@@ -89,6 +89,9 @@ if action == 'clean':
     installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
     installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
     packages_to_remove = [p for p in installed_packages_explicit if p not in pacdef_packages]
+    if len(packages_to_remove) == 0:
+        print('nothing to do')
+        sys.exit(0)
     print('Would remove the following packages:')
     for p in packages_to_remove:
         print(p)
