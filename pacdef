@@ -17,7 +17,10 @@ def aur_helper_execute(command: List[str]):
 
 def get_packages_from_pacdef() -> List[str]:
     packages = []
-    files = os.listdir(GROUPS_PATH)
+    try:
+        files = os.listdir(GROUPS_PATH)
+    except FileNotFoundError
+        return []
     for f in files:
         with open(os.path.join(GROUPS_PATH, f)) as fd:
             lines = fd.readlines()
