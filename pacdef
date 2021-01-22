@@ -120,6 +120,18 @@ if action == 'show-groups':
     for f in files:
         print(f)
 
+if action == 'show-group':
+    groups = sys.argv[(pacdef_idx + 2):]
+    if len(groups) == 0:
+        print('which group do you want to show?')
+        sys.exit(1)
+    files = os.listdir(GROUPS_PATH)
+    files.sort()
+    for f in files:
+        if f in groups:
+            with open(os.path.join(GROUPS_PATH, f)) as fd:
+                print(fd.read())
+
 if action == 'show-unmanaged':
     pacdef_packages = get_packages_from_pacdef()
     installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
