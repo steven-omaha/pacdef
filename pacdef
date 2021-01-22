@@ -19,7 +19,7 @@ def get_packages_from_pacdef() -> List[str]:
     packages = []
     try:
         files = os.listdir(GROUPS_PATH)
-    except FileNotFoundError
+    except FileNotFoundError:
         return []
     for f in files:
         with open(os.path.join(GROUPS_PATH, f)) as fd:
