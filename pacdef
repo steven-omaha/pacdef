@@ -1,10 +1,17 @@
 #!/usr/bin/python
 
+import argparse
 import configparser
 import os
 import subprocess
 import sys
 from typing import List
+
+
+AUR_HELPER = ''
+CONFIG_PATH = ''
+CONFIG_FILE = ''
+GROUPS_PATH = ''
 
 
 def aur_helper_execute(command: List[str]):
@@ -31,114 +38,132 @@ def get_packages_from_pacdef() -> List[str]:
     return packages
 
 
-CONFIG_PATH = os.path.join(os.environ['HOME'], '.config/pacdef')
-CONFIG_FILE = os.path.join(CONFIG_PATH, 'pacdef.conf')
-GROUPS_PATH = os.path.join(CONFIG_PATH, 'groups')
+def parse_config():
+    global AUR_HELPER, CONFIG_PATH, CONFIG_FILE, GROUPS_PATH
 
-if not os.path.exists(CONFIG_PATH):
-    os.mkdir(CONFIG_PATH)
+    CONFIG_PATH = os.path.join(os.environ['HOME'], '.config/pacdef')
+    CONFIG_FILE = os.path.join(CONFIG_PATH, 'pacdef.conf')
+    GROUPS_PATH = os.path.join(CONFIG_PATH, 'groups')
 
-if not os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'w'):
-        pass
+    if not os.path.exists(CONFIG_PATH):
+        os.mkdir(CONFIG_PATH)
 
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
-
-try:
-    AUR_HELPER = config['misc']['aur_helper']
-except KeyError:
-    AUR_HELPER = 'paru'
-
-for i, item in enumerate(sys.argv):
-    if 'pacdef' in item:
-        pacdef_idx = i
-        break
-else:
-    print('Name of the executable is wrong. What did you do?!')
-    sys.exit(1)
-
-try:
-    action = sys.argv[pacdef_idx + 1]
-except IndexError:
-    print('no action given. actions can be one of [clean, import, remove, show-group, show-groups, show-unmanaged, sync].')
-    sys.exit(1)
-
-if action == 'import':
-    files = sys.argv[(pacdef_idx + 2):]
-    if len(files) == 0:
-        print('nothing to import')
-    for f in files:
-        if os.path.exists(os.path.join(GROUPS_PATH, f)):
-            print(f'{f} already exists, skipping')
-        else:
-            os.symlink(os.path.abspath(f), os.path.join(GROUPS_PATH, f))
-
-if action == 'sync':
-    packages = get_packages_from_pacdef()
-    installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
-    installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
-    to_sync = [p for p in packages if p not in installed_packages]
-    if len(to_sync) == 0:
-        print('nothing to do')
-    else:
-        aur_helper_execute(['--sync', '--needed'] + to_sync)
-
-if action == 'clean':
-    pacdef_packages = get_packages_from_pacdef()
-    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
-    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
-    packages_to_remove = [p for p in installed_packages_explicit if p not in pacdef_packages]
-    if len(packages_to_remove) == 0:
-        print('nothing to do')
-        sys.exit(0)
-    print('Would remove the following packages:')
-    for p in packages_to_remove:
-        print(p)
-    while True:
-        user_input = input('Continue? [y/N] ')
-        print(user_input)
-        if len(user_input) > 1:
+    if not os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'w'):
             pass
-        elif user_input.lower() == 'y':
-            break
-        elif user_input.lower() in ['', 'n']:
+
+    config = configparser.ConfigParser()
+    config.read(CONFIG_FILE)
+
+    try:
+        AUR_HELPER = config['misc']['aur_helper']
+    except KeyError:
+        AUR_HELPER = 'paru'
+
+
+def main():
+    parse_config()
+
+    parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
+
+    subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
+    subparsers.add_parser('clean', help='uninstall packages not managed by pacdef')
+    subparsers.add_parser('groups', help='show names of imported groups')
+    parser_import = subparsers.add_parser('import', help='import a new group file')
+    parser_import.add_argument('file', nargs='+', help='a group file')
+    parser_remove = subparsers.add_parser('remove', help='remove previously imported group')
+    parser_remove.add_argument('group', nargs='+', help='a previously imported group')
+    parser_show_group = subparsers.add_parser('show-group', help='show packages under an imported group')
+    parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
+    subparsers.add_parser('sync', help='install packages from all imported groups')
+    subparsers.add_parser('unmanaged', help='show explicitly installed packages not managed by pacdef')
+    args = parser.parse_args()
+
+    if args.action == 'clean':
+        pacdef_packages = get_packages_from_pacdef()
+        installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+        installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
+        packages_to_remove = [p for p in installed_packages_explicit if p not in pacdef_packages]
+        if len(packages_to_remove) == 0:
+            print('nothing to do')
             sys.exit(0)
-    aur_helper_execute(['--remove'] + packages_to_remove)
+        print('Would remove the following packages and their dependencies:')
+        for p in packages_to_remove:
+            print(p)
+        while True:
+            user_input = input('Continue? [y/N] ')
+            if len(user_input) > 1:
+                pass
+            elif user_input.lower() == 'y':
+                break
+            elif user_input.lower() in ['', 'n']:
+                sys.exit(0)
+        aur_helper_execute(['--remove', '--recursive'] + packages_to_remove)
 
-if action == 'remove':
-    files = sys.argv[(pacdef_idx + 2):]
-    if len(files) == 0:
-        print('nothing to remove')
-    for f in files:
-        actual_file = os.path.join(GROUPS_PATH, f)
-        if os.path.exists(actual_file):
-            subprocess.call(['rm', actual_file])
+    if args.action == 'groups':
+        files = os.listdir(GROUPS_PATH)
+        files.sort()
+        for f in files:
+            print(f)
+
+    if args.action == 'import':
+        files = args.file
+        # check if all file-arguments exist before we do anything (be atomic)
+        for f in files:
+            if not os.path.exists(f):
+                print(f'Cannot import {f}, does not exist')
+                sys.exit(1)
+        for f in files:
+            if os.path.exists(os.path.join(GROUPS_PATH, f)):
+                print(f'{f} already exists, skipping')
+            else:
+                os.symlink(os.path.abspath(f), os.path.join(GROUPS_PATH, f))
+
+    if args.action == 'remove':
+        groups = args.group
+        if len(groups) == 0:
+            print('nothing to remove')
+        for g in groups:
+            actual_file = os.path.join(GROUPS_PATH, g)
+            if os.path.exists(actual_file):
+                subprocess.call(['rm', actual_file])
+            else:
+                print(f'Did not find the group {g}')
+                sys.exit(1)
+
+    if args.action == 'show-group':
+        groups = args.group
+        if len(groups) == 0:
+            print('which group do you want to show?')
+            sys.exit(1)
+        files = os.listdir(GROUPS_PATH)
+        files.sort()
+        for f in files:
+            if f in groups:
+                with open(os.path.join(GROUPS_PATH, f)) as fd:
+                    print(fd.read().strip())  # remove final newline
+
+    if args.action == 'sync':
+        packages = get_packages_from_pacdef()
+        installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
+        installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
+        to_sync = [p for p in packages if p not in installed_packages]
+        if len(to_sync) == 0:
+            print('nothing to do')
         else:
-            print(f'Did not find the group {f}')
+            aur_helper_execute(['--sync', '--needed'] + to_sync)
 
-if action == 'show-groups':
-    files = os.listdir(GROUPS_PATH)
-    files.sort()
-    for f in files:
-        print(f)
+    if args.action == 'unmanaged':
+        pacdef_packages = get_packages_from_pacdef()
+        installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+        installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
+        unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
+        for p in unmanaged_packages:
+            print(p)
 
-if action == 'show-group':
-    groups = sys.argv[(pacdef_idx + 2):]
-    if len(groups) == 0:
-        print('which group do you want to show?')
-        sys.exit(1)
-    files = os.listdir(GROUPS_PATH)
-    files.sort()
-    for f in files:
-        if f in groups:
-            with open(os.path.join(GROUPS_PATH, f)) as fd:
-                print(fd.read())
 
-if action == 'show-unmanaged':
-    pacdef_packages = get_packages_from_pacdef()
-    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
-    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
-    unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
-    for p in unmanaged_packages:
-        print(p)
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(130)
