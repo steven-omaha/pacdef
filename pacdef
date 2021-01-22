@@ -58,7 +58,7 @@ else:
 try:
     action = sys.argv[pacdef_idx + 1]
 except IndexError:
-    print('no action given. actions can be one of [clean, import, remove, sync].')
+    print('no action given. actions can be one of [clean, import, remove, show-unmanaged, sync].')
     sys.exit(1)
 
 if action == 'import':
