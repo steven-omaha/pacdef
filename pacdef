@@ -110,3 +110,11 @@ if action == 'remove':
             subprocess.call(['rm', actual_file])
         else:
             print(f'Did not find the group {f}')
+
+if action == 'show-unmanaged':
+    pacdef_packages = get_packages_from_pacdef()
+    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
+    unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
+    for p in unmanaged_packages:
+        print(p)
