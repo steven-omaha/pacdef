@@ -151,7 +151,7 @@ def main():
         if len(to_sync) == 0:
             print('nothing to do')
         else:
-            aur_helper_execute(['--sync', '--needed'] + to_sync)
+            aur_helper_execute(['--sync', '--refresh', '--needed'] + to_sync)
 
     if args.action == 'unmanaged':
         pacdef_packages = get_packages_from_pacdef()
