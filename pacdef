@@ -125,7 +125,7 @@ def main():
             print('nothing to remove')
         for g in groups:
             actual_file = os.path.join(GROUPS_PATH, g)
-            if os.path.exists(actual_file):
+            if os.path.islink(actual_file):
                 subprocess.call(['rm', actual_file])
             else:
                 print(f'Did not find the group {g}')
