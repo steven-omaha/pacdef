@@ -171,16 +171,18 @@ def show_groups() -> None:
 
 
 def remove_unmanaged_packages() -> None:
-    pacdef_packages = get_packages_from_pacdef()
-    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
-    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
-    packages_to_remove = [p for p in installed_packages_explicit if p not in pacdef_packages]
-    if len(packages_to_remove) == 0:
+    unmanaged_packages = get_unmanaged_packages()
+    if len(unmanaged_packages) == 0:
         print('nothing to do')
         sys.exit(0)
     print('Would remove the following packages and their dependencies:')
-    for p in packages_to_remove:
+    for p in unmanaged_packages:
         print(p)
+    get_user_confirmation()
+    aur_helper_execute(['--remove', '--recursive'] + unmanaged_packages)
+
+
+def get_user_confirmation() -> None:
     while True:
         user_input = input('Continue? [y/N] ')
         if len(user_input) > 1:
@@ -189,7 +191,20 @@ def remove_unmanaged_packages() -> None:
             break
         elif user_input.lower() in ['', 'n']:
             sys.exit(0)
-    aur_helper_execute(['--remove', '--recursive'] + packages_to_remove)
+
+
+def get_unmanaged_packages() -> List[str]:
+    pacdef_packages = get_packages_from_pacdef()
+    explicitly_installed_packages = get_explicitly_installed_packages()
+    unmanaged_packages = [p for p in explicitly_installed_packages if p not in pacdef_packages]
+    unmanaged_packages.sort()
+    return unmanaged_packages
+
+
+def get_explicitly_installed_packages() -> List[str]:
+    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
+    return installed_packages_explicit
 
 
 def parse_args() -> argparse.Namespace:
