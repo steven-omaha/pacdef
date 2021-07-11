@@ -2,16 +2,17 @@
 
 import argparse
 import configparser
-import os
 import subprocess
 import sys
+from pathlib import Path
 from typing import List
+from os import environ
 
 
-AUR_HELPER = ''
-CONFIG_PATH = ''
-CONFIG_FILE = ''
-GROUPS_PATH = ''
+AUR_HELPER: Path
+CONFIG_PATH: Path
+CONFIG_FILE: Path
+GROUPS_PATH: Path
 
 
 def main():
@@ -39,7 +40,7 @@ def main():
 
 def aur_helper_execute(command: List[str]):
     try:
-        subprocess.call([AUR_HELPER] + command)
+        subprocess.call([str(AUR_HELPER)] + command)
     except FileNotFoundError:
         print(f'Could not start the AUR helper "{AUR_HELPER}".')
         sys.exit(1)
@@ -48,32 +49,36 @@ def aur_helper_execute(command: List[str]):
 def get_packages_from_pacdef() -> List[str]:
     packages = []
     try:
-        files = os.listdir(GROUPS_PATH)
+        for f in GROUPS_PATH.iterdir():
+            with open(f) as fd:
+                lines = fd.readlines()
+            for line in lines:
+                package_name = line.split('#')[0].strip()
+                if len(package_name) > 0:
+                    packages.append(package_name)
     except FileNotFoundError:
-        return []
-    for f in files:
-        with open(os.path.join(GROUPS_PATH, f)) as fd:
-            lines = fd.readlines()
-        for line in lines:
-            package_name = line.split('#')[0].strip()
-            if len(package_name) > 0:
-                packages.append(package_name)
+        pass
     return packages
 
 
 def parse_config():
     global AUR_HELPER, CONFIG_PATH, CONFIG_FILE, GROUPS_PATH
 
-    CONFIG_PATH = os.path.join(os.environ['HOME'], '.config/pacdef')
-    CONFIG_FILE = os.path.join(CONFIG_PATH, 'pacdef.conf')
-    GROUPS_PATH = os.path.join(CONFIG_PATH, 'groups')
+    try:
+        config_base = Path(environ['XDG_CONFIG_HOME'])
+    except KeyError:
+        home = Path.home()
+        config_base = home.joinpath('.config')
 
-    if not os.path.exists(CONFIG_PATH):
-        os.mkdir(CONFIG_PATH)
+    CONFIG_PATH = config_base.joinpath('pacdef')
+    CONFIG_FILE = CONFIG_PATH.joinpath('pacdef.conf')
+    GROUPS_PATH = CONFIG_PATH.joinpath('groups')
 
-    if not os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, 'w'):
-            pass
+    if not dir_exists(CONFIG_PATH):
+        CONFIG_PATH.mkdir(parents=True)
+
+    if not file_exists(CONFIG_FILE):
+        CONFIG_FILE.touch()
 
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
@@ -109,21 +114,22 @@ def show_group(args):
     if len(groups) == 0:
         print('which group do you want to show?')
         sys.exit(1)
-    files = os.listdir(GROUPS_PATH)
+    files = list(GROUPS_PATH.iterdir())
     files.sort()
     for f in files:
         if f in groups:
-            with open(os.path.join(GROUPS_PATH, f)) as fd:
+            with open(GROUPS_PATH.joinpath(f)) as fd:
                 print(fd.read().strip())  # remove final newline
 
 
 def remove_group(args):
+    # TODO make atomic
     groups = args.group
     if len(groups) == 0:
         print('nothing to remove')
     for g in groups:
-        actual_file = os.path.join(GROUPS_PATH, g)
-        if os.path.islink(actual_file):
+        actual_file = GROUPS_PATH.joinpath(g)
+        if actual_file.is_symlink() or file_exists(actual_file):
             subprocess.call(['rm', actual_file])
         else:
             print(f'Did not find the group {g}')
@@ -134,18 +140,21 @@ def import_groups(args):
     files = args.file
     # check if all file-arguments exist before we do anything (be atomic)
     for f in files:
-        if not os.path.exists(f):
+        path = Path(f)
+        if not file_exists(path):
             print(f'Cannot import {f}, does not exist')
             sys.exit(1)
     for f in files:
-        if os.path.exists(os.path.join(GROUPS_PATH, f)):
+        path = Path(f)
+        link_target = GROUPS_PATH.joinpath(f)
+        if file_exists(link_target):
             print(f'{f} already exists, skipping')
         else:
-            os.symlink(os.path.abspath(f), os.path.join(GROUPS_PATH, f))
+            link_target.symlink_to(path)
 
 
 def show_groups():
-    files = os.listdir(GROUPS_PATH)
+    files = list(GROUPS_PATH.iterdir())
     files.sort()
     for f in files:
         print(f)
@@ -188,6 +197,14 @@ def parse_args() -> argparse.Namespace:
     subparsers.add_parser('unmanaged', help='show explicitly installed packages not managed by pacdef')
     args = parser.parse_args()
     return args
+
+
+def dir_exists(path: Path) -> bool:
+    return path.exists() and path.is_dir()
+
+
+def file_exists(path: Path) -> bool:
+    return path.exists() and path.is_file()
 
 
 if __name__ == '__main__':
