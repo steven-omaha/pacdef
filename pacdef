@@ -10,7 +10,6 @@ from os import environ
 
 
 AUR_HELPER: Path
-CONFIG_PATH: Path
 CONFIG_FILE: Path
 GROUPS_PATH: Path
 
@@ -62,7 +61,7 @@ def get_packages_from_pacdef() -> List[str]:
 
 
 def parse_config():
-    global AUR_HELPER, CONFIG_PATH, CONFIG_FILE, GROUPS_PATH
+    global AUR_HELPER, CONFIG_FILE, GROUPS_PATH
 
     try:
         config_base = Path(environ['XDG_CONFIG_HOME'])
@@ -70,12 +69,12 @@ def parse_config():
         home = Path.home()
         config_base = home.joinpath('.config')
 
-    CONFIG_PATH = config_base.joinpath('pacdef')
-    CONFIG_FILE = CONFIG_PATH.joinpath('pacdef.conf')
-    GROUPS_PATH = CONFIG_PATH.joinpath('groups')
+    config_path = config_base.joinpath('pacdef')
+    CONFIG_FILE = config_path.joinpath('pacdef.conf')
+    GROUPS_PATH = config_path.joinpath('groups')
 
-    if not dir_exists(CONFIG_PATH):
-        CONFIG_PATH.mkdir(parents=True)
+    if not dir_exists(config_path):
+        config_path.mkdir(parents=True)
 
     if not file_exists(CONFIG_FILE):
         CONFIG_FILE.touch()
