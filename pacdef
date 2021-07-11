@@ -120,8 +120,8 @@ def show_unmanaged_packages() -> None:
     pacdef_packages = get_packages_from_pacdef()
     installed_packages_explicit = get_explicitly_installed_packages()
     unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
-    for p in unmanaged_packages:
-        print(p)
+    for package in unmanaged_packages:
+        print(package)
 
 
 def install_packages_from_groups() -> None:
@@ -196,9 +196,9 @@ def import_groups(args: argparse.Namespace) -> None:
 
 
 def show_groups() -> None:
-    files = get_groups()
-    for f in files:
-        print(f)
+    groups = get_groups()
+    for group in groups:
+        print(group)
 
 
 def get_groups() -> List[str]:
@@ -213,8 +213,8 @@ def remove_unmanaged_packages() -> None:
         print('nothing to do')
         sys.exit(0)
     print('Would remove the following packages and their dependencies:')
-    for p in unmanaged_packages:
-        print(p)
+    for package in unmanaged_packages:
+        print(package)
     get_user_confirmation()
     aur_helper_execute(['--remove', '--recursive'] + unmanaged_packages)
 
