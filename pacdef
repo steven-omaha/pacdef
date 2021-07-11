@@ -38,7 +38,7 @@ def main():
         sys.exit(1)
 
 
-def aur_helper_execute(command: List[str]):
+def aur_helper_execute(command: List[str]) -> None:
     try:
         subprocess.call([str(AUR_HELPER)] + command)
     except FileNotFoundError:
@@ -61,7 +61,7 @@ def get_packages_from_pacdef() -> List[str]:
     return packages
 
 
-def parse_config():
+def parse_config() -> None:
     global AUR_HELPER, CONFIG_FILE, GROUPS_PATH
 
     try:
@@ -89,7 +89,7 @@ def parse_config():
         AUR_HELPER = 'paru'
 
 
-def show_unmanaged_packages():
+def show_unmanaged_packages() -> None:
     pacdef_packages = get_packages_from_pacdef()
     installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
     installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
@@ -98,7 +98,7 @@ def show_unmanaged_packages():
         print(p)
 
 
-def install_packages_from_groups():
+def install_packages_from_groups() -> None:
     packages = get_packages_from_pacdef()
     installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
     installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
@@ -109,7 +109,7 @@ def install_packages_from_groups():
         aur_helper_execute(['--sync', '--refresh', '--needed'] + to_sync)
 
 
-def show_group(args):
+def show_group(args: argparse.Namespace) -> None:
     groups = args.group
     if len(groups) == 0:
         print('which group do you want to show?')
@@ -122,7 +122,7 @@ def show_group(args):
                 print(fd.read().strip())  # remove final newline
 
 
-def remove_group(args):
+def remove_group(args: argparse.Namespace) -> None:
     # TODO make atomic
     groups = args.group
     if len(groups) == 0:
@@ -136,7 +136,7 @@ def remove_group(args):
             sys.exit(1)
 
 
-def import_groups(args):
+def import_groups(args: argparse.Namespace) -> None:
     files = args.file
     # check if all file-arguments exist before we do anything (be atomic)
     for f in files:
@@ -153,14 +153,14 @@ def import_groups(args):
             link_target.symlink_to(path)
 
 
-def show_groups():
+def show_groups() -> None:
     files = list(GROUPS_PATH.iterdir())
     files.sort()
     for f in files:
         print(f)
 
 
-def remove_unmanaged_packages():
+def remove_unmanaged_packages() -> None:
     pacdef_packages = get_packages_from_pacdef()
     installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
     installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
