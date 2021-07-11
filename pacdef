@@ -86,7 +86,11 @@ def parse_config() -> None:
         CONFIG_FILE.touch()
 
     config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
+    try:
+        config.read(CONFIG_FILE)
+    except configparser.ParsingError as e:
+        print(e.message)
+        sys.exit(1)
 
     AUR_HELPER = get_aur_helper(config)
 
