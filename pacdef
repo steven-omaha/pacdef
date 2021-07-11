@@ -146,17 +146,19 @@ def print_content_of_group(group: str) -> None:
 
 
 def remove_group(args: argparse.Namespace) -> None:
-    # TODO make atomic
     groups = args.group
     if len(groups) == 0:
         print('nothing to remove')
-    for g in groups:
-        actual_file = GROUPS_PATH.joinpath(g)
-        if actual_file.is_symlink() or file_exists(actual_file):
-            subprocess.call(['rm', actual_file])
+    found_groups = []
+    for group_name in groups:
+        group_file = GROUPS_PATH.joinpath(group_name)
+        if group_file.is_symlink() or file_exists(group_file):
+            found_groups.append(group_file)
         else:
-            print(f'Did not find the group {g}')
+            print(f'Did not find the group {group_name}')
             sys.exit(1)
+    for path in found_groups:
+        path.unlink()
 
 
 def import_groups(args: argparse.Namespace) -> None:
