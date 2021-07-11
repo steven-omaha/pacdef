@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 from typing import List
 from os import environ
+from enum import Enum
 
 
 AUR_HELPER: Path
@@ -18,19 +19,19 @@ def main():
     parse_config()
     args = parse_args()
 
-    if args.action == 'clean':
+    if args.action == Actions.clean.value:
         remove_unmanaged_packages()
-    elif args.action == 'groups':
+    elif args.action == Actions.groups.value:
         show_groups()
-    elif args.action == 'import':
+    elif args.action == Actions.import_.value:
         import_groups(args)
-    elif args.action == 'remove':
+    elif args.action == Actions.remove.value:
         remove_group(args)
-    elif args.action == 'show-group':
+    elif args.action == Actions.show_group.value:
         show_group(args)
-    elif args.action == 'sync':
+    elif args.action == Actions.sync.value:
         install_packages_from_groups()
-    elif args.action == 'unmanaged':
+    elif args.action == Actions.unmanaged.value:
         show_unmanaged_packages()
     else:
         print('Did not understand what you want me to do')
@@ -184,16 +185,16 @@ def remove_unmanaged_packages():
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
     subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
-    subparsers.add_parser('clean', help='uninstall packages not managed by pacdef')
-    subparsers.add_parser('groups', help='show names of imported groups')
-    parser_import = subparsers.add_parser('import', help='import a new group file')
+    subparsers.add_parser(Actions.clean.value, help='uninstall packages not managed by pacdef')
+    subparsers.add_parser(Actions.groups.value, help='show names of imported groups')
+    parser_import = subparsers.add_parser(Actions.import_.value, help='import a new group file')
     parser_import.add_argument('file', nargs='+', help='a group file')
-    parser_remove = subparsers.add_parser('remove', help='remove previously imported group')
+    parser_remove = subparsers.add_parser(Actions.remove.value, help='remove previously imported group')
     parser_remove.add_argument('group', nargs='+', help='a previously imported group')
-    parser_show_group = subparsers.add_parser('show-group', help='show packages under an imported group')
+    parser_show_group = subparsers.add_parser(Actions.show_group.value, help='show packages under an imported group')
     parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
-    subparsers.add_parser('sync', help='install packages from all imported groups')
-    subparsers.add_parser('unmanaged', help='show explicitly installed packages not managed by pacdef')
+    subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
+    subparsers.add_parser(Actions.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
     args = parser.parse_args()
     return args
 
@@ -204,6 +205,19 @@ def dir_exists(path: Path) -> bool:
 
 def file_exists(path: Path) -> bool:
     return path.exists() and path.is_file()
+
+
+class Actions(Enum):
+    clean = 'clean'
+    groups = 'groups'
+    import_ = 'import'
+    remove = 'remove'
+    show_group = 'show-group'
+    sync = 'sync'
+    unmanaged = 'unmanaged'
+
+    def __repr__(self):
+        return str(self)
 
 
 if __name__ == '__main__':
