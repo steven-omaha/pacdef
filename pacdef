@@ -9,6 +9,7 @@ from typing import List
 from os import environ
 from enum import Enum
 
+COMMENT = '#'
 
 AUR_HELPER: Path
 CONFIG_FILE: Path
@@ -53,12 +54,18 @@ def get_packages_from_pacdef() -> List[str]:
             with open(f) as fd:
                 lines = fd.readlines()
             for line in lines:
-                package_name = line.split('#')[0].strip()
+                package_name = get_package_from_line(line)
                 if len(package_name) > 0:
                     packages.append(package_name)
     except FileNotFoundError:
-        pass
+        print('pacdef does not know any groups. Import one.')
     return packages
+
+
+def get_package_from_line(line) -> str:
+    before_comment = line.split(COMMENT)[0]
+    package_name = before_comment.strip()
+    return package_name
 
 
 def parse_config() -> None:
