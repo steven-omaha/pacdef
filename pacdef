@@ -14,6 +14,29 @@ CONFIG_FILE = ''
 GROUPS_PATH = ''
 
 
+def main():
+    parse_config()
+    args = parse_args()
+
+    if args.action == 'clean':
+        remove_unmanaged_packages()
+    elif args.action == 'groups':
+        show_groups()
+    elif args.action == 'import':
+        import_groups(args)
+    elif args.action == 'remove':
+        remove_group(args)
+    elif args.action == 'show-group':
+        show_group(args)
+    elif args.action == 'sync':
+        install_packages_from_groups()
+    elif args.action == 'unmanaged':
+        show_unmanaged_packages()
+    else:
+        print('Did not understand what you want me to do')
+        sys.exit(1)
+
+
 def aur_helper_execute(command: List[str]):
     try:
         subprocess.call([AUR_HELPER] + command)
@@ -61,11 +84,97 @@ def parse_config():
         AUR_HELPER = 'paru'
 
 
-def main():
-    parse_config()
+def show_unmanaged_packages():
+    pacdef_packages = get_packages_from_pacdef()
+    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
+    unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
+    for p in unmanaged_packages:
+        print(p)
 
+
+def install_packages_from_groups():
+    packages = get_packages_from_pacdef()
+    installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
+    installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
+    to_sync = [p for p in packages if p not in installed_packages]
+    if len(to_sync) == 0:
+        print('nothing to do')
+    else:
+        aur_helper_execute(['--sync', '--refresh', '--needed'] + to_sync)
+
+
+def show_group(args):
+    groups = args.group
+    if len(groups) == 0:
+        print('which group do you want to show?')
+        sys.exit(1)
+    files = os.listdir(GROUPS_PATH)
+    files.sort()
+    for f in files:
+        if f in groups:
+            with open(os.path.join(GROUPS_PATH, f)) as fd:
+                print(fd.read().strip())  # remove final newline
+
+
+def remove_group(args):
+    groups = args.group
+    if len(groups) == 0:
+        print('nothing to remove')
+    for g in groups:
+        actual_file = os.path.join(GROUPS_PATH, g)
+        if os.path.islink(actual_file):
+            subprocess.call(['rm', actual_file])
+        else:
+            print(f'Did not find the group {g}')
+            sys.exit(1)
+
+
+def import_groups(args):
+    files = args.file
+    # check if all file-arguments exist before we do anything (be atomic)
+    for f in files:
+        if not os.path.exists(f):
+            print(f'Cannot import {f}, does not exist')
+            sys.exit(1)
+    for f in files:
+        if os.path.exists(os.path.join(GROUPS_PATH, f)):
+            print(f'{f} already exists, skipping')
+        else:
+            os.symlink(os.path.abspath(f), os.path.join(GROUPS_PATH, f))
+
+
+def show_groups():
+    files = os.listdir(GROUPS_PATH)
+    files.sort()
+    for f in files:
+        print(f)
+
+
+def remove_unmanaged_packages():
+    pacdef_packages = get_packages_from_pacdef()
+    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
+    packages_to_remove = [p for p in installed_packages_explicit if p not in pacdef_packages]
+    if len(packages_to_remove) == 0:
+        print('nothing to do')
+        sys.exit(0)
+    print('Would remove the following packages and their dependencies:')
+    for p in packages_to_remove:
+        print(p)
+    while True:
+        user_input = input('Continue? [y/N] ')
+        if len(user_input) > 1:
+            pass
+        elif user_input.lower() == 'y':
+            break
+        elif user_input.lower() in ['', 'n']:
+            sys.exit(0)
+    aur_helper_execute(['--remove', '--recursive'] + packages_to_remove)
+
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
-
     subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
     subparsers.add_parser('clean', help='uninstall packages not managed by pacdef')
     subparsers.add_parser('groups', help='show names of imported groups')
@@ -78,88 +187,7 @@ def main():
     subparsers.add_parser('sync', help='install packages from all imported groups')
     subparsers.add_parser('unmanaged', help='show explicitly installed packages not managed by pacdef')
     args = parser.parse_args()
-
-    if args.action == 'clean':
-        pacdef_packages = get_packages_from_pacdef()
-        installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
-        installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
-        packages_to_remove = [p for p in installed_packages_explicit if p not in pacdef_packages]
-        if len(packages_to_remove) == 0:
-            print('nothing to do')
-            sys.exit(0)
-        print('Would remove the following packages and their dependencies:')
-        for p in packages_to_remove:
-            print(p)
-        while True:
-            user_input = input('Continue? [y/N] ')
-            if len(user_input) > 1:
-                pass
-            elif user_input.lower() == 'y':
-                break
-            elif user_input.lower() in ['', 'n']:
-                sys.exit(0)
-        aur_helper_execute(['--remove', '--recursive'] + packages_to_remove)
-
-    if args.action == 'groups':
-        files = os.listdir(GROUPS_PATH)
-        files.sort()
-        for f in files:
-            print(f)
-
-    if args.action == 'import':
-        files = args.file
-        # check if all file-arguments exist before we do anything (be atomic)
-        for f in files:
-            if not os.path.exists(f):
-                print(f'Cannot import {f}, does not exist')
-                sys.exit(1)
-        for f in files:
-            if os.path.exists(os.path.join(GROUPS_PATH, f)):
-                print(f'{f} already exists, skipping')
-            else:
-                os.symlink(os.path.abspath(f), os.path.join(GROUPS_PATH, f))
-
-    if args.action == 'remove':
-        groups = args.group
-        if len(groups) == 0:
-            print('nothing to remove')
-        for g in groups:
-            actual_file = os.path.join(GROUPS_PATH, g)
-            if os.path.islink(actual_file):
-                subprocess.call(['rm', actual_file])
-            else:
-                print(f'Did not find the group {g}')
-                sys.exit(1)
-
-    if args.action == 'show-group':
-        groups = args.group
-        if len(groups) == 0:
-            print('which group do you want to show?')
-            sys.exit(1)
-        files = os.listdir(GROUPS_PATH)
-        files.sort()
-        for f in files:
-            if f in groups:
-                with open(os.path.join(GROUPS_PATH, f)) as fd:
-                    print(fd.read().strip())  # remove final newline
-
-    if args.action == 'sync':
-        packages = get_packages_from_pacdef()
-        installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
-        installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
-        to_sync = [p for p in packages if p not in installed_packages]
-        if len(to_sync) == 0:
-            print('nothing to do')
-        else:
-            aur_helper_execute(['--sync', '--refresh', '--needed'] + to_sync)
-
-    if args.action == 'unmanaged':
-        pacdef_packages = get_packages_from_pacdef()
-        installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
-        installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
-        unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
-        for p in unmanaged_packages:
-            print(p)
+    return args
 
 
 if __name__ == '__main__':
