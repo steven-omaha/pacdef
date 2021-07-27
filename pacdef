@@ -5,7 +5,7 @@ import configparser
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 from os import environ
 from enum import Enum
 
@@ -43,7 +43,7 @@ def main():
         sys.exit(1)
 
 
-def aur_helper_execute(command: List[str]) -> None:
+def aur_helper_execute(command: list[str]) -> None:
     try:
         subprocess.call([str(AUR_HELPER)] + command)
     except FileNotFoundError:
@@ -51,7 +51,7 @@ def aur_helper_execute(command: List[str]) -> None:
         sys.exit(1)
 
 
-def get_packages_from_pacdef() -> List[str]:
+def get_packages_from_pacdef() -> list[str]:
     packages = []
     try:
         for f in GROUPS_PATH.iterdir():
@@ -150,7 +150,7 @@ def install_packages_from_groups() -> None:
         aur_helper_execute(['--sync', '--refresh', '--needed'] + to_install)
 
 
-def get_all_installed_packages() -> List[str]:
+def get_all_installed_packages() -> list[str]:
     installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
     installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
     return installed_packages
@@ -227,7 +227,7 @@ def show_groups() -> None:
         print(group)
 
 
-def get_groups() -> List[str]:
+def get_groups() -> list[str]:
     groups = [group.name for group in GROUPS_PATH.iterdir()]
     groups.sort()
     return groups
@@ -256,7 +256,7 @@ def get_user_confirmation() -> None:
             sys.exit(0)
 
 
-def get_unmanaged_packages() -> List[str]:
+def get_unmanaged_packages() -> list[str]:
     pacdef_packages = get_packages_from_pacdef()
     explicitly_installed_packages = get_explicitly_installed_packages()
     unmanaged_packages = [p for p in explicitly_installed_packages if p not in pacdef_packages]
@@ -264,7 +264,7 @@ def get_unmanaged_packages() -> List[str]:
     return unmanaged_packages
 
 
-def get_explicitly_installed_packages() -> List[str]:
+def get_explicitly_installed_packages() -> list[str]:
     installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
     installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
     return installed_packages_explicit
