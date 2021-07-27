@@ -177,14 +177,6 @@ def show_group(args: argparse.Namespace) -> None:
             print(package)
 
 
-def print_content_of_group(group: str) -> None:
-    path = GROUPS_PATH.joinpath(group)
-    with open(path) as fd:
-        content = fd.read()
-        content = content.strip()  # remove final newline
-        print(content)
-
-
 def remove_group(args: argparse.Namespace) -> None:
     groups = args.group
     if len(groups) == 0:
