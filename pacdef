@@ -54,13 +54,9 @@ def aur_helper_execute(command: list[str]) -> None:
 def get_packages_from_pacdef() -> list[str]:
     packages = []
     try:
-        for f in GROUPS_PATH.iterdir():
-            with open(f) as fd:
-                lines = fd.readlines()
-            for line in lines:
-                package_name = get_package_from_line(line)
-                if len(package_name) > 0:
-                    packages.append(package_name)
+        for group in GROUPS_PATH.iterdir():
+            content = get_packages_from_group(group)
+            packages.extend(content)
     except FileNotFoundError:
         print('pacdef does not know any groups. Import one.')
     return packages
@@ -136,6 +132,7 @@ def show_unmanaged_packages() -> None:
     pacdef_packages = get_packages_from_pacdef()
     installed_packages_explicit = get_explicitly_installed_packages()
     unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
+    unmanaged_packages.sort()
     for package in unmanaged_packages:
         print(package)
 
