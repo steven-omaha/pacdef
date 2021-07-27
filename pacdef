@@ -32,7 +32,7 @@ def main():
         remove_group(args)
     elif args.action == Actions.search.value:
         search_package(args)
-    elif args.action == Actions.show_group.value:
+    elif args.action == Actions.show.value:
         show_group(args)
     elif args.action == Actions.sync.value:
         install_packages_from_groups()
@@ -293,7 +293,7 @@ def parse_args() -> argparse.Namespace:
     parser_remove.add_argument('group', nargs='+', help='a previously imported group')
     parser_search = subparsers.add_parser(Actions.search.value, help='show the group containing a package')
     parser_search.add_argument('package', help='the package to search for')
-    parser_show_group = subparsers.add_parser(Actions.show_group.value, help='show packages under an imported group')
+    parser_show_group = subparsers.add_parser(Actions.show.value, help='show packages under an imported group')
     parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
     subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
     subparsers.add_parser(Actions.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
@@ -315,7 +315,7 @@ class Actions(Enum):
     import_ = 'import'
     remove = 'remove'
     search = 'search'
-    show_group = 'show-group'
+    show = 'show'
     sync = 'sync'
     unmanaged = 'unmanaged'
 
