@@ -153,18 +153,28 @@ def get_all_installed_packages() -> list[str]:
     return installed_packages
 
 
+def get_path_from_group_name(group_name: str) -> Path:
+    group = GROUPS_PATH.joinpath(group_name)
+    if not file_exists(group):
+        raise FileNotFoundError
+    return group
+
+
 def show_group(args: argparse.Namespace) -> None:
     groups_to_show = args.group
     if len(groups_to_show) == 0:
         print('which group do you want to show?')
         sys.exit(1)
-    imported_groups = get_groups()
-    for group in groups_to_show:
-        if group not in imported_groups:
-            print(f"I don't know the group {group}.")
+    imported_groups_name = get_groups_name()
+    for group_name in groups_to_show:
+        if group_name not in imported_groups_name:
+            print(f"I don't know the group {group_name}.")
             sys.exit(1)
-    for group in groups_to_show:
-        print_content_of_group(group)
+    for group_name in groups_to_show:
+        group = get_path_from_group_name(group_name)
+        packages = get_packages_from_group(group)
+        for package in packages:
+            print(package)
 
 
 def print_content_of_group(group: str) -> None:
@@ -219,14 +229,19 @@ def search_package(args: argparse.Namespace):
 
 
 def show_groups() -> None:
-    groups = get_groups()
+    groups = get_groups_name()
     for group in groups:
         print(group)
 
 
-def get_groups() -> list[str]:
-    groups = [group.name for group in GROUPS_PATH.iterdir()]
+def get_groups() -> list[Path]:
+    groups = [group for group in GROUPS_PATH.iterdir()]
     groups.sort()
+    return groups
+
+
+def get_groups_name() -> list[str]:
+    groups = [group.name for group in get_groups()]
     return groups
 
 
