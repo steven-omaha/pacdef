@@ -5,7 +5,7 @@ import configparser
 import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from os import environ
 from enum import Enum
 
@@ -30,6 +30,8 @@ def main():
         import_groups(args)
     elif args.action == Actions.remove.value:
         remove_group(args)
+    elif args.action == Actions.search.value:
+        search_package(args)
     elif args.action == Actions.show_group.value:
         show_group(args)
     elif args.action == Actions.sync.value:
@@ -64,10 +66,24 @@ def get_packages_from_pacdef() -> List[str]:
     return packages
 
 
-def get_package_from_line(line) -> str:
+def get_packages_from_group(group: Path) -> list[str]:
+    with open(group, 'r') as fd:
+        lines = fd.readlines()
+    packages = []
+    for line in lines:
+        package = get_package_from_line(line)
+        if package is not None:
+            packages.append(package)
+    return packages
+
+
+def get_package_from_line(line: str) -> Optional[str]:
     before_comment = line.split(COMMENT)[0]
     package_name = before_comment.strip()
-    return package_name
+    if len(package_name) >= 0:
+        return package_name
+    else:
+        return None
 
 
 def parse_config() -> None:
@@ -195,6 +211,16 @@ def import_groups(args: argparse.Namespace) -> None:
             link_target.symlink_to(path)
 
 
+def search_package(args: argparse.Namespace):
+    for group in GROUPS_PATH.iterdir():
+        packages = get_packages_from_group(group)
+        if args.package in packages:
+            print(group.name)
+            sys.exit(0)
+    else:
+        sys.exit(1)
+
+
 def show_groups() -> None:
     groups = get_groups()
     for group in groups:
@@ -253,6 +279,8 @@ def parse_args() -> argparse.Namespace:
     parser_import.add_argument('file', nargs='+', help='a group file')
     parser_remove = subparsers.add_parser(Actions.remove.value, help='remove previously imported group')
     parser_remove.add_argument('group', nargs='+', help='a previously imported group')
+    parser_search = subparsers.add_parser(Actions.search.value, help='show the group containing a package')
+    parser_search.add_argument('package', help='the package to search for')
     parser_show_group = subparsers.add_parser(Actions.show_group.value, help='show packages under an imported group')
     parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
     subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
@@ -274,6 +302,7 @@ class Actions(Enum):
     groups = 'groups'
     import_ = 'import'
     remove = 'remove'
+    search = 'search'
     show_group = 'show-group'
     sync = 'sync'
     unmanaged = 'unmanaged'
