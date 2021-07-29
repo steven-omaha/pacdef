@@ -260,23 +260,22 @@ class Actions(Enum):
 
 class Config:
     aur_helper: Path
-    config_file: Path
     groups_path: Path
 
     def __init__(self):
         config_base_dir = self._get_xdg_config_home()
 
         pacdef_path = config_base_dir.joinpath('pacdef')
-        self.config_file = pacdef_path.joinpath('pacdef.conf')
+        config_file = pacdef_path.joinpath('pacdef.conf')
         self.groups_path = pacdef_path.joinpath('groups')
 
         if not dir_exists(pacdef_path):
             pacdef_path.mkdir(parents=True)
 
-        if not file_exists(self.config_file):
-            self.config_file.touch()
+        if not file_exists(config_file):
+            config_file.touch()
 
-        self.aur_helper = self._get_aur_helper()
+        self.aur_helper = self._get_aur_helper(config_file)
 
     @staticmethod
     def _get_xdg_config_home() -> Path:
@@ -287,27 +286,26 @@ class Config:
             config_base = home.joinpath('.config')
         return config_base
 
-    def _get_aur_helper(self) -> Path:
+    @staticmethod
+    def _get_aur_helper(config_file: Path) -> Path:
         config = configparser.ConfigParser()
 
         try:
-            config.read(self.config_file)
-        except configparser.ParsingError as e:
-            print(e.message)
-            sys.exit(1)
+            config.read(config_file)
+        except configparser.ParsingError:
+            print('Could not parse the config')
 
         try:
             aur_helper = Path(config['misc']['aur_helper'])
         except KeyError:
-            print('No AUR helper set. Defaulting to paru.')
-            aur_helper = PARU
-        except ValueError:
             print('Could not parse AUR helper from config. Defaulting to paru.')
             aur_helper = PARU
 
+        if not aur_helper.is_absolute():
+            aur_helper = Path('/usr/bin').joinpath(aur_helper)
+
         if not file_exists(aur_helper):
-            print(f'{aur_helper} not found.')
-            sys.exit(1)
+            raise FileNotFoundError(f'{aur_helper} not found.')
         return aur_helper
 
 
