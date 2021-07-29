@@ -17,6 +17,7 @@ PARU = Path('/usr/bin/paru')
 
 
 def main():
+    setup_logger()
     conf = Config()
     args = parse_args()
 
@@ -308,6 +309,16 @@ class Config:
         if not file_exists(aur_helper):
             raise FileNotFoundError(f'{aur_helper} not found.')
         return aur_helper
+
+
+def setup_logger():
+    try:
+        level_name = environ['LOGLEVEL']
+    except KeyError:
+        level_name = 'WARNING'
+
+    level = logging.getLevelName(level_name)
+    logging.basicConfig(format='%(levelname)s: %(message)s', level=level)
 
 
 if __name__ == '__main__':
