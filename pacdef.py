@@ -46,7 +46,7 @@ def aur_helper_execute(aur_helper: Path, command: list[str]) -> None:
     try:
         subprocess.call([str(aur_helper)] + command)
     except FileNotFoundError:
-        logging.error(f'Could not start the AUR helper "{aur_helper}".')
+        print(f'Could not start the AUR helper "{aur_helper}".')
         sys.exit(1)
 
 
@@ -273,11 +273,14 @@ class Config:
 
         if not dir_exists(pacdef_path):
             pacdef_path.mkdir(parents=True)
-
+        if not dir_exists(self.groups_path):
+            self.groups_path.mkdir()
         if not file_exists(config_file):
             config_file.touch()
 
         self.aur_helper = self._get_aur_helper(config_file)
+        logging.info(f"{self.aur_helper=}")
+        logging.info(f"{self.groups_path=}")
 
     @staticmethod
     def _get_xdg_config_home() -> Path:
