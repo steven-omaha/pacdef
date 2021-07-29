@@ -269,9 +269,9 @@ class Config:
     groups_path: Path
 
     def __init__(self):
-        config_base = self._get_xdg_config_home()
+        config_base_dir = self._get_xdg_config_home()
 
-        pacdef_path = config_base.joinpath('pacdef')
+        pacdef_path = config_base_dir.joinpath('pacdef')
         self.config_file = pacdef_path.joinpath('pacdef.conf')
         self.groups_path = pacdef_path.joinpath('groups')
 
@@ -281,14 +281,7 @@ class Config:
         if not file_exists(self.config_file):
             self.config_file.touch()
 
-        config = configparser.ConfigParser()
-        try:
-            config.read(self.config_file)
-        except configparser.ParsingError as e:
-            print(e.message)
-            sys.exit(1)
-
-        self.aur_helper = self._get_aur_helper(config)
+        self.aur_helper = self._get_aur_helper()
 
     @staticmethod
     def _get_xdg_config_home() -> Path:
@@ -299,8 +292,15 @@ class Config:
             config_base = home.joinpath('.config')
         return config_base
 
-    @staticmethod
-    def _get_aur_helper(config: configparser.ConfigParser) -> Path:
+    def _get_aur_helper(self) -> Path:
+        config = configparser.ConfigParser()
+
+        try:
+            config.read(self.config_file)
+        except configparser.ParsingError as e:
+            print(e.message)
+            sys.exit(1)
+
         try:
             aur_helper = Path(config['misc']['aur_helper'])
         except KeyError:
@@ -309,6 +309,7 @@ class Config:
         except ValueError:
             print('Could not parse AUR helper from config. Defaulting to paru.')
             aur_helper = PARU
+
         if not file_exists(aur_helper):
             print(f'{aur_helper} not found.')
             sys.exit(1)
