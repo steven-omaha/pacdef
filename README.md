@@ -74,3 +74,12 @@ If you would like to use another AUR helper, you will need to change the config.
 1. One package per line. 
 2. Anything after a `#` is ignored.
 3. Empty lines are ignored.
+
+Example:
+```ini
+# desktop
+alacritty
+firefox
+libreoffice-fresh
+...
+```
