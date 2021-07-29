@@ -297,8 +297,8 @@ class Config:
             config_base = home.joinpath('.config')
         return config_base
 
-    @staticmethod
-    def _get_aur_helper(config_file: Path) -> Path:
+    @classmethod
+    def _get_aur_helper(cls, config_file: Path) -> Path:
         config = configparser.ConfigParser()
 
         try:
@@ -311,6 +311,7 @@ class Config:
         except KeyError:
             logging.warning(f'No AUR helper set. Defaulting to {PARU}')
             aur_helper = PARU
+            cls._write_config_stub(config_file)
 
         if not aur_helper.is_absolute():
             aur_helper = Path('/usr/bin').joinpath(aur_helper)
@@ -318,6 +319,12 @@ class Config:
         if not file_exists(aur_helper):
             raise FileNotFoundError(f'{aur_helper} not found.')
         return aur_helper
+
+    @classmethod
+    def _write_config_stub(cls, config_file: Path):
+        with open(config_file, 'w') as fd:
+            fd.write('[misc]\n')
+            fd.write('aur_helper = paru\n')
 
 
 def setup_logger():
