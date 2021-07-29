@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import annotations
+
 import argparse
 import configparser
 import subprocess
@@ -10,51 +12,46 @@ from os import environ
 from enum import Enum
 
 COMMENT = '#'
-
-AUR_HELPER: Path
-CONFIG_FILE: Path
-GROUPS_PATH: Path
-
 PARU = Path('/usr/bin/paru')
 
 
 def main():
-    parse_config()
+    conf = Config()
     args = parse_args()
 
     if args.action == Actions.clean.value:
-        remove_unmanaged_packages()
+        remove_unmanaged_packages(conf)
     elif args.action == Actions.groups.value:
-        show_groups()
+        show_groups(conf)
     elif args.action == Actions.import_.value:
-        import_groups(args)
+        import_groups(conf, args)
     elif args.action == Actions.remove.value:
-        remove_group(args)
+        remove_group(conf, args)
     elif args.action == Actions.search.value:
-        search_package(args)
+        search_package(conf, args)
     elif args.action == Actions.show.value:
-        show_group(args)
+        show_group(conf, args)
     elif args.action == Actions.sync.value:
-        install_packages_from_groups()
+        install_packages_from_groups(conf)
     elif args.action == Actions.unmanaged.value:
-        show_unmanaged_packages()
+        show_unmanaged_packages(conf)
     else:
         print('Did not understand what you want me to do')
         sys.exit(1)
 
 
-def aur_helper_execute(command: list[str]) -> None:
+def aur_helper_execute(aur_helper: Path, command: list[str]) -> None:
     try:
-        subprocess.call([str(AUR_HELPER)] + command)
+        subprocess.call([str(aur_helper)] + command)
     except FileNotFoundError:
-        print(f'Could not start the AUR helper "{AUR_HELPER}".')
+        print(f'Could not start the AUR helper "{aur_helper}".')
         sys.exit(1)
 
 
-def get_packages_from_pacdef() -> list[str]:
+def get_packages_from_pacdef(conf: Config) -> list[str]:
     packages = []
     try:
-        for group in GROUPS_PATH.iterdir():
+        for group in conf.groups_path.iterdir():
             content = get_packages_from_group(group)
             packages.extend(content)
     except FileNotFoundError:
@@ -82,54 +79,8 @@ def get_package_from_line(line: str) -> Optional[str]:
         return None
 
 
-def parse_config() -> None:
-    global AUR_HELPER, CONFIG_FILE, GROUPS_PATH
-
-    config_base = get_xdg_config_home()
-
-    pacdef_path = config_base.joinpath('pacdef')
-    CONFIG_FILE = pacdef_path.joinpath('pacdef.conf')
-    GROUPS_PATH = pacdef_path.joinpath('groups')
-
-    if not dir_exists(pacdef_path):
-        pacdef_path.mkdir(parents=True)
-
-    if not file_exists(CONFIG_FILE):
-        CONFIG_FILE.touch()
-
-    config = configparser.ConfigParser()
-    try:
-        config.read(CONFIG_FILE)
-    except configparser.ParsingError as e:
-        print(e.message)
-        sys.exit(1)
-
-    AUR_HELPER = get_aur_helper(config)
-
-
-def get_xdg_config_home() -> Path:
-    try:
-        config_base = Path(environ['XDG_CONFIG_HOME'])
-    except KeyError:
-        home = Path.home()
-        config_base = home.joinpath('.config')
-    return config_base
-
-
-def get_aur_helper(config: configparser.ConfigParser) -> Path:
-    try:
-        aur_helper = Path(config['misc']['aur_helper'])
-    except KeyError:
-        print('No AUR helper set. Defaulting to paru.')
-        aur_helper = PARU
-    except ValueError:
-        print('Could not parse AUR helper from config. Defaulting to paru.')
-        aur_helper = PARU
-    return aur_helper
-
-
-def show_unmanaged_packages() -> None:
-    pacdef_packages = get_packages_from_pacdef()
+def show_unmanaged_packages(conf: Config) -> None:
+    pacdef_packages = get_packages_from_pacdef(conf)
     installed_packages_explicit = get_explicitly_installed_packages()
     unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
     unmanaged_packages.sort()
@@ -137,14 +88,14 @@ def show_unmanaged_packages() -> None:
         print(package)
 
 
-def install_packages_from_groups() -> None:
-    pacdef_packages = get_packages_from_pacdef()
+def install_packages_from_groups(conf: Config) -> None:
+    pacdef_packages = get_packages_from_pacdef(conf)
     installed_packages = get_all_installed_packages()
     to_install = [p for p in pacdef_packages if p not in installed_packages]
     if len(to_install) == 0:
         print('nothing to do')
     else:
-        aur_helper_execute(['--sync', '--refresh', '--needed'] + to_install)
+        aur_helper_execute(conf.aur_helper, ['--sync', '--refresh', '--needed'] + to_install)
 
 
 def get_all_installed_packages() -> list[str]:
@@ -153,37 +104,37 @@ def get_all_installed_packages() -> list[str]:
     return installed_packages
 
 
-def get_path_from_group_name(group_name: str) -> Path:
-    group = GROUPS_PATH.joinpath(group_name)
+def get_path_from_group_name(conf: Config, group_name: str) -> Path:
+    group = conf.groups_path.joinpath(group_name)
     if not file_exists(group):
         raise FileNotFoundError
     return group
 
 
-def show_group(args: argparse.Namespace) -> None:
+def show_group(conf: Config, args: argparse.Namespace) -> None:
     groups_to_show = args.group
     if len(groups_to_show) == 0:
         print('which group do you want to show?')
         sys.exit(1)
-    imported_groups_name = get_groups_name()
+    imported_groups_name = get_groups_name(conf)
     for group_name in groups_to_show:
         if group_name not in imported_groups_name:
             print(f"I don't know the group {group_name}.")
             sys.exit(1)
     for group_name in groups_to_show:
-        group = get_path_from_group_name(group_name)
+        group = get_path_from_group_name(conf, group_name)
         packages = get_packages_from_group(group)
         for package in packages:
             print(package)
 
 
-def remove_group(args: argparse.Namespace) -> None:
+def remove_group(conf: Config, args: argparse.Namespace) -> None:
     groups = args.group
     if len(groups) == 0:
         print('nothing to remove')
     found_groups = []
     for group_name in groups:
-        group_file = GROUPS_PATH.joinpath(group_name)
+        group_file = conf.groups_path.joinpath(group_name)
         if group_file.is_symlink() or file_exists(group_file):
             found_groups.append(group_file)
         else:
@@ -193,7 +144,7 @@ def remove_group(args: argparse.Namespace) -> None:
         path.unlink()
 
 
-def import_groups(args: argparse.Namespace) -> None:
+def import_groups(conf: Config, args: argparse.Namespace) -> None:
     files = args.file
     # check if all file-arguments exist before we do anything (be atomic)
     for f in files:
@@ -203,15 +154,15 @@ def import_groups(args: argparse.Namespace) -> None:
             sys.exit(1)
     for f in files:
         path = Path(f)
-        link_target = GROUPS_PATH.joinpath(f)
+        link_target = conf.groups_path.joinpath(f)
         if file_exists(link_target):
             print(f'{f} already exists, skipping')
         else:
             link_target.symlink_to(path)
 
 
-def search_package(args: argparse.Namespace):
-    for group in GROUPS_PATH.iterdir():
+def search_package(conf: Config, args: argparse.Namespace):
+    for group in conf.groups_path.iterdir():
         packages = get_packages_from_group(group)
         if args.package in packages:
             print(group.name)
@@ -220,25 +171,25 @@ def search_package(args: argparse.Namespace):
         sys.exit(1)
 
 
-def show_groups() -> None:
-    groups = get_groups_name()
+def show_groups(conf: Config) -> None:
+    groups = get_groups_name(conf)
     for group in groups:
         print(group)
 
 
-def get_groups() -> list[Path]:
-    groups = [group for group in GROUPS_PATH.iterdir()]
+def get_groups(conf: Config) -> list[Path]:
+    groups = [group for group in conf.groups_path.iterdir()]
     groups.sort()
     return groups
 
 
-def get_groups_name() -> list[str]:
-    groups = [group.name for group in get_groups()]
+def get_groups_name(conf: Config) -> list[str]:
+    groups = [group.name for group in get_groups(conf)]
     return groups
 
 
-def remove_unmanaged_packages() -> None:
-    unmanaged_packages = get_unmanaged_packages()
+def remove_unmanaged_packages(conf: Config) -> None:
+    unmanaged_packages = get_unmanaged_packages(conf)
     if len(unmanaged_packages) == 0:
         print('nothing to do')
         sys.exit(0)
@@ -246,7 +197,7 @@ def remove_unmanaged_packages() -> None:
     for package in unmanaged_packages:
         print(package)
     get_user_confirmation()
-    aur_helper_execute(['--remove', '--recursive'] + unmanaged_packages)
+    aur_helper_execute(conf.aur_helper, ['--remove', '--recursive'] + unmanaged_packages)
 
 
 def get_user_confirmation() -> None:
@@ -260,8 +211,8 @@ def get_user_confirmation() -> None:
             sys.exit(0)
 
 
-def get_unmanaged_packages() -> list[str]:
-    pacdef_packages = get_packages_from_pacdef()
+def get_unmanaged_packages(conf: Config) -> list[str]:
+    pacdef_packages = get_packages_from_pacdef(conf)
     explicitly_installed_packages = get_explicitly_installed_packages()
     unmanaged_packages = [p for p in explicitly_installed_packages if p not in pacdef_packages]
     unmanaged_packages.sort()
@@ -310,6 +261,58 @@ class Actions(Enum):
     show = 'show'
     sync = 'sync'
     unmanaged = 'unmanaged'
+
+
+class Config:
+    aur_helper: Path
+    config_file: Path
+    groups_path: Path
+
+    def __init__(self):
+        config_base = self._get_xdg_config_home()
+
+        pacdef_path = config_base.joinpath('pacdef')
+        self.config_file = pacdef_path.joinpath('pacdef.conf')
+        self.groups_path = pacdef_path.joinpath('groups')
+
+        if not dir_exists(pacdef_path):
+            pacdef_path.mkdir(parents=True)
+
+        if not file_exists(self.config_file):
+            self.config_file.touch()
+
+        config = configparser.ConfigParser()
+        try:
+            config.read(self.config_file)
+        except configparser.ParsingError as e:
+            print(e.message)
+            sys.exit(1)
+
+        self.aur_helper = self._get_aur_helper(config)
+
+    @staticmethod
+    def _get_xdg_config_home() -> Path:
+        try:
+            config_base = Path(environ['XDG_CONFIG_HOME'])
+        except KeyError:
+            home = Path.home()
+            config_base = home.joinpath('.config')
+        return config_base
+
+    @staticmethod
+    def _get_aur_helper(config: configparser.ConfigParser) -> Path:
+        try:
+            aur_helper = Path(config['misc']['aur_helper'])
+        except KeyError:
+            print('No AUR helper set. Defaulting to paru.')
+            aur_helper = PARU
+        except ValueError:
+            print('Could not parse AUR helper from config. Defaulting to paru.')
+            aur_helper = PARU
+        if not file_exists(aur_helper):
+            print(f'{aur_helper} not found.')
+            sys.exit(1)
+        return aur_helper
 
 
 if __name__ == '__main__':
