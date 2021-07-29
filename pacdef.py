@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import configparser
+import logging
 import subprocess
 import sys
 from pathlib import Path
@@ -44,7 +45,7 @@ def aur_helper_execute(aur_helper: Path, command: list[str]) -> None:
     try:
         subprocess.call([str(aur_helper)] + command)
     except FileNotFoundError:
-        print(f'Could not start the AUR helper "{aur_helper}".')
+        logging.error(f'Could not start the AUR helper "{aur_helper}".')
         sys.exit(1)
 
 
@@ -293,12 +294,12 @@ class Config:
         try:
             config.read(config_file)
         except configparser.ParsingError:
-            print('Could not parse the config')
+            logging.warning('Could not parse the config')
 
         try:
             aur_helper = Path(config['misc']['aur_helper'])
         except KeyError:
-            print('Could not parse AUR helper from config. Defaulting to paru.')
+            logging.warning('No AUR helper set. Defaulting to paru.')
             aur_helper = PARU
 
         if not aur_helper.is_absolute():
