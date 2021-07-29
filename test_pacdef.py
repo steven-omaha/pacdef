@@ -1,35 +1,103 @@
+from os import environ
 from pathlib import Path
+from unittest import mock
 
-from pacdef import dir_exists, file_exists
+import builtins
+import pytest
 
-testpath = Path('/tmp/pacdef_test')
-
-
-class TestDirExists:
-    def test_dir_exists_file(self):
-        testpath.touch()
-        assert not dir_exists(testpath)
-        testpath.unlink()
-
-    def test_dir_exists_nonexistent(self):
-        assert not dir_exists(testpath)
-
-    def test_dir_exists_existing(self):
-        testpath.mkdir()
-        assert dir_exists(testpath)
-        testpath.rmdir()
+from pacdef import PARU, Config, dir_exists, file_exists, get_user_confirmation
 
 
-class TestFileExists:
-    def test_file_exists_file(self):
-        testpath.touch()
-        assert file_exists(testpath)
-        testpath.unlink()
+def test_dir_exists(tmpdir):
+    tmpdir = Path(tmpdir)
+    tmpfile = tmpdir.joinpath('tmpfile')
+    tmpfile.touch()
+    assert not dir_exists(tmpfile)
+    tmpfile.unlink()
+    assert not dir_exists(tmpfile)
+    assert dir_exists(tmpdir)
 
-    def test_file_exists_nonexistent(self):
-        assert not file_exists(testpath)
 
-    def test_file_exists_dir(self):
-        testpath.mkdir()
-        assert not file_exists(testpath)
-        testpath.rmdir()
+def test_file_exists(tmpdir):
+    tmpfile = Path(tmpdir).joinpath('tmpfile')
+    tmpfile.touch()
+    assert file_exists(tmpfile)
+    tmpfile.unlink()
+    assert not file_exists(tmpfile)
+    tmpfile.mkdir()
+    assert not file_exists(tmpfile)
+
+
+class TestConfig:
+    @staticmethod
+    def test__get_xdg_config_home(tmpdir, monkeypatch):
+        monkeypatch.delenv('XDG_CONFIG_HOME', raising=False)
+        result = Config._get_xdg_config_home()
+        assert result == Path(f'{environ["HOME"]}/.config')
+
+        monkeypatch.setenv('XDG_CONFIG_HOME', str(tmpdir))
+        result = Config._get_xdg_config_home()
+        assert result == Path(tmpdir)
+
+    @staticmethod
+    def test__get_aur_helper(tmpdir):
+        tmpfile = Path(tmpdir).joinpath('tmp.conf')
+
+        helper = Config._get_aur_helper(tmpfile)
+        assert helper == PARU
+
+        with open(tmpfile, 'w') as fd:
+            fd.write('some strange content')
+        helper = Config._get_aur_helper(tmpfile)
+        assert PARU == helper
+
+        with open(tmpfile, 'w') as fd:
+            fd.write('[misc]\nsomething')
+        helper = Config._get_aur_helper(tmpfile)
+        assert PARU == helper
+
+        with open(tmpfile, 'w') as fd:
+            fd.write('[misc]\naur_helper=something')
+        with pytest.raises(FileNotFoundError):
+            Config._get_aur_helper(tmpfile)
+
+        with open(tmpfile, 'w') as fd:
+            fd.write('[misc]\naur___hELPer=paru')
+        helper = Config._get_aur_helper(tmpfile)
+        assert helper == PARU
+
+        with open(tmpfile, 'w') as fd:
+            fd.write('[misc]\naur_helper=paru')
+        helper = Config._get_aur_helper(tmpfile)
+        assert helper == PARU
+
+        with open(tmpfile, 'w') as fd:
+            fd.write('[misc]\naur_helper=/usr/bin/paru')
+        helper = Config._get_aur_helper(tmpfile)
+        assert helper == PARU
+
+    @staticmethod
+    def test___init__(tmpdir, monkeypatch):
+        monkeypatch.setenv('XDG_CONFIG_HOME', str(tmpdir))
+        groups = Path(tmpdir).joinpath('pacdef/groups')
+        conf_file = Path(tmpdir).joinpath('pacdef/pacdef.conf')
+
+        config = Config()
+        aur_helper = Path('/usr/bin/paru')
+
+        assert config.groups_path == groups
+        assert config.aur_helper == aur_helper
+        assert conf_file.is_file()
+
+
+@pytest.mark.parametrize('inp', ['Y', 'y'])
+def test_get_user_confirmation_continue(inp):
+    with mock.patch.object(builtins, 'input', lambda _: inp):
+        assert get_user_confirmation() is None
+
+
+@pytest.mark.parametrize('inp', ['', 'n', 'N', 'asd#!|^l;"f'])
+def test_get_user_confirmation_exit(inp):
+    with mock.patch.object(builtins, 'input', lambda _: inp):
+        with pytest.raises(SystemExit):
+            get_user_confirmation()
