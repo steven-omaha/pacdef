@@ -14,6 +14,7 @@ from typing import Optional
 
 COMMENT = '#'
 PARU = Path('/usr/bin/paru')
+VERSION = 'unknown'
 
 
 def main():
@@ -37,6 +38,8 @@ def main():
         install_packages_from_groups(conf)
     elif args.action == Actions.unmanaged.value:
         show_unmanaged_packages(conf)
+    elif args.action == Actions.version.value:
+        show_version()
     else:
         print('Did not understand what you want me to do')
         sys.exit(1)
@@ -238,6 +241,7 @@ def parse_args() -> argparse.Namespace:
     parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
     subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
     subparsers.add_parser(Actions.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
+    subparsers.add_parser(Actions.version.value, help='show version info')
     args = parser.parse_args()
     return args
 
@@ -259,6 +263,7 @@ class Actions(Enum):
     show = 'show'
     sync = 'sync'
     unmanaged = 'unmanaged'
+    version = 'version'
 
 
 class Config:
@@ -326,6 +331,10 @@ def setup_logger():
         logging.basicConfig(format='%(levelname)s:%(lineno)d: %(message)s', level=level)
     else:
         logging.basicConfig(format='%(levelname)s: %(message)s', level=level)
+
+
+def show_version():
+    print(f'pacdef, version: {VERSION}')
 
 
 if __name__ == '__main__':
