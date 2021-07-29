@@ -1,3 +1,4 @@
+import configparser
 from os import environ
 from pathlib import Path
 from unittest import mock
@@ -77,6 +78,19 @@ class TestConfig:
         assert helper == PARU
 
     @staticmethod
+    def test__write_config_stub(tmpdir):
+        tmpfile = Path('/a')
+        with pytest.raises(PermissionError):
+            Config._write_config_stub(tmpfile)
+
+        tmpfile = Path(tmpdir).joinpath('pacdef.conf')
+        Config._write_config_stub(tmpfile)
+        config = configparser.ConfigParser()
+        config.read(tmpfile)
+        assert config['misc']['aur_helper'] == 'paru'
+
+
+    @staticmethod
     def test___init__(tmpdir, monkeypatch):
         monkeypatch.setenv('XDG_CONFIG_HOME', str(tmpdir))
         groups = Path(tmpdir).joinpath('pacdef/groups')
@@ -101,3 +115,5 @@ def test_get_user_confirmation_exit(user_input):
     with mock.patch.object(builtins, 'input', lambda _: user_input):
         with pytest.raises(SystemExit):
             get_user_confirmation()
+
+
