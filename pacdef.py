@@ -181,11 +181,13 @@ def show_groups(conf: Config) -> None:
 def get_groups(conf: Config) -> list[Path]:
     groups = [group for group in conf.groups_path.iterdir()]
     groups.sort()
+    logging.debug(f'{groups=}')
     return groups
 
 
 def get_groups_name(conf: Config) -> list[str]:
     groups = [group.name for group in get_groups(conf)]
+    logging.info(f'{groups=}')
     return groups
 
 
@@ -296,13 +298,13 @@ class Config:
 
         try:
             config.read(config_file)
-        except configparser.ParsingError:
-            logging.warning('Could not parse the config')
+        except configparser.ParsingError as e:
+            logging.error(f'Could not parse the config: {e}')
 
         try:
             aur_helper = Path(config['misc']['aur_helper'])
         except KeyError:
-            logging.warning('No AUR helper set. Defaulting to paru.')
+            logging.warning(f'No AUR helper set. Defaulting to {PARU}')
             aur_helper = PARU
 
         if not aur_helper.is_absolute():
@@ -319,8 +321,11 @@ def setup_logger():
     except KeyError:
         level_name = 'WARNING'
 
-    level = logging.getLevelName(level_name)
-    logging.basicConfig(format='%(levelname)s: %(message)s', level=level)
+    level: int = logging.getLevelName(level_name)
+    if level < logging.WARNING:
+        logging.basicConfig(format='%(levelname)s:%(lineno)d: %(message)s', level=level)
+    else:
+        logging.basicConfig(format='%(levelname)s: %(message)s', level=level)
 
 
 if __name__ == '__main__':
