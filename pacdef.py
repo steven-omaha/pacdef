@@ -7,10 +7,10 @@ import configparser
 import logging
 import subprocess
 import sys
+from enum import Enum
+from os import environ
 from pathlib import Path
 from typing import Optional
-from os import environ
-from enum import Enum
 
 COMMENT = '#'
 PARU = Path('/usr/bin/paru')
