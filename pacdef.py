@@ -201,14 +201,9 @@ def remove_unmanaged_packages(conf: Config) -> None:
 
 
 def get_user_confirmation() -> None:
-    while True:
-        user_input = input('Continue? [y/N] ')
-        if len(user_input) > 1:
-            pass
-        elif user_input.lower() == 'y':
-            break
-        elif user_input.lower() in ['', 'n']:
-            sys.exit(0)
+    user_input = input('Continue? [y/N] ').lower()
+    if len(user_input) > 1 or user_input != 'y':
+        sys.exit(0)
 
 
 def get_unmanaged_packages(conf: Config) -> list[str]:
