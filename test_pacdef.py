@@ -90,14 +90,14 @@ class TestConfig:
         assert conf_file.is_file()
 
 
-@pytest.mark.parametrize('inp', ['Y', 'y'])
-def test_get_user_confirmation_continue(inp):
-    with mock.patch.object(builtins, 'input', lambda _: inp):
+@pytest.mark.parametrize('user_input', ['Y', 'y'])
+def test_get_user_confirmation_continue(user_input):
+    with mock.patch.object(builtins, 'input', lambda _: user_input):
         assert get_user_confirmation() is None
 
 
-@pytest.mark.parametrize('inp', ['', 'n', 'N', 'asd#!|^l;"f'])
-def test_get_user_confirmation_exit(inp):
-    with mock.patch.object(builtins, 'input', lambda _: inp):
+@pytest.mark.parametrize('user_input', ['', 'n', 'N', 'asd#!|^l;"f'])
+def test_get_user_confirmation_exit(user_input):
+    with mock.patch.object(builtins, 'input', lambda _: user_input):
         with pytest.raises(SystemExit):
             get_user_confirmation()
