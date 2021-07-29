@@ -52,12 +52,11 @@ def aur_helper_execute(aur_helper: Path, command: list[str]) -> None:
 
 def get_packages_from_pacdef(conf: Config) -> list[str]:
     packages = []
-    try:
-        for group in conf.groups_path.iterdir():
-            content = get_packages_from_group(group)
-            packages.extend(content)
-    except FileNotFoundError:
-        print('pacdef does not know any groups. Import one.')
+    for group in conf.groups_path.iterdir():
+        content = get_packages_from_group(group)
+        packages.extend(content)
+    if len(packages) == 0:
+        logging.warning('pacdef does not know any groups. Import one.')
     return packages
 
 
