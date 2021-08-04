@@ -107,7 +107,7 @@ def calculate_packages_to_install(installed_packages: list[str], pacdef_packages
     Using a custom repository that contains a different version of a package that is also present in the standard repos
     requires distinguishing which version we want to install. Adding the repo in front of the package name (like
     `panthera/zsh-theme-powerlevel10k`) is understood by at least some AUR helpers (paru). If the string contains a
-    slash, we check if the part of the slash is an installed package.
+    slash, we check if the part after the slash is an installed package.
 
     :param installed_packages: list of installed packages
     :param pacdef_packages: list of packages known by pacman, optionally with repository prefix
