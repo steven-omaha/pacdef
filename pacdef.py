@@ -184,7 +184,7 @@ def import_groups(conf: Config, args: argparse.Namespace) -> None:
         if file_exists(link_target):
             print(f'{f} already exists, skipping')
         else:
-            link_target.symlink_to(path)
+            link_target.symlink_to(path.absolute())
 
 
 def search_package(conf: Config, args: argparse.Namespace):
