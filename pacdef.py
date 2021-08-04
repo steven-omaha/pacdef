@@ -234,7 +234,7 @@ def get_user_confirmation() -> None:
 def get_unmanaged_packages(conf: Config) -> list[str]:
     pacdef_packages = get_packages_from_pacdef(conf)
     explicitly_installed_packages = get_explicitly_installed_packages()
-    unmanaged_packages = [p for p in explicitly_installed_packages if p not in pacdef_packages]
+    unmanaged_packages = calculate_package_diff(explicitly_installed_packages, pacdef_packages)
     unmanaged_packages.sort()
     return unmanaged_packages
 
