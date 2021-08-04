@@ -74,6 +74,8 @@ If you would like to use another AUR helper, you will need to change the config.
 1. One package per line. 
 2. Anything after a `#` is ignored.
 3. Empty lines are ignored.
+4. If a package exists in multiple repositories, the repo can be specified as prefix followed by a forward slash.
+   The AUR helper must understand this notation.
 
 Example:
 ```ini
@@ -81,5 +83,6 @@ Example:
 alacritty
 firefox
 libreoffice-fresh
+mycustomrepo/zsh-theme-powerlevel10k
 ...
 ```
