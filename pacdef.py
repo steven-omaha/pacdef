@@ -95,11 +95,33 @@ def show_unmanaged_packages(conf: Config) -> None:
 def install_packages_from_groups(conf: Config) -> None:
     pacdef_packages = get_packages_from_pacdef(conf)
     installed_packages = get_all_installed_packages()
-    to_install = [p for p in pacdef_packages if p not in installed_packages]
+    to_install = calculate_packages_to_install(installed_packages, pacdef_packages)
     if len(to_install) == 0:
         print('nothing to do')
     else:
         aur_helper_execute(conf.aur_helper, ['--sync', '--refresh', '--needed'] + to_install)
+
+
+def calculate_packages_to_install(installed_packages: list[str], pacdef_packages: list[str]) -> list[str]:
+    """
+    Using a custom repository that contains a different version of a package that is also present in the standard repos
+    requires distinguishing which version we want to install. Adding the repo in front of the package name (like
+    `panthera/zsh-theme-powerlevel10k`) is understood by at least some AUR helpers (paru). If the string contains a
+    slash, we check if the part of the slash is an installed package.
+
+    :param installed_packages: list of installed packages
+    :param pacdef_packages: list of packages known by pacman, optionally with repository prefix
+    :return: list of pacdef_packages with repository prefix that are not in installed_packages
+    """
+    to_install = []
+    for package_string in pacdef_packages:
+        if '/' in package_string:
+            repo, package = package_string.split('/')
+        else:
+            package = package_string
+        if package not in installed_packages:
+            to_install.append(package_string)
+    return to_install
 
 
 def get_all_installed_packages() -> list[str]:
