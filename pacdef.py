@@ -84,10 +84,7 @@ def get_package_from_line(line: str) -> Optional[str]:
 
 
 def show_unmanaged_packages(conf: Config) -> None:
-    pacdef_packages = get_packages_from_pacdef(conf)
-    installed_packages_explicit = get_explicitly_installed_packages()
-    unmanaged_packages = [p for p in installed_packages_explicit if p not in pacdef_packages]
-    unmanaged_packages.sort()
+    unmanaged_packages = get_unmanaged_packages(conf)
     for package in unmanaged_packages:
         print(package)
 
