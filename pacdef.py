@@ -112,7 +112,7 @@ def calculate_packages_to_install(system_packages: list[str], pacdef_packages: l
     """
     to_install = []
     for package_string in pacdef_packages:
-        package = remove_repo_prefix_from_package()
+        package = remove_repo_prefix_from_package(package_string)
         if package not in system_packages:
             to_install.append(package_string)
     return to_install
