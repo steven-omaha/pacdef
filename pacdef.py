@@ -90,35 +90,21 @@ def show_unmanaged_packages(conf: Config) -> None:
 
 
 def install_packages_from_groups(conf: Config) -> None:
-    pacdef_packages = get_packages_from_pacdef(conf)
-    installed_packages = get_all_installed_packages()
-    to_install = calculate_packages_to_install(installed_packages, pacdef_packages)
+    to_install = calculate_packages_to_install(conf)
     if len(to_install) == 0:
         print('nothing to do')
-    else:
-        aur_helper_execute(conf.aur_helper, ['--sync', '--refresh', '--needed'] + to_install)
+        sys.exit(0)
+    aur_helper_execute(conf.aur_helper, ['--sync', '--refresh', '--needed'] + to_install)
 
 
-def calculate_packages_to_install(system_packages: list[str], pacdef_packages: list[str]) -> list[str]:
-    """
-    Using a custom repository that contains a different version of a package that is also present in the standard repos
-    requires distinguishing which version we want to install. Adding the repo in front of the package name (like
-    `panthera/zsh-theme-powerlevel10k`) is understood by at least some AUR helpers (paru). If the string contains a
-    slash, we check if the part after the slash is a known package.
-
-    :param system_packages: list of packages known by the system
-    :param pacdef_packages: list of packages known by pacdef, optionally with repository prefix
-    :return: list of pacdef_packages with repository prefix that are not in installed_packages
-    """
-    to_install = []
-    for package_string in pacdef_packages:
-        package = remove_repo_prefix_from_package(package_string)
-        if package not in system_packages:
-            to_install.append(package_string)
-    return to_install
+def calculate_packages_to_install(conf):
+    pacdef_packages = get_packages_from_pacdef(conf)
+    installed_packages = get_all_installed_packages()
+    _, pacdef_only = calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
+    return pacdef_only
 
 
-def remove_repo_prefix_from_all_pacdef_packages(pacdef_packages: list[str]) -> list[str]:
+def remove_repo_prefix_from_packages(pacdef_packages: list[str]) -> list[str]:
     result = []
     for package_string in pacdef_packages:
         package = remove_repo_prefix_from_package(package_string)
@@ -140,7 +126,9 @@ def remove_repo_prefix_from_package(package_string: str) -> str:
     return package
 
 
-def calculate_unmanaged_packages(system_packages: list[str], pacdef_packages: list[str]) -> list[str]:
+def calculate_package_diff(
+        system_packages: list[str], pacdef_packages: list[str], keep_prefix: bool = False
+) -> tuple[list[str], list[str]]:
     """
     Using a custom repository that contains a different version of a package that is also present in the standard repos
     requires distinguishing which version we want to install. Adding the repo in front of the package name (like
@@ -149,14 +137,22 @@ def calculate_unmanaged_packages(system_packages: list[str], pacdef_packages: li
 
     :param system_packages: list of packages known by the system
     :param pacdef_packages: list of packages known by pacdef, optionally with repository prefix
-    :return: list of pacdef_packages with repository prefix that are not in installed_packages
+    :param keep_prefix: if a repository prefix exists in a pacdef package, keep it (default: False)
+    :return: 2-tuple: list of packages exclusively in argument 1, list of packages exclusively in argument 2
     """
-    to_clean = []
-    pacdef_packages_without_repo_prefix = remove_repo_prefix_from_all_pacdef_packages(pacdef_packages)
+    system_only = []
+    pacdef_only = []
+    pacdef_packages_without_prefix = remove_repo_prefix_from_packages(pacdef_packages)
     for package in system_packages:
-        if package not in pacdef_packages_without_repo_prefix:
-            to_clean.append(package)
-    return to_clean
+        if package not in pacdef_packages_without_prefix:
+            system_only.append(package)
+    for package, package_without_prefix in zip(pacdef_packages, pacdef_packages_without_prefix):
+        if package_without_prefix not in system_packages:
+            if keep_prefix:
+                pacdef_only.append(package)
+            else:
+                pacdef_only.append(package_without_prefix)
+    return system_only, pacdef_only
 
 
 def get_all_installed_packages() -> list[str]:
@@ -272,7 +268,7 @@ def get_user_confirmation() -> None:
 def get_unmanaged_packages(conf: Config) -> list[str]:
     pacdef_packages = get_packages_from_pacdef(conf)
     explicitly_installed_packages = get_explicitly_installed_packages()
-    unmanaged_packages = calculate_unmanaged_packages(explicitly_installed_packages, pacdef_packages)
+    unmanaged_packages, _ = calculate_package_diff(explicitly_installed_packages, pacdef_packages)
     unmanaged_packages.sort()
     return unmanaged_packages
 

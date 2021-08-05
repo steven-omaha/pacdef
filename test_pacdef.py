@@ -116,3 +116,19 @@ def test_get_user_confirmation_exit(user_input):
             pacdef.get_user_confirmation()
 
 
+@pytest.mark.parametrize(
+    'pacdef_packages, installed_packages, expected_result',
+    [
+        (['base'],     [],       ['base']     ),
+        ([],           ['base'], []           ),
+        ([],           [],       []           ),
+        (['base'],     ['base'], []           ),
+        (['repo/base'],[],       ['repo/base']),
+        (['repo/base'],['base'], []           ),
+    ]
+)
+def test_calculate_packages_to_install(pacdef_packages, installed_packages, expected_result):
+    with mock.patch.object(pacdef, 'get_packages_from_pacdef', lambda _: pacdef_packages):
+        with mock.patch.object(pacdef, 'get_all_installed_packages', lambda: installed_packages):
+            result = pacdef.calculate_packages_to_install(None)
+            assert result == expected_result
