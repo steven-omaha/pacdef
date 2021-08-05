@@ -97,7 +97,7 @@ def install_packages_from_groups(conf: Config) -> None:
     aur_helper_execute(conf.aur_helper, ['--sync', '--refresh', '--needed'] + to_install)
 
 
-def calculate_packages_to_install(conf):
+def calculate_packages_to_install(conf: Config) -> list[str]:
     pacdef_packages = get_packages_from_pacdef(conf)
     installed_packages = get_all_installed_packages()
     _, pacdef_only = calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
