@@ -15,7 +15,7 @@ The group files are maintained outside of `pacdef` by any VCS.
 Then installing all packages from all groups is as simple as `pacdef sync`.
 All package operations are executed by your favourite AUR helper.
 
-If you work with multiple Arch installations and have asked yourself "*Why don't I have the program that I use every day on
+If you work with multiple Arch installations and have asked yourself "*Why do I have the program that I use every day on
 my other machine not installed here?*", then `pacdef` is the tool for you.
 
 ### Example
