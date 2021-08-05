@@ -42,40 +42,41 @@ class TestConfig:
 
     @staticmethod
     def test__get_aur_helper(tmpdir):
-        tmpfile = Path(tmpdir).joinpath('tmp.conf')
+        with mock.patch.object(pacdef, 'file_exists', lambda x: x == Path('/usr/bin/paru')):
+            tmpfile = Path(tmpdir).joinpath('tmp.conf')
 
-        helper = pacdef.Config._get_aur_helper(tmpfile)
-        assert helper == pacdef.PARU
+            helper = pacdef.Config._get_aur_helper(tmpfile)
+            assert helper == pacdef.PARU
 
-        with open(tmpfile, 'w') as fd:
-            fd.write('some strange content')
-        helper = pacdef.Config._get_aur_helper(tmpfile)
-        assert pacdef.PARU == helper
+            with open(tmpfile, 'w') as fd:
+                fd.write('some strange content')
+            helper = pacdef.Config._get_aur_helper(tmpfile)
+            assert pacdef.PARU == helper
 
-        with open(tmpfile, 'w') as fd:
-            fd.write('[misc]\nsomething')
-        helper = pacdef.Config._get_aur_helper(tmpfile)
-        assert pacdef.PARU == helper
+            with open(tmpfile, 'w') as fd:
+                fd.write('[misc]\nsomething')
+            helper = pacdef.Config._get_aur_helper(tmpfile)
+            assert pacdef.PARU == helper
 
-        with open(tmpfile, 'w') as fd:
-            fd.write('[misc]\naur_helper=something')
-        with pytest.raises(FileNotFoundError):
-            pacdef.Config._get_aur_helper(tmpfile)
+            with open(tmpfile, 'w') as fd:
+                fd.write('[misc]\naur_helper=something')
+            with pytest.raises(FileNotFoundError):
+                pacdef.Config._get_aur_helper(tmpfile)
 
-        with open(tmpfile, 'w') as fd:
-            fd.write('[misc]\naur___hELPer=paru')
-        helper = pacdef.Config._get_aur_helper(tmpfile)
-        assert helper == pacdef.PARU
+            with open(tmpfile, 'w') as fd:
+                fd.write('[misc]\naur___hELPer=paru')
+            helper = pacdef.Config._get_aur_helper(tmpfile)
+            assert helper == pacdef.PARU
 
-        with open(tmpfile, 'w') as fd:
-            fd.write('[misc]\naur_helper=paru')
-        helper = pacdef.Config._get_aur_helper(tmpfile)
-        assert helper == pacdef.PARU
+            with open(tmpfile, 'w') as fd:
+                fd.write('[misc]\naur_helper=paru')
+            helper = pacdef.Config._get_aur_helper(tmpfile)
+            assert helper == pacdef.PARU
 
-        with open(tmpfile, 'w') as fd:
-            fd.write('[misc]\naur_helper=/usr/bin/paru')
-        helper = pacdef.Config._get_aur_helper(tmpfile)
-        assert helper == pacdef.PARU
+            with open(tmpfile, 'w') as fd:
+                fd.write('[misc]\naur_helper=/usr/bin/paru')
+            helper = pacdef.Config._get_aur_helper(tmpfile)
+            assert helper == pacdef.PARU
 
     @staticmethod
     def test__write_config_stub(tmpdir):
@@ -95,7 +96,8 @@ class TestConfig:
         groups = Path(tmpdir).joinpath('pacdef/groups')
         conf_file = Path(tmpdir).joinpath('pacdef/pacdef.conf')
 
-        config = pacdef.Config()
+        with mock.patch.object(pacdef, 'file_exists', lambda x: x == Path('/usr/bin/paru')):
+            config = pacdef.Config()
         aur_helper = Path('/usr/bin/paru')
 
         assert config.groups_path == groups
