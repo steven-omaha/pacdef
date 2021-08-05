@@ -344,11 +344,12 @@ class Config:
     @staticmethod
     def _get_xdg_config_home() -> Path:
         try:
-            config_base = Path(environ['XDG_CONFIG_HOME'])
+            config_base_dir = Path(environ['XDG_CONFIG_HOME'])
         except KeyError:
             home = Path.home()
-            config_base = home.joinpath('.config')
-        return config_base
+            config_base_dir = home.joinpath('.config')
+        logging.debug(f'{config_base_dir=}')
+        return config_base_dir
 
     @classmethod
     def _get_aur_helper(cls, config_file: Path) -> Path:
@@ -375,6 +376,7 @@ class Config:
 
     @classmethod
     def _write_config_stub(cls, config_file: Path):
+        logging.info(f'Created config stub under {config_file}')
         with open(config_file, 'w') as fd:
             fd.write('[misc]\n')
             fd.write('aur_helper = paru\n')
