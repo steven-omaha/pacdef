@@ -133,3 +133,22 @@ def test_calculate_packages_to_install(pacdef_packages, installed_packages, expe
             # noinspection PyTypeChecker
             result = pacdef.calculate_packages_to_install(None)
             assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    'pacdef_packages, installed_packages, expected_result',
+    [
+        (['base'],      [],       []           ),
+        ([],            ['base'], ['base']     ),
+        ([],            [],       []           ),
+        (['base'],      ['base'], []           ),
+        (['repo/base'], [],       []           ),
+        (['repo/base'], ['base'], []           ),
+    ]
+)
+def test_get_unmanaged_packages(pacdef_packages, installed_packages, expected_result):
+    with mock.patch.object(pacdef, 'get_packages_from_pacdef', lambda _: pacdef_packages):
+        with mock.patch.object(pacdef, 'get_explicitly_installed_packages', lambda: installed_packages):
+            # noinspection PyTypeChecker
+            result = pacdef.get_unmanaged_packages(None)
+            assert result == expected_result
