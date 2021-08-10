@@ -238,3 +238,54 @@ def test_install_packages_from_groups_for_packages(packages):
     with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: packages):
         with mock.patch.object(pacdef, 'aur_helper_execute', check_valid):
             pacdef.install_packages_from_groups(conf)
+
+
+def test_remove_unmanaged_packages_none():
+    conf = pacdef.Config.__new__(pacdef.Config)
+    with mock.patch.object(pacdef, 'get_unmanaged_packages', lambda _: []):
+        with pytest.raises(SystemExit):
+            pacdef.remove_unmanaged_packages(conf)
+
+
+@pytest.mark.parametrize('packages', [
+    [
+        ['neovim'],
+        ['neovim', 'python'],
+    ]
+])
+def test_remove_unmanaged_packages_for_packages(packages):
+    def check_valid(aur_helper: Path, args: list[str]):
+        check_aur_helper(aur_helper)
+        check_switches_valid(args)
+        check_switches_before_packages(args)
+        check_packages_present(args)
+
+    def check_aur_helper(aur_helper: Path):
+        assert aur_helper == pacdef.PARU
+
+    def check_switches_valid(args: list[str]):
+        for switch in switches:
+            assert switch in args
+
+    def check_switches_before_packages(args: list[str]):
+        switch_positions: dict[str, int] = {}
+        for switch in switches:
+            for position, arg in enumerate(args):
+                if arg == switch:
+                    switch_positions[switch] = position
+                    break
+            else:
+                raise AssertionError
+        assert max(switch_positions.values()) == len(switches) - 1
+
+    def check_packages_present(args: list[str]):
+        for package in packages:
+            assert package in args
+
+    switches = ['--remove', '--recursive']
+    conf = pacdef.Config.__new__(pacdef.Config)
+    conf.aur_helper = pacdef.PARU
+    with mock.patch.object(pacdef, 'get_unmanaged_packages', lambda _: packages):
+        with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
+            with mock.patch.object(pacdef, 'aur_helper_execute', check_valid):
+                pacdef.remove_unmanaged_packages(conf)
