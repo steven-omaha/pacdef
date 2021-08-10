@@ -121,12 +121,12 @@ def test_get_user_confirmation_exit(user_input):
 @pytest.mark.parametrize(
     'pacdef_packages, installed_packages, expected_result',
     [
-        (['base'],      [],       ['base']     ),
-        ([],            ['base'], []           ),
-        ([],            [],       []           ),
-        (['base'],      ['base'], []           ),
-        (['repo/base'], [],       ['repo/base']),
-        (['repo/base'], ['base'], []           ),
+        (['base'], [], ['base']),
+        ([], ['base'], []),
+        ([], [], []),
+        (['base'], ['base'], []),
+        (['repo/base'], [], ['repo/base']),
+        (['repo/base'], ['base'], []),
     ]
 )
 def test_calculate_packages_to_install(pacdef_packages, installed_packages, expected_result):
@@ -140,12 +140,12 @@ def test_calculate_packages_to_install(pacdef_packages, installed_packages, expe
 @pytest.mark.parametrize(
     'pacdef_packages, installed_packages, expected_result',
     [
-        (['base'],      [],       []           ),
-        ([],            ['base'], ['base']     ),
-        ([],            [],       []           ),
-        (['base'],      ['base'], []           ),
-        (['repo/base'], [],       []           ),
-        (['repo/base'], ['base'], []           ),
+        (['base'], [], []),
+        ([], ['base'], ['base']),
+        ([], [], []),
+        (['base'], ['base'], []),
+        (['repo/base'], [], []),
+        (['repo/base'], ['base'], []),
     ]
 )
 def test_get_unmanaged_packages(pacdef_packages, installed_packages, expected_result):
