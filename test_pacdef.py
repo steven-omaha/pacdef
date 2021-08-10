@@ -164,3 +164,24 @@ def test_get_all_installed_packages_arch():
     for item in result:
         assert type(item) == str
         assert len(item) > 0
+
+
+def test_get_path_from_group_name(tmpdir):
+    conf = pacdef.Config.__new__(pacdef.Config)
+    conf.groups_path = Path(tmpdir)
+    exists = Path(conf.groups_path.joinpath('exists'))
+    exists.touch()
+    result = pacdef.get_path_from_group_name(conf, exists.name)
+    assert result == exists
+
+    with pytest.raises(FileNotFoundError):
+        pacdef.get_path_from_group_name(conf, "does not exist")
+
+    symlink = conf.groups_path.joinpath('symlink')
+    symlink.symlink_to(exists)
+    result = pacdef.get_path_from_group_name(conf, symlink.name)
+    assert result == symlink
+
+    exists.unlink()
+    result = pacdef.get_path_from_group_name(conf, symlink.name)
+    assert result == symlink
