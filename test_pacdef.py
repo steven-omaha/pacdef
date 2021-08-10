@@ -132,9 +132,11 @@ def test_get_user_confirmation_exit(user_input):
 )
 def test_calculate_packages_to_install(pacdef_packages, installed_packages, expected_result):
     with mock.patch.object(pacdef, 'get_packages_from_pacdef', lambda _: pacdef_packages):
-        with mock.patch.object(pacdef, 'get_all_installed_packages', lambda: installed_packages):
-            # noinspection PyTypeChecker
-            result = pacdef.calculate_packages_to_install(None)
+        aur_helper = object.__new__(pacdef.AURHelper)
+        conf = object.__new__(pacdef.Config)
+        conf.aur_helper = aur_helper
+        with mock.patch.object(aur_helper, 'get_all_installed_packages', lambda: installed_packages):
+            result = pacdef.calculate_packages_to_install(conf)
             assert result == expected_result
 
 
@@ -151,15 +153,18 @@ def test_calculate_packages_to_install(pacdef_packages, installed_packages, expe
 )
 def test_get_unmanaged_packages(pacdef_packages, installed_packages, expected_result):
     with mock.patch.object(pacdef, 'get_packages_from_pacdef', lambda _: pacdef_packages):
-        with mock.patch.object(pacdef, 'get_explicitly_installed_packages', lambda: installed_packages):
-            # noinspection PyTypeChecker
-            result = pacdef.get_unmanaged_packages(None)
+        aur_helper = object.__new__(pacdef.AURHelper)
+        conf = object.__new__(pacdef.Config)
+        conf.aur_helper = aur_helper
+        with mock.patch.object(aur_helper, 'get_explicitly_installed_packages', lambda: installed_packages):
+            result = pacdef.get_unmanaged_packages(conf)
             assert result == expected_result
 
 
-@pytest.mark.skipif(not pacdef.PACMAN.exists(), reason='pacman not found. That\'s not an Arch installation.')
+@pytest.mark.skipif(not Path('/usr/bin/pacman').exists(), reason='pacman not found. That\'s not an Arch installation.')
 def test_get_all_installed_packages_arch():
-    result = pacdef.get_all_installed_packages()
+    instance = pacdef.AURHelper(pacdef.PARU)
+    result = instance.get_all_installed_packages()
     assert type(result) == list
     assert len(result) > 0
     for item in result:
@@ -302,8 +307,8 @@ class TestAURHelper:
     )
     def test_install(cls, packages):
         def check_valid(command):
-            cls.check_switches_valid(command, pacdef.AURHelper.SWITCHES_INSTALL)
-            cls.check_switches_before_packages(command, pacdef.AURHelper.SWITCHES_INSTALL)
+            cls.check_switches_valid(command, pacdef.AURHelper._Switches.install.value)
+            cls.check_switches_before_packages(command, pacdef.AURHelper._Switches.install.value)
             cls.check_packages_present(command, packages)
 
         with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
@@ -320,8 +325,8 @@ class TestAURHelper:
     )
     def test_remove(cls, packages):
         def check_valid(command):
-            cls.check_switches_valid(command, pacdef.AURHelper.SWITCHES_REMOVE)
-            cls.check_switches_before_packages(command, pacdef.AURHelper.SWITCHES_REMOVE)
+            cls.check_switches_valid(command, pacdef.AURHelper._Switches.remove.value)
+            cls.check_switches_before_packages(command, pacdef.AURHelper._Switches.remove.value)
             cls.check_packages_present(command, packages)
 
         with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):

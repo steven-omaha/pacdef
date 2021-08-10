@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Optional
 
 COMMENT = '#'
-PACMAN = Path('/usr/bin/pacman')
 PARU = Path('/usr/bin/paru')
 VERSION = 'unknown'
 
@@ -100,7 +99,7 @@ def install_packages_from_groups(conf: Config) -> None:
 
 def calculate_packages_to_install(conf: Config) -> list[str]:
     pacdef_packages = get_packages_from_pacdef(conf)
-    installed_packages = get_all_installed_packages()
+    installed_packages = conf.aur_helper.get_all_installed_packages()
     _, pacdef_only = calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
     return pacdef_only
 
@@ -154,12 +153,6 @@ def calculate_package_diff(
             else:
                 pacdef_only.append(package_without_prefix)
     return system_only, pacdef_only
-
-
-def get_all_installed_packages() -> list[str]:
-    installed_packages_all = subprocess.check_output([PACMAN, '-Qq']).decode('utf-8')
-    installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
-    return installed_packages
 
 
 def get_path_from_group_name(conf: Config, group_name: str) -> Path:
@@ -271,16 +264,10 @@ def get_user_confirmation() -> None:
 
 def get_unmanaged_packages(conf: Config) -> list[str]:
     pacdef_packages = get_packages_from_pacdef(conf)
-    explicitly_installed_packages = get_explicitly_installed_packages()
+    explicitly_installed_packages = conf.aur_helper.get_explicitly_installed_packages()
     unmanaged_packages, _ = calculate_package_diff(explicitly_installed_packages, pacdef_packages)
     unmanaged_packages.sort()
     return unmanaged_packages
-
-
-def get_explicitly_installed_packages() -> list[str]:
-    installed_packages_explicit = subprocess.check_output([PACMAN, '-Qqe']).decode('utf-8')
-    installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
-    return installed_packages_explicit
 
 
 def parse_args() -> argparse.Namespace:
@@ -383,9 +370,13 @@ class Config:
 
 
 class AURHelper:
+    class _Switches(Enum):
+        install = ['--sync', '--refresh', '--needed']
+        remove = ['--remove', '--recursive']
+        installed_packages = ['--query', '--quiet']
+        explicitly_installed_packages = ['--query', '--quiet', '--explicit']
+
     _path: Path
-    SWITCHES_INSTALL: list[str] = ['--sync', '--refresh', '--needed']
-    SWITCHES_REMOVE: list[str] = ['--remove', '--recursive']
 
     def __init__(self, path: Path):
         if not path.is_absolute():
@@ -401,13 +392,25 @@ class AURHelper:
             print(f'Could not start the AUR helper "{self._path}".')
             sys.exit(1)
 
+    def _check_output(self, query: list[str]) -> list[str]:
+        command = [str(self._path)] + query
+        result = subprocess.check_output(command).decode('utf-8')
+        result_list = result.split('\n')[:-1]  # last entry is zero-length
+        return result_list
+
     def install(self, packages: list[str]) -> None:
-        command: list[str] = self.SWITCHES_INSTALL + packages
+        command: list[str] = self._Switches.install.value + packages
         self._execute(command)
 
     def remove(self, packages: list[str]) -> None:
-        command: list[str] = self.SWITCHES_REMOVE + packages
+        command: list[str] = self._Switches.remove.value + packages
         self._execute(command)
+
+    def get_all_installed_packages(self) -> list[str]:
+        return self._check_output(self._Switches.installed_packages.value)
+
+    def get_explicitly_installed_packages(self) -> list[str]:
+        return self._check_output(self._Switches.explicitly_installed_packages.value)
 
 
 def setup_logger():
