@@ -91,6 +91,10 @@ def install_packages_from_groups(conf: Config) -> None:
     if len(to_install) == 0:
         print('nothing to do')
         sys.exit(0)
+    print('Would install the following packages:')
+    for package in to_install:
+        print(package)
+    get_user_confirmation()
     conf.aur_helper.install(to_install)
 
 
