@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Optional
 
 COMMENT = '#'
+PACMAN = Path('/usr/bin/pacman')
 PARU = Path('/usr/bin/paru')
 VERSION = 'unknown'
 
@@ -160,7 +161,7 @@ def calculate_package_diff(
 
 
 def get_all_installed_packages() -> list[str]:
-    installed_packages_all = subprocess.check_output(['pacman', '-Qq']).decode('utf-8')
+    installed_packages_all = subprocess.check_output([PACMAN, '-Qq']).decode('utf-8')
     installed_packages = installed_packages_all.split('\n')[:-1]  # last entry is zero-length
     return installed_packages
 
@@ -281,7 +282,7 @@ def get_unmanaged_packages(conf: Config) -> list[str]:
 
 
 def get_explicitly_installed_packages() -> list[str]:
-    installed_packages_explicit = subprocess.check_output(['pacman', '-Qqe']).decode('utf-8')
+    installed_packages_explicit = subprocess.check_output([PACMAN, '-Qqe']).decode('utf-8')
     installed_packages_explicit = installed_packages_explicit.split('\n')[:-1]  # last entry is zero-length
     return installed_packages_explicit
 
