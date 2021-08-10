@@ -185,3 +185,56 @@ def test_get_path_from_group_name(tmpdir):
     exists.unlink()
     result = pacdef.get_path_from_group_name(conf, symlink.name)
     assert result == symlink
+
+
+def test_install_packages_from_groups_none():
+    with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: []):
+        with pytest.raises(SystemExit):
+            # noinspection PyTypeChecker
+            pacdef.install_packages_from_groups(None)
+
+
+@pytest.mark.parametrize(
+    'packages',
+    [
+        ['neovim'],
+        ['neovim', 'python'],
+        ['neovim', 'repo/python'],
+    ]
+)
+def test_install_packages_from_groups_for_packages(packages):
+    def check_valid(aur_helper: Path, args: list[str]):
+        check_aur_helper(aur_helper)
+        check_switches_valid(args)
+        check_switches_before_packages(args)
+        check_packages_present(args)
+
+    def check_aur_helper(aur_helper: Path):
+        assert aur_helper == pacdef.PARU
+
+    def check_switches_valid(args: list[str]):
+        for switch in switches:
+            assert switch in args
+
+    def check_switches_before_packages(args: list[str]):
+        switch_positions: dict[str, int] = {}
+        for switch in switches:
+            for position, arg in enumerate(args):
+                if arg == switch:
+                    switch_positions[switch] = position
+                    break
+            else:
+                raise AssertionError
+        assert max(switch_positions.values()) == len(switches) - 1
+
+    def check_packages_present(args: list[str]):
+        for package in packages:
+            assert package in args
+
+    switches = ['--sync', '--refresh', '--needed']
+    conf = pacdef.Config.__new__(pacdef.Config)
+    conf.aur_helper = pacdef.PARU
+
+    with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: packages):
+        with mock.patch.object(pacdef, 'aur_helper_execute', check_valid):
+            pacdef.install_packages_from_groups(conf)
