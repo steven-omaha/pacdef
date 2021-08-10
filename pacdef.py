@@ -64,8 +64,12 @@ def get_packages_from_pacdef(conf: Config) -> list[str]:
 
 
 def get_packages_from_group(group: Path) -> list[str]:
-    with open(group, 'r') as fd:
-        lines = fd.readlines()
+    try:
+        with open(group, 'r') as fd:
+            lines = fd.readlines()
+    except (IOError, FileNotFoundError):
+        logging.error(f'Could not read group file {group.absolute()}')
+        sys.exit(1)
     packages = []
     for line in lines:
         package = get_package_from_line(line)
@@ -164,7 +168,10 @@ def get_all_installed_packages() -> list[str]:
 def get_path_from_group_name(conf: Config, group_name: str) -> Path:
     group = conf.groups_path.joinpath(group_name)
     if not file_exists(group):
-        raise FileNotFoundError
+        if group.is_symlink():
+            logging.warning(f'found group {group.absolute()}, but it is a broken symlink')
+        else:
+            raise FileNotFoundError
     return group
 
 
