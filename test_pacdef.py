@@ -154,3 +154,13 @@ def test_get_unmanaged_packages(pacdef_packages, installed_packages, expected_re
             # noinspection PyTypeChecker
             result = pacdef.get_unmanaged_packages(None)
             assert result == expected_result
+
+
+@pytest.mark.skipif(not pacdef.PACMAN.exists(), reason='pacman not found. That\'s not an Arch installation.')
+def test_get_all_installed_packages_arch():
+    result = pacdef.get_all_installed_packages()
+    assert type(result) == list
+    assert len(result) > 0
+    for item in result:
+        assert type(item) == str
+        assert len(item) > 0
