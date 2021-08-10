@@ -19,40 +19,30 @@ VERSION = 'unknown'
 
 def main():
     setup_logger()
-    conf = Config()
+    pacdef = Pacdef()
     args = parse_args()
 
     if args.action == Actions.clean.value:
-        remove_unmanaged_packages(conf)
+        pacdef.remove_unmanaged_packages()
     elif args.action == Actions.groups.value:
-        show_groups(conf)
+        pacdef.show_groups()
     elif args.action == Actions.import_.value:
-        import_groups(conf, args)
+        pacdef.import_groups(args)
     elif args.action == Actions.remove.value:
-        remove_group(conf, args)
+        pacdef.remove_group(args)
     elif args.action == Actions.search.value:
-        search_package(conf, args)
+        pacdef.search_package(args)
     elif args.action == Actions.show.value:
-        show_group(conf, args)
+        pacdef.show_group(args)
     elif args.action == Actions.sync.value:
-        install_packages_from_groups(conf)
+        pacdef.install_packages_from_groups()
     elif args.action == Actions.unmanaged.value:
-        show_unmanaged_packages(conf)
+        pacdef.show_unmanaged_packages()
     elif args.action == Actions.version.value:
         show_version()
     else:
         print('Did not understand what you want me to do')
         sys.exit(1)
-
-
-def get_packages_from_pacdef(conf: Config) -> list[str]:
-    packages = []
-    for group in conf.groups_path.iterdir():
-        content = get_packages_from_group(group)
-        packages.extend(content)
-    if len(packages) == 0:
-        logging.warning('pacdef does not know any groups. Import one.')
-    return packages
 
 
 def get_packages_from_group(group: Path) -> list[str]:
@@ -77,31 +67,6 @@ def get_package_from_line(line: str) -> Optional[str]:
         return package_name
     else:
         return None
-
-
-def show_unmanaged_packages(conf: Config) -> None:
-    unmanaged_packages = get_unmanaged_packages(conf)
-    for package in unmanaged_packages:
-        print(package)
-
-
-def install_packages_from_groups(conf: Config) -> None:
-    to_install = calculate_packages_to_install(conf)
-    if len(to_install) == 0:
-        print('nothing to do')
-        sys.exit(0)
-    print('Would install the following packages:')
-    for package in to_install:
-        print(package)
-    get_user_confirmation()
-    conf.aur_helper.install(to_install)
-
-
-def calculate_packages_to_install(conf: Config) -> list[str]:
-    pacdef_packages = get_packages_from_pacdef(conf)
-    installed_packages = conf.aur_helper.get_all_installed_packages()
-    _, pacdef_only = calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
-    return pacdef_only
 
 
 def remove_repo_prefix_from_packages(pacdef_packages: list[str]) -> list[str]:
@@ -165,109 +130,10 @@ def get_path_from_group_name(conf: Config, group_name: str) -> Path:
     return group
 
 
-def show_group(conf: Config, args: argparse.Namespace) -> None:
-    groups_to_show = args.group
-    if len(groups_to_show) == 0:
-        print('which group do you want to show?')
-        sys.exit(1)
-    imported_groups_name = get_groups_name(conf)
-    for group_name in groups_to_show:
-        if group_name not in imported_groups_name:
-            print(f"I don't know the group {group_name}.")
-            sys.exit(1)
-    for group_name in groups_to_show:
-        group = get_path_from_group_name(conf, group_name)
-        packages = get_packages_from_group(group)
-        for package in packages:
-            print(package)
-
-
-def remove_group(conf: Config, args: argparse.Namespace) -> None:
-    groups = args.group
-    if len(groups) == 0:
-        print('nothing to remove')
-    found_groups = []
-    for group_name in groups:
-        group_file = conf.groups_path.joinpath(group_name)
-        if group_file.is_symlink() or file_exists(group_file):
-            found_groups.append(group_file)
-        else:
-            print(f'Did not find the group {group_name}')
-            sys.exit(1)
-    for path in found_groups:
-        path.unlink()
-
-
-def import_groups(conf: Config, args: argparse.Namespace) -> None:
-    files = args.file
-    # check if all file-arguments exist before we do anything (be atomic)
-    for f in files:
-        path = Path(f)
-        if not file_exists(path):
-            print(f'Cannot import {f}, does not exist')
-            sys.exit(1)
-    for f in files:
-        path = Path(f)
-        link_target = conf.groups_path.joinpath(f)
-        if file_exists(link_target):
-            print(f'{f} already exists, skipping')
-        else:
-            link_target.symlink_to(path.absolute())
-
-
-def search_package(conf: Config, args: argparse.Namespace):
-    for group in conf.groups_path.iterdir():
-        packages = get_packages_from_group(group)
-        if args.package in packages:
-            print(group.name)
-            sys.exit(0)
-    else:
-        sys.exit(1)
-
-
-def show_groups(conf: Config) -> None:
-    groups = get_groups_name(conf)
-    for group in groups:
-        print(group)
-
-
-def get_groups(conf: Config) -> list[Path]:
-    groups = [group for group in conf.groups_path.iterdir()]
-    groups.sort()
-    logging.debug(f'{groups=}')
-    return groups
-
-
-def get_groups_name(conf: Config) -> list[str]:
-    groups = [group.name for group in get_groups(conf)]
-    logging.info(f'{groups=}')
-    return groups
-
-
-def remove_unmanaged_packages(conf: Config) -> None:
-    unmanaged_packages = get_unmanaged_packages(conf)
-    if len(unmanaged_packages) == 0:
-        print('nothing to do')
-        sys.exit(0)
-    print('Would remove the following packages and their dependencies:')
-    for package in unmanaged_packages:
-        print(package)
-    get_user_confirmation()
-    conf.aur_helper.remove(unmanaged_packages)
-
-
 def get_user_confirmation() -> None:
     user_input = input('Continue? [y/N] ').lower()
     if len(user_input) > 1 or user_input != 'y':
         sys.exit(0)
-
-
-def get_unmanaged_packages(conf: Config) -> list[str]:
-    pacdef_packages = get_packages_from_pacdef(conf)
-    explicitly_installed_packages = conf.aur_helper.get_explicitly_installed_packages()
-    unmanaged_packages, _ = calculate_package_diff(explicitly_installed_packages, pacdef_packages)
-    unmanaged_packages.sort()
-    return unmanaged_packages
 
 
 def parse_args() -> argparse.Namespace:
@@ -411,6 +277,134 @@ class AURHelper:
 
     def get_explicitly_installed_packages(self) -> list[str]:
         return self._check_output(self._Switches.explicitly_installed_packages.value)
+
+
+class Pacdef:
+    _conf: Config
+
+    def __init__(self):
+        self._conf = Config()
+
+    def remove_unmanaged_packages(self):
+        unmanaged_packages = self._get_unmanaged_packages()
+        if len(unmanaged_packages) == 0:
+            print('nothing to do')
+            sys.exit(0)
+        print('Would remove the following packages and their dependencies:')
+        for package in unmanaged_packages:
+            print(package)
+        get_user_confirmation()
+        self._conf.aur_helper.remove(unmanaged_packages)
+
+    def show_groups(self):
+        groups = self._get_group_names()
+        for group in groups:
+            print(group)
+
+    def import_groups(self, args: argparse.Namespace) -> None:
+        files = args.file
+        # check if all file-arguments exist before we do anything (be atomic)
+        for f in files:
+            path = Path(f)
+            if not file_exists(path):
+                print(f'Cannot import {f}, does not exist')
+                sys.exit(1)
+        for f in files:
+            path = Path(f)
+            link_target = self._conf.groups_path.joinpath(f)
+            if file_exists(link_target):
+                print(f'{f} already exists, skipping')
+            else:
+                link_target.symlink_to(path.absolute())
+
+    def remove_group(self, args: argparse.Namespace) -> None:
+        groups = args.group
+        if len(groups) == 0:
+            print('nothing to remove')
+        found_groups = []
+        for group_name in groups:
+            group_file = self._conf.groups_path.joinpath(group_name)
+            if group_file.is_symlink() or file_exists(group_file):
+                found_groups.append(group_file)
+            else:
+                print(f'Did not find the group {group_name}')
+                sys.exit(1)
+        for path in found_groups:
+            path.unlink()
+
+    def search_package(self, args: argparse.Namespace):
+        for group in self._conf.groups_path.iterdir():
+            packages = get_packages_from_group(group)
+            if args.package in packages:
+                print(group.name)
+                sys.exit(0)
+        else:
+            sys.exit(1)
+
+    def show_group(self, args: argparse.Namespace) -> None:
+        groups_to_show = args.group
+        if len(groups_to_show) == 0:
+            print('which group do you want to show?')
+            sys.exit(1)
+        imported_groups_name = self._get_group_names()
+        for group_name in groups_to_show:
+            if group_name not in imported_groups_name:
+                print(f"I don't know the group {group_name}.")
+                sys.exit(1)
+        for group_name in groups_to_show:
+            group = get_path_from_group_name(self._conf, group_name)
+            packages = get_packages_from_group(group)
+            for package in packages:
+                print(package)
+
+    def install_packages_from_groups(self) -> None:
+        to_install = self._calculate_packages_to_install()
+        if len(to_install) == 0:
+            print('nothing to do')
+            sys.exit(0)
+        print('Would install the following packages:')
+        for package in to_install:
+            print(package)
+        get_user_confirmation()
+        self._conf.aur_helper.install(to_install)
+
+    def show_unmanaged_packages(self) -> None:
+        unmanaged_packages = self._get_unmanaged_packages()
+        for package in unmanaged_packages:
+            print(package)
+
+    def _calculate_packages_to_install(self) -> list[str]:
+        pacdef_packages = self._get_managed_packages()
+        installed_packages = self._conf.aur_helper.get_all_installed_packages()
+        _, pacdef_only = calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
+        return pacdef_only
+
+    def _get_unmanaged_packages(self) -> list[str]:
+        managed_packages = self._get_managed_packages()
+        explicitly_installed_packages = self._conf.aur_helper.get_explicitly_installed_packages()
+        unmanaged_packages, _ = calculate_package_diff(explicitly_installed_packages, managed_packages)
+        unmanaged_packages.sort()
+        return unmanaged_packages
+
+    def _get_managed_packages(self) -> list[str]:
+        packages = []
+        for group in self._conf.groups_path.iterdir():
+            content = get_packages_from_group(group)
+            packages.extend(content)
+        if len(packages) == 0:
+            logging.warning('pacdef does not know any groups. Import one.')
+        return packages
+
+    def _get_group_names(self) -> list[str]:
+        groups = [group.name for group in self._get_groups()]
+        logging.info(f'{groups=}')
+        return groups
+
+    def _get_groups(self) -> list[Path]:
+        groups = [group for group in self._conf.groups_path.iterdir()]
+        groups.sort()
+        logging.debug(f'{groups=}')
+        return groups
 
 
 def setup_logger():

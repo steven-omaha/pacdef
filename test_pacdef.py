@@ -119,48 +119,6 @@ def test_get_user_confirmation_exit(user_input):
             pacdef.get_user_confirmation()
 
 
-@pytest.mark.parametrize(
-    'pacdef_packages, installed_packages, expected_result',
-    [
-        (['base'], [], ['base']),
-        ([], ['base'], []),
-        ([], [], []),
-        (['base'], ['base'], []),
-        (['repo/base'], [], ['repo/base']),
-        (['repo/base'], ['base'], []),
-    ]
-)
-def test_calculate_packages_to_install(pacdef_packages, installed_packages, expected_result):
-    with mock.patch.object(pacdef, 'get_packages_from_pacdef', lambda _: pacdef_packages):
-        aur_helper = object.__new__(pacdef.AURHelper)
-        conf = object.__new__(pacdef.Config)
-        conf.aur_helper = aur_helper
-        with mock.patch.object(aur_helper, 'get_all_installed_packages', lambda: installed_packages):
-            result = pacdef.calculate_packages_to_install(conf)
-            assert result == expected_result
-
-
-@pytest.mark.parametrize(
-    'pacdef_packages, installed_packages, expected_result',
-    [
-        (['base'], [], []),
-        ([], ['base'], ['base']),
-        ([], [], []),
-        (['base'], ['base'], []),
-        (['repo/base'], [], []),
-        (['repo/base'], ['base'], []),
-    ]
-)
-def test_get_unmanaged_packages(pacdef_packages, installed_packages, expected_result):
-    with mock.patch.object(pacdef, 'get_packages_from_pacdef', lambda _: pacdef_packages):
-        aur_helper = object.__new__(pacdef.AURHelper)
-        conf = object.__new__(pacdef.Config)
-        conf.aur_helper = aur_helper
-        with mock.patch.object(aur_helper, 'get_explicitly_installed_packages', lambda: installed_packages):
-            result = pacdef.get_unmanaged_packages(conf)
-            assert result == expected_result
-
-
 @pytest.mark.skipif(not Path('/usr/bin/pacman').exists(), reason='pacman not found. That\'s not an Arch installation.')
 def test_get_all_installed_packages_arch():
     instance = pacdef.AURHelper(pacdef.PARU)
@@ -191,62 +149,6 @@ def test_get_path_from_group_name(tmpdir):
     exists.unlink()
     result = pacdef.get_path_from_group_name(conf, symlink.name)
     assert result == symlink
-
-
-def test_install_packages_from_groups_none():
-    with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: []):
-        with pytest.raises(SystemExit):
-            # noinspection PyTypeChecker
-            pacdef.install_packages_from_groups(None)
-
-
-@pytest.mark.parametrize(
-    'packages',
-    [
-        ['neovim'],
-        ['neovim', 'python'],
-        ['neovim', 'repo/python'],
-    ]
-)
-def test_install_packages_from_groups_for_packages(packages):
-    def check_valid(_, args: list[str]) -> None:
-        for arg in args:
-            assert arg in packages
-
-    with mock.patch.object(pacdef.AURHelper, 'install', check_valid):
-        aur_helper = pacdef.AURHelper(pacdef.PARU)
-        conf = pacdef.Config.__new__(pacdef.Config)
-        conf.aur_helper = aur_helper
-        with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: packages):
-            with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
-                pacdef.install_packages_from_groups(conf)
-
-
-def test_remove_unmanaged_packages_none():
-    conf = pacdef.Config.__new__(pacdef.Config)
-    with mock.patch.object(pacdef, 'get_unmanaged_packages', lambda _: []):
-        with pytest.raises(SystemExit):
-            pacdef.remove_unmanaged_packages(conf)
-
-
-@pytest.mark.parametrize('packages', [
-    [
-        ['neovim'],
-        ['neovim', 'python'],
-    ]
-])
-def test_remove_unmanaged_packages_for_packages(packages):
-    def check_valid(_, args: list[str]) -> None:
-        for arg in args:
-            assert arg in packages
-
-    with mock.patch.object(pacdef.AURHelper, 'remove', check_valid):
-        aur_helper = pacdef.AURHelper(pacdef.PARU)
-        conf = pacdef.Config.__new__(pacdef.Config)
-        conf.aur_helper = aur_helper
-        with mock.patch.object(pacdef, 'get_unmanaged_packages', lambda _: packages):
-            with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
-                pacdef.remove_unmanaged_packages(conf)
 
 
 class TestAURHelper:
@@ -332,3 +234,134 @@ class TestAURHelper:
         with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
             instance = pacdef.AURHelper(pacdef.PARU)
             instance.remove(packages)
+
+
+class TestPacdef:
+    instance = object.__new__(pacdef.Pacdef)
+    conf = object.__new__(pacdef.Config)
+    aur_helper = object.__new__(pacdef.AURHelper)
+    conf.aur_helper = aur_helper
+    instance._conf = conf
+
+    def test_remove_unmanaged_packages_none(self):
+        with mock.patch.object(self.instance, '_get_unmanaged_packages', lambda: []):
+            with pytest.raises(SystemExit):
+                self.instance.remove_unmanaged_packages()
+
+    @pytest.mark.parametrize('packages', [
+        [
+            ['neovim'],
+            ['neovim', 'python'],
+        ]
+    ])
+    def test_remove_unmanaged_packages_for_packages(self, packages):
+        def check_valid(_, args: list[str]) -> None:
+            for arg in args:
+                assert arg in packages
+
+        with mock.patch.object(pacdef.AURHelper, 'remove', check_valid):
+            with mock.patch.object(self.instance, '_get_unmanaged_packages', lambda: packages):
+                with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
+                    self.instance.remove_unmanaged_packages()
+
+    def test_remove_unmanaged_packages(self):
+        pass  # TODO
+
+    def test_show_groups(self):
+        pass  # TODO
+
+    def test_import_groups(self):
+        pass  # TODO
+
+    def test_remove_group(self):
+        pass  # TODO
+
+    def test_search_package(self):
+        pass  # TODO
+
+    def test_show_group(self):
+        pass  # TODO
+
+    def test_install_packages_from_groups_none(self):
+        with mock.patch.object(self.instance, '_calculate_packages_to_install', lambda: []):
+            with pytest.raises(SystemExit):
+                self.instance.install_packages_from_groups()
+
+    @pytest.mark.parametrize(
+        'packages',
+        [
+            ['neovim'],
+            ['neovim', 'python'],
+            ['neovim', 'repo/python'],
+        ]
+    )
+    def test_install_packages_from_groups_for_packages(self, packages):
+        def check_valid(_, args: list[str]) -> None:
+            for arg in args:
+                assert arg in packages
+
+        with mock.patch.object(pacdef.AURHelper, 'install', check_valid):
+            aur_helper = pacdef.AURHelper(pacdef.PARU)
+            conf = pacdef.Config.__new__(pacdef.Config)
+            conf.aur_helper = aur_helper
+            with mock.patch.object(self.instance, '_calculate_packages_to_install', lambda: packages):
+                with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
+                    self.instance.install_packages_from_groups()
+
+    def test_show_unmanaged_packages(self):
+        pass  # TODO
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        'pacdef_packages, installed_packages, expected_result',
+        [
+            (['base'], [], ['base']),
+            ([], ['base'], []),
+            ([], [], []),
+            (['base'], ['base'], []),
+            (['repo/base'], [], ['repo/base']),
+            (['repo/base'], ['base'], []),
+        ]
+    )
+    def test__calculate_packages_to_install(pacdef_packages, installed_packages, expected_result):
+        instance = object.__new__(pacdef.Pacdef)
+        conf = object.__new__(pacdef.Config)
+        aur_helper = object.__new__(pacdef.AURHelper)
+        conf.aur_helper = aur_helper
+        instance._conf = conf
+        with mock.patch.object(instance, '_get_managed_packages', lambda: pacdef_packages):
+            with mock.patch.object(aur_helper, 'get_all_installed_packages', lambda: installed_packages):
+                result = instance._calculate_packages_to_install()
+                assert result == expected_result
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        'pacdef_packages, installed_packages, expected_result',
+        [
+            (['base'], [], []),
+            ([], ['base'], ['base']),
+            ([], [], []),
+            (['base'], ['base'], []),
+            (['repo/base'], [], []),
+            (['repo/base'], ['base'], []),
+        ]
+    )
+    def test_get_unmanaged_packages(pacdef_packages, installed_packages, expected_result):
+        instance = object.__new__(pacdef.Pacdef)
+        conf = object.__new__(pacdef.Config)
+        aur_helper = object.__new__(pacdef.AURHelper)
+        conf.aur_helper = aur_helper
+        instance._conf = conf
+        with mock.patch.object(instance, '_get_managed_packages', lambda: pacdef_packages):
+            with mock.patch.object(aur_helper, 'get_explicitly_installed_packages', lambda: installed_packages):
+                result = instance._get_unmanaged_packages()
+                assert result == expected_result
+
+    def test__get_managed_packages(self):
+        pass  # TODO
+
+    def test__get_group_names(self):
+        pass  # TODO
+
+    def test__get_groups(self):
+        pass  # TODO
