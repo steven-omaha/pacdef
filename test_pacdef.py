@@ -371,3 +371,19 @@ class TestPacdef:
 
     def test__get_groups(self):
         pass  # TODO
+
+
+def test_get_packages_from_group():
+    pass  # TODO
+
+
+def test_get_package_from_line():
+    pass  # TODO
+
+
+def test_remove_repo_prefix_from_packages():
+    pass  # TODO
+
+
+def test_remove_repo_prefix_from_package():
+    pass  # TODO
