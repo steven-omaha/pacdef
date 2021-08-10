@@ -46,14 +46,6 @@ def main():
         sys.exit(1)
 
 
-def aur_helper_execute(aur_helper: Path, command: list[str]) -> None:
-    try:
-        subprocess.call([str(aur_helper)] + command)
-    except FileNotFoundError:
-        print(f'Could not start the AUR helper "{aur_helper}".')
-        sys.exit(1)
-
-
 def get_packages_from_pacdef(conf: Config) -> list[str]:
     packages = []
     for group in conf.groups_path.iterdir():
@@ -99,7 +91,7 @@ def install_packages_from_groups(conf: Config) -> None:
     if len(to_install) == 0:
         print('nothing to do')
         sys.exit(0)
-    aur_helper_execute(conf.aur_helper, ['--sync', '--refresh', '--needed'] + to_install)
+    conf.aur_helper.install(to_install)
 
 
 def calculate_packages_to_install(conf: Config) -> list[str]:
@@ -264,7 +256,7 @@ def remove_unmanaged_packages(conf: Config) -> None:
     for package in unmanaged_packages:
         print(package)
     get_user_confirmation()
-    aur_helper_execute(conf.aur_helper, ['--remove', '--recursive'] + unmanaged_packages)
+    conf.aur_helper.remove(unmanaged_packages)
 
 
 def get_user_confirmation() -> None:
@@ -328,7 +320,7 @@ class Actions(Enum):
 
 
 class Config:
-    aur_helper: Path
+    aur_helper: AURHelper
     groups_path: Path
 
     def __init__(self):
@@ -360,7 +352,7 @@ class Config:
         return config_base_dir
 
     @classmethod
-    def _get_aur_helper(cls, config_file: Path) -> Path:
+    def _get_aur_helper(cls, config_file: Path) -> AURHelper:
         config = configparser.ConfigParser()
 
         try:
@@ -369,17 +361,13 @@ class Config:
             logging.error(f'Could not parse the config: {e}')
 
         try:
-            aur_helper = Path(config['misc']['aur_helper'])
+            path = Path(config['misc']['aur_helper'])
         except KeyError:
             logging.warning(f'No AUR helper set. Defaulting to {PARU}')
-            aur_helper = PARU
+            path = PARU
             cls._write_config_stub(config_file)
 
-        if not aur_helper.is_absolute():
-            aur_helper = Path('/usr/bin').joinpath(aur_helper)
-
-        if not file_exists(aur_helper):
-            raise FileNotFoundError(f'{aur_helper} not found.')
+        aur_helper = AURHelper(path)
         return aur_helper
 
     @classmethod
@@ -388,6 +376,34 @@ class Config:
         with open(config_file, 'w') as fd:
             fd.write('[misc]\n')
             fd.write('aur_helper = paru\n')
+
+
+class AURHelper:
+    _path: Path
+    SWITCHES_INSTALL: list[str] = ['--sync', '--refresh', '--needed']
+    SWITCHES_REMOVE: list[str] = ['--remove', '--recursive']
+
+    def __init__(self, path: Path):
+        if not path.is_absolute():
+            path = Path('/usr/bin').joinpath(path)
+        if not file_exists(path):
+            raise FileNotFoundError(f'{path} not found.')
+        self._path = path
+
+    def _execute(self, command: list[str]) -> None:
+        try:
+            subprocess.call([str(self._path)] + command)
+        except FileNotFoundError:
+            print(f'Could not start the AUR helper "{self._path}".')
+            sys.exit(1)
+
+    def install(self, packages: list[str]) -> None:
+        command: list[str] = self.SWITCHES_INSTALL + packages
+        self._execute(command)
+
+    def remove(self, packages: list[str]) -> None:
+        command: list[str] = self.SWITCHES_REMOVE + packages
+        self._execute(command)
 
 
 def setup_logger():

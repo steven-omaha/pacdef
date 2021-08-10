@@ -1,4 +1,5 @@
 import configparser
+import subprocess
 from os import environ
 from pathlib import Path
 from unittest import mock
@@ -46,17 +47,17 @@ class TestConfig:
             tmpfile = Path(tmpdir).joinpath('tmp.conf')
 
             helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper == pacdef.PARU
+            assert helper._path == pacdef.PARU
 
             with open(tmpfile, 'w') as fd:
                 fd.write('some strange content')
             helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert pacdef.PARU == helper
+            assert helper._path == pacdef.PARU
 
             with open(tmpfile, 'w') as fd:
                 fd.write('[misc]\nsomething')
             helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert pacdef.PARU == helper
+            assert helper._path == pacdef.PARU
 
             with open(tmpfile, 'w') as fd:
                 fd.write('[misc]\naur_helper=something')
@@ -66,17 +67,17 @@ class TestConfig:
             with open(tmpfile, 'w') as fd:
                 fd.write('[misc]\naur___hELPer=paru')
             helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper == pacdef.PARU
+            assert helper._path == pacdef.PARU
 
             with open(tmpfile, 'w') as fd:
                 fd.write('[misc]\naur_helper=paru')
             helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper == pacdef.PARU
+            assert helper._path == pacdef.PARU
 
             with open(tmpfile, 'w') as fd:
                 fd.write('[misc]\naur_helper=/usr/bin/paru')
             helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper == pacdef.PARU
+            assert helper._path == pacdef.PARU
 
     @staticmethod
     def test__write_config_stub(tmpdir):
@@ -101,7 +102,7 @@ class TestConfig:
         aur_helper = Path('/usr/bin/paru')
 
         assert config.groups_path == groups
-        assert config.aur_helper == aur_helper
+        assert config.aur_helper._path == aur_helper
         assert conf_file.is_file()
 
 
@@ -203,41 +204,17 @@ def test_install_packages_from_groups_none():
     ]
 )
 def test_install_packages_from_groups_for_packages(packages):
-    def check_valid(aur_helper: Path, args: list[str]):
-        check_aur_helper(aur_helper)
-        check_switches_valid(args)
-        check_switches_before_packages(args)
-        check_packages_present(args)
+    def check_valid(_, args: list[str]) -> None:
+        for arg in args:
+            assert arg in packages
 
-    def check_aur_helper(aur_helper: Path):
-        assert aur_helper == pacdef.PARU
-
-    def check_switches_valid(args: list[str]):
-        for switch in switches:
-            assert switch in args
-
-    def check_switches_before_packages(args: list[str]):
-        switch_positions: dict[str, int] = {}
-        for switch in switches:
-            for position, arg in enumerate(args):
-                if arg == switch:
-                    switch_positions[switch] = position
-                    break
-            else:
-                raise AssertionError
-        assert max(switch_positions.values()) == len(switches) - 1
-
-    def check_packages_present(args: list[str]):
-        for package in packages:
-            assert package in args
-
-    switches = ['--sync', '--refresh', '--needed']
-    conf = pacdef.Config.__new__(pacdef.Config)
-    conf.aur_helper = pacdef.PARU
-
-    with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: packages):
-        with mock.patch.object(pacdef, 'aur_helper_execute', check_valid):
-            pacdef.install_packages_from_groups(conf)
+    with mock.patch.object(pacdef.AURHelper, 'install', check_valid):
+        aur_helper = pacdef.AURHelper(pacdef.PARU)
+        conf = pacdef.Config.__new__(pacdef.Config)
+        conf.aur_helper = aur_helper
+        with mock.patch.object(pacdef, 'calculate_packages_to_install', lambda _: packages):
+            with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
+                pacdef.install_packages_from_groups(conf)
 
 
 def test_remove_unmanaged_packages_none():
@@ -254,23 +231,54 @@ def test_remove_unmanaged_packages_none():
     ]
 ])
 def test_remove_unmanaged_packages_for_packages(packages):
-    def check_valid(aur_helper: Path, args: list[str]):
-        check_aur_helper(aur_helper)
-        check_switches_valid(args)
-        check_switches_before_packages(args)
-        check_packages_present(args)
+    def check_valid(_, args: list[str]) -> None:
+        for arg in args:
+            assert arg in packages
 
-    def check_aur_helper(aur_helper: Path):
-        assert aur_helper == pacdef.PARU
+    with mock.patch.object(pacdef.AURHelper, 'remove', check_valid):
+        aur_helper = pacdef.AURHelper(pacdef.PARU)
+        conf = pacdef.Config.__new__(pacdef.Config)
+        conf.aur_helper = aur_helper
+        with mock.patch.object(pacdef, 'get_unmanaged_packages', lambda _: packages):
+            with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
+                pacdef.remove_unmanaged_packages(conf)
 
-    def check_switches_valid(args: list[str]):
+
+class TestAURHelper:
+    @staticmethod
+    def test___init__():
+        name = Path(pacdef.PARU.name)
+        instance = pacdef.AURHelper(name)
+        assert instance._path == pacdef.PARU
+
+        with pytest.raises(FileNotFoundError):
+            pacdef.AURHelper(Path('does not exist'))
+
+    def test__execute(self):
+        def check_valid(command_run: list[str]):
+            assert command_run[0] == str(instance._path)
+            assert command_run[1:] == command_given
+
+        command_given: list[str] = ['some', 'command']
+        instance = pacdef.AURHelper(pacdef.PARU)
+        with mock.patch.object(subprocess, 'call', check_valid):
+            instance._execute(command_given)
+
+        instance = object.__new__(pacdef.AURHelper)
+        instance._path = Path('does not exist')
+        with pytest.raises(SystemExit):
+            instance._execute(command_given)
+
+    @staticmethod
+    def check_switches_valid(command: list[str], switches: list[str]):
         for switch in switches:
-            assert switch in args
+            assert switch in command
 
-    def check_switches_before_packages(args: list[str]):
+    @staticmethod
+    def check_switches_before_packages(command: list[str], switches: list[str]):
         switch_positions: dict[str, int] = {}
         for switch in switches:
-            for position, arg in enumerate(args):
+            for position, arg in enumerate(command):
                 if arg == switch:
                     switch_positions[switch] = position
                     break
@@ -278,14 +286,44 @@ def test_remove_unmanaged_packages_for_packages(packages):
                 raise AssertionError
         assert max(switch_positions.values()) == len(switches) - 1
 
-    def check_packages_present(args: list[str]):
+    @staticmethod
+    def check_packages_present(command: list[str], packages: list[str]):
         for package in packages:
-            assert package in args
+            assert package in command
 
-    switches = ['--remove', '--recursive']
-    conf = pacdef.Config.__new__(pacdef.Config)
-    conf.aur_helper = pacdef.PARU
-    with mock.patch.object(pacdef, 'get_unmanaged_packages', lambda _: packages):
-        with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
-            with mock.patch.object(pacdef, 'aur_helper_execute', check_valid):
-                pacdef.remove_unmanaged_packages(conf)
+    @classmethod
+    @pytest.mark.parametrize(
+        'packages',
+        [
+            ['neovim'],
+            ['neovim', 'python'],
+            ['neovim', 'repo/python'],
+        ]
+    )
+    def test_install(cls, packages):
+        def check_valid(command):
+            cls.check_switches_valid(command, pacdef.AURHelper.SWITCHES_INSTALL)
+            cls.check_switches_before_packages(command, pacdef.AURHelper.SWITCHES_INSTALL)
+            cls.check_packages_present(command, packages)
+
+        with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
+            instance = pacdef.AURHelper(pacdef.PARU)
+            instance.install(packages)
+
+    @classmethod
+    @pytest.mark.parametrize(
+        'packages',
+        [
+            ['neovim'],
+            ['neovim', 'python'],
+        ]
+    )
+    def test_remove(cls, packages):
+        def check_valid(command):
+            cls.check_switches_valid(command, pacdef.AURHelper.SWITCHES_REMOVE)
+            cls.check_switches_before_packages(command, pacdef.AURHelper.SWITCHES_REMOVE)
+            cls.check_packages_present(command, packages)
+
+        with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
+            instance = pacdef.AURHelper(pacdef.PARU)
+            instance.remove(packages)
