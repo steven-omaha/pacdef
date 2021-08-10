@@ -387,3 +387,37 @@ def test_remove_repo_prefix_from_packages():
 
 def test_remove_repo_prefix_from_package():
     pass  # TODO
+
+
+@pytest.mark.parametrize(
+    'pacdef_packages, system_packages, pacdef_only, system_only',
+    [
+        (['base'], [], ['base'], []),
+        ([], ['base'], [], ['base']),
+        ([], [], [], []),
+        (['base'], ['base'], [], []),
+        (['repo/base'], ['base'], [], []),
+        (['repo/base'], [], ['base'], []),
+    ]
+)
+def test_calculate_package_diff_keep_prefix_no(pacdef_packages, system_packages, pacdef_only, system_only):
+    system_result, pacdef_result = pacdef.calculate_package_diff(system_packages, pacdef_packages, keep_prefix=False)
+    assert system_result == system_only
+    assert pacdef_result == pacdef_only
+
+
+@pytest.mark.parametrize(
+    'pacdef_packages, system_packages, pacdef_only, system_only',
+    [
+        (['base'], [], ['base'], []),
+        ([], ['base'], [], ['base']),
+        ([], [], [], []),
+        (['base'], ['base'], [], []),
+        (['repo/base'], ['base'], [], []),
+        (['repo/base'], [], ['repo/base'], []),
+    ]
+)
+def test_calculate_package_diff_keep_prefix_yes(pacdef_packages, system_packages, pacdef_only, system_only):
+    system_result, pacdef_result = pacdef.calculate_package_diff(system_packages, pacdef_packages, keep_prefix=True)
+    assert system_result == system_only
+    assert pacdef_result == pacdef_only
