@@ -109,6 +109,9 @@ def calculate_package_diff(
     :param keep_prefix: if a repository prefix exists in a pacdef package, keep it (default: False)
     :return: 2-tuple: list of packages exclusively in argument 1, list of packages exclusively in argument 2
     """
+    logging.debug('calculate_package_diff')
+    logging.debug(f'{system_packages=}')
+    logging.debug(f'{pacdef_packages=}')
     system_only = []
     pacdef_only = []
     pacdef_packages_without_prefix = remove_repo_prefix_from_packages(pacdef_packages)
@@ -121,6 +124,8 @@ def calculate_package_diff(
                 pacdef_only.append(package)
             else:
                 pacdef_only.append(package_without_prefix)
+    logging.debug(f'{system_only=}')
+    logging.debug(f'{pacdef_only=}')
     return system_only, pacdef_only
 
 
@@ -199,7 +204,6 @@ class Config:
             config_file.touch()
 
         self.aur_helper = self._get_aur_helper(config_file)
-        logging.info(f"{self.aur_helper=}")
         logging.info(f"{self.groups_path=}")
 
     @staticmethod
@@ -254,6 +258,7 @@ class AURHelper:
         if not file_exists(path):
             raise FileNotFoundError(f'{path} not found.')
         self._path = path
+        logging.info(f"AUR helper: {self._path}")
 
     def _execute(self, command: list[str]) -> None:
         try:
