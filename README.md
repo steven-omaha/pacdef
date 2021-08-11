@@ -1,7 +1,7 @@
 [![pytest](https://github.com/steven-omaha/pacdef/actions/workflows/main.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/main.yml)
 
 # pacdef
-a declarative manager of Arch packages
+declarative manager of Arch packages
 
 ## Installation
 `pacdef` is available [in the AUR](https://aur.archlinux.org/packages/pacdef).
