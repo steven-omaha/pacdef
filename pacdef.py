@@ -41,7 +41,7 @@ def main():
     elif args.action == Actions.version.value:
         show_version()
     else:
-        print('Did not understand what you want me to do')
+        logging.error('Did not understand what you want me to do')
         sys.exit(1)
 
 
@@ -255,7 +255,7 @@ class AURHelper:
         try:
             subprocess.call([str(self._path)] + command)
         except FileNotFoundError:
-            print(f'Could not start the AUR helper "{self._path}".')
+            logging.error(f'Could not start the AUR helper "{self._path}".')
             sys.exit(1)
 
     def _check_output(self, query: list[str]) -> list[str]:
@@ -307,13 +307,13 @@ class Pacdef:
         for f in files:
             path = Path(f)
             if not file_exists(path):
-                print(f'Cannot import {f}, does not exist')
+                logging.error(f'Cannot import {f}, does not exist')
                 sys.exit(1)
         for f in files:
             path = Path(f)
             link_target = self._conf.groups_path.joinpath(f)
             if file_exists(link_target):
-                print(f'{f} already exists, skipping')
+                logging.warning(f'{f} already exists, skipping')
             else:
                 link_target.symlink_to(path.absolute())
 
@@ -327,7 +327,7 @@ class Pacdef:
             if group_file.is_symlink() or file_exists(group_file):
                 found_groups.append(group_file)
             else:
-                print(f'Did not find the group {group_name}')
+                logging.error(f'Did not find the group {group_name}')
                 sys.exit(1)
         for path in found_groups:
             path.unlink()
@@ -349,7 +349,7 @@ class Pacdef:
         imported_groups_name = self._get_group_names()
         for group_name in groups_to_show:
             if group_name not in imported_groups_name:
-                print(f"I don't know the group {group_name}.")
+                logging.error(f"I don't know the group {group_name}.")
                 sys.exit(1)
         for group_name in groups_to_show:
             group = get_path_from_group_name(self._conf, group_name)
