@@ -124,17 +124,6 @@ def test_get_user_confirmation_exit(user_input):
             pacdef.get_user_confirmation()
 
 
-@pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
-def test_get_all_installed_packages_arch():
-    instance = pacdef.AURHelper(PACMAN)  # pacman is good enough for the test case
-    result = instance.get_all_installed_packages()
-    assert type(result) == list
-    assert len(result) > 0
-    for item in result:
-        assert type(item) == str
-        assert len(item) > 0
-
-
 def test_get_path_from_group_name(tmpdir):
     conf = pacdef.Config.__new__(pacdef.Config)
     conf.groups_path = Path(tmpdir)
@@ -241,6 +230,16 @@ class TestAURHelper:
         with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
             instance = pacdef.AURHelper(pacdef.PARU)
             instance.remove(packages)
+
+    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
+    def test_get_all_installed_packages_arch(self):
+        instance = pacdef.AURHelper(PACMAN)  # pacman is good enough for the test case
+        result = instance.get_all_installed_packages()
+        assert type(result) == list
+        assert len(result) > 0
+        for item in result:
+            assert type(item) == str
+            assert len(item) > 0
 
 
 class TestPacdef:
