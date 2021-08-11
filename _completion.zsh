@@ -36,6 +36,7 @@ _pacdef() {
         remove)
             _arguments "*:group file:_files -W ~/.config/pacdef/groups"
         ;;
+        "") ;;
         *)
             _message "no more arguments"
         ;;
