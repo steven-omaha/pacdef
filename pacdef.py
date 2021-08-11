@@ -403,6 +403,13 @@ class Pacdef:
     def _get_groups(self) -> list[Path]:
         groups = [group for group in self._conf.groups_path.iterdir()]
         groups.sort()
+        for group in groups:
+            if group.is_dir():
+                logging.warning(f'found directory {group} in {self._conf.groups_path}')
+            if group.is_symlink() and not group.exists():
+                logging.warning(f'found group {group}, but it is a broken symlink')
+            if not group.is_symlink() and group.is_file():
+                logging.warning(f'found group {group}, but it is not a symlink')
         logging.debug(f'{groups=}')
         return groups
 
