@@ -9,7 +9,8 @@ import pytest
 
 import pacdef
 
-PACMAN_EXISTS = Path('/usr/bin/pacman').exists()
+PACMAN = Path('/usr/bin/pacman')
+PACMAN_EXISTS = PACMAN.exists()
 REASON_NOT_ARCH = 'pacman not found. That\'s not an Arch installation.'
 
 
@@ -124,7 +125,7 @@ def test_get_user_confirmation_exit(user_input):
 
 @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
 def test_get_all_installed_packages_arch():
-    instance = pacdef.AURHelper(pacdef.PARU)
+    instance = pacdef.AURHelper(PACMAN)  # pacman is good enough for the test case
     result = instance.get_all_installed_packages()
     assert type(result) == list
     assert len(result) > 0
@@ -158,9 +159,9 @@ class TestAURHelper:
     @staticmethod
     @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
     def test___init__():
-        name = Path(pacdef.PARU.name)
+        name = Path(PACMAN.name)  # pacman is good enough for the test case
         instance = pacdef.AURHelper(name)
-        assert instance._path == pacdef.PARU
+        assert instance._path == PACMAN
 
         with pytest.raises(FileNotFoundError):
             pacdef.AURHelper(Path('does not exist'))
@@ -242,6 +243,35 @@ class TestAURHelper:
 
 
 class TestPacdef:
+    def _test_basic_printing_function(self, test_method: str, patched_method: str, capsys):
+        instance = self._get_test_instance()
+        method = instance.__getattribute__(test_method)
+        with mock.patch.object(instance, patched_method, lambda: None):
+            with pytest.raises(TypeError):
+                method()
+
+        with mock.patch.object(instance, patched_method, lambda: []):
+            method()
+        out, err = capsys.readouterr()
+        assert len(out) == 0
+        assert len(err) == 0
+
+        packages = ['base']
+        with mock.patch.object(instance, patched_method, lambda: packages):
+            method()
+        out, err = capsys.readouterr()
+        for package in packages:
+            assert package in out
+        assert len(err) == 0
+
+        packages = ['base', 'python']
+        with mock.patch.object(instance, patched_method, lambda: packages):
+            method()
+        out, err = capsys.readouterr()
+        for package in packages:
+            assert package in out
+        assert len(err) == 0
+
     @staticmethod
     def _get_test_instance() -> pacdef.Pacdef:
         instance = object.__new__(pacdef.Pacdef)
@@ -276,11 +306,8 @@ class TestPacdef:
                 with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
                     instance.remove_unmanaged_packages()
 
-    def test_remove_unmanaged_packages(self):
-        pass  # TODO
-
-    def test_show_groups(self):
-        pass  # TODO
+    def test_show_groups(self, capsys):
+        self._test_basic_printing_function('show_groups', '_get_group_names', capsys)
 
     def test_import_groups(self):
         pass  # TODO
@@ -321,8 +348,8 @@ class TestPacdef:
                 with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
                     instance.install_packages_from_groups()
 
-    def test_show_unmanaged_packages(self):
-        pass  # TODO
+    def test_show_unmanaged_packages(self, capsys):
+        self._test_basic_printing_function('show_unmanaged_packages', '_get_unmanaged_packages', capsys)
 
     @classmethod
     @pytest.mark.parametrize(
