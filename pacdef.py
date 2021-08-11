@@ -85,7 +85,11 @@ def remove_repo_prefix_from_package(package_string: str) -> str:
     :return: package name
     """
     if '/' in package_string:
-        repo, package = package_string.split('/')
+        try:
+            repo, package = package_string.split('/')
+        except ValueError:  # too many values to unpack
+            logging.error(f'could not split this line into repo and package:\n{package_string}')
+            sys.exit(1)
     else:
         package = package_string
     return package
