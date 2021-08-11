@@ -9,6 +9,7 @@ _pacdef() {
             'clean:uninstall packages not managed by pacdef'
             'groups:show names of imported groups'
             'import:import a new group file'
+            'remove:remove a group file'
             'search:show the group containing a package'
             'show:show packages under an imported group'
             'sync:install all packages from imported groups'
@@ -31,6 +32,9 @@ _pacdef() {
         ;;
         show)
             _arguments "1:group file:_files -W ~/.config/pacdef/groups"
+        ;;
+        remove)
+            _arguments "*:group file:_files -W ~/.config/pacdef/groups"
         ;;
         *)
             _message "no more arguments"
