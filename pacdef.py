@@ -319,8 +319,6 @@ class Pacdef:
 
     def remove_group(self, args: argparse.Namespace) -> None:
         groups = args.group
-        if len(groups) == 0:
-            print('nothing to remove')
         found_groups = []
         for group_name in groups:
             group_file = self._conf.groups_path.joinpath(group_name)
@@ -343,9 +341,6 @@ class Pacdef:
 
     def show_group(self, args: argparse.Namespace) -> None:
         groups_to_show = args.group
-        if len(groups_to_show) == 0:
-            print('which group do you want to show?')
-            sys.exit(1)
         imported_groups_name = self._get_group_names()
         for group_name in groups_to_show:
             if group_name not in imported_groups_name:
