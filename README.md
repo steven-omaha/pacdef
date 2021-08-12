@@ -4,7 +4,7 @@
 declarative manager of Arch packages
 
 ## Installation
-`pacdef` is available [in the AUR](https://aur.archlinux.org/packages/pacdef).
+`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef).
 
 ## Use-case
 `pacdef` allows the user to have consistent packages among multiple Arch machines by managing packages in group files.
