@@ -13,7 +13,9 @@ import pacdef
 
 PACMAN = Path('/usr/bin/pacman')
 PACMAN_EXISTS = PACMAN.exists()
+PARU_EXISTS = pacdef.PARU.exists()
 REASON_NOT_ARCH = 'pacman not found. That\'s not an Arch installation.'
+REASON_PARU_MISSING = 'paru not found'
 
 
 def test_dir_exists(tmpdir):
@@ -195,6 +197,7 @@ class TestAURHelper:
         for package in packages:
             assert package in command
 
+    @pytest.mark.skipif(not PARU_EXISTS, reason=REASON_PARU_MISSING)
     @pytest.mark.parametrize(
         'packages',
         [
@@ -213,6 +216,7 @@ class TestAURHelper:
             instance = pacdef.AURHelper(pacdef.PARU)
             instance.install(packages)
 
+    @pytest.mark.skipif(not PARU_EXISTS, reason=REASON_PARU_MISSING)
     @pytest.mark.parametrize(
         'packages',
         [
