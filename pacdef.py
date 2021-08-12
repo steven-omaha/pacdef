@@ -357,11 +357,11 @@ class Pacdef:
         for f in args.files:
             path = Path(f)
             if not file_exists(path):
-                logging.error(f'Cannot import {f}, does not exist')
+                logging.error(f'Cannot import {f}. Is it an existing file?')
                 sys.exit(1)
         for f in args.files:
             path = Path(f)
-            link_target = self._conf.groups_path.joinpath(f)
+            link_target = self._conf.groups_path.joinpath(f.name)
             if file_exists(link_target):
                 logging.warning(f'{f} already exists, skipping')
             else:
