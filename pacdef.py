@@ -20,28 +20,28 @@ VERSION = 'unknown'
 def main():
     setup_logger()
     pacdef = Pacdef()
-    args = parse_args()
+    args = Arguments()
 
-    if args.action == Actions.clean.value:
+    if args.action == Actions.clean:
         pacdef.remove_unmanaged_packages()
-    elif args.action == Actions.groups.value:
+    elif args.action == Actions.groups:
         pacdef.show_groups()
-    elif args.action == Actions.import_.value:
+    elif args.action == Actions.import_:
         pacdef.import_groups(args)
-    elif args.action == Actions.remove.value:
+    elif args.action == Actions.remove:
         pacdef.remove_group(args)
-    elif args.action == Actions.search.value:
+    elif args.action == Actions.search:
         pacdef.search_package(args)
-    elif args.action == Actions.show.value:
+    elif args.action == Actions.show:
         pacdef.show_group(args)
-    elif args.action == Actions.sync.value:
+    elif args.action == Actions.sync:
         pacdef.install_packages_from_groups()
-    elif args.action == Actions.unmanaged.value:
+    elif args.action == Actions.unmanaged:
         pacdef.show_unmanaged_packages()
-    elif args.action == Actions.version.value:
+    elif args.action == Actions.version:
         show_version()
     else:
-        logging.error('Did not understand what you want me to do')
+        logging.error('This should not happen.')
         sys.exit(1)
 
 
@@ -145,24 +145,66 @@ def get_user_confirmation() -> None:
         sys.exit(0)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
-    subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
-    subparsers.add_parser(Actions.clean.value, help='uninstall packages not managed by pacdef')
-    subparsers.add_parser(Actions.groups.value, help='show names of imported groups')
-    parser_import = subparsers.add_parser(Actions.import_.value, help='import a new group file')
-    parser_import.add_argument('file', nargs='+', help='a group file')
-    parser_remove = subparsers.add_parser(Actions.remove.value, help='remove previously imported group')
-    parser_remove.add_argument('group', nargs='+', help='a previously imported group')
-    parser_search = subparsers.add_parser(Actions.search.value, help='show the group containing a package')
-    parser_search.add_argument('package', help='the package to search for')
-    parser_show_group = subparsers.add_parser(Actions.show.value, help='show packages under an imported group')
-    parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
-    subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
-    subparsers.add_parser(Actions.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
-    subparsers.add_parser(Actions.version.value, help='show version info')
-    args = parser.parse_args()
-    return args
+class Arguments:
+    action: Actions
+    files: Optional[list[Path]]
+    groups: Optional[list[str]]
+    package: Optional[str]
+
+    def __init__(self):
+        args = self._parse_basic_args()
+        self.action = self._parse_action(args)
+        self.files = self._parse_files(args)
+        self.groups = self._parse_groups(args)
+        self.package = self._parse_package(args)
+
+    @staticmethod
+    def _parse_package(args: argparse.Namespace) -> Optional[str]:
+        if not hasattr(args, 'package'):
+            return
+        return args.package
+
+    @staticmethod
+    def _parse_basic_args() -> argparse.Namespace:
+        parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
+        subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
+        subparsers.add_parser(Actions.clean.value, help='uninstall packages not managed by pacdef')
+        subparsers.add_parser(Actions.groups.value, help='show names of imported groups')
+        parser_import = subparsers.add_parser(Actions.import_.value, help='import a new group file')
+        parser_import.add_argument('file', nargs='+', help='a group file')
+        parser_remove = subparsers.add_parser(Actions.remove.value, help='remove previously imported group')
+        parser_remove.add_argument('group', nargs='+', help='a previously imported group')
+        parser_search = subparsers.add_parser(Actions.search.value, help='show the group containing a package')
+        parser_search.add_argument('package', help='the package to search for')
+        parser_show_group = subparsers.add_parser(Actions.show.value, help='show packages under an imported group')
+        parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
+        subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
+        subparsers.add_parser(Actions.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
+        subparsers.add_parser(Actions.version.value, help='show version info')
+        args = parser.parse_args()
+        return args
+
+    @staticmethod
+    def _parse_files(args: argparse.Namespace) -> Optional[list[Path]]:
+        if not hasattr(args, 'file'):
+            return
+        files = [Path(f) for f in args.file]
+        return files
+
+    @staticmethod
+    def _parse_action(args: argparse.Namespace) -> Actions:
+        for _, action in Actions.__members__.items():
+            if action.value == args.action:
+                return action
+        else:
+            logging.error('Did not understand what you want me to do')
+            sys.exit(1)
+
+    @staticmethod
+    def _parse_groups(args: argparse.Namespace) -> Optional[list[str]]:
+        if not hasattr(args, 'group'):
+            return
+        return args.group
 
 
 def dir_exists(path: Path) -> bool:
@@ -310,15 +352,14 @@ class Pacdef:
         for group in groups:
             print(group)
 
-    def import_groups(self, args: argparse.Namespace) -> None:
-        files = args.file
+    def import_groups(self, args: Arguments) -> None:
         # check if all file-arguments exist before we do anything (be atomic)
-        for f in files:
+        for f in args.files:
             path = Path(f)
             if not file_exists(path):
                 logging.error(f'Cannot import {f}, does not exist')
                 sys.exit(1)
-        for f in files:
+        for f in args.files:
             path = Path(f)
             link_target = self._conf.groups_path.joinpath(f)
             if file_exists(link_target):
@@ -326,10 +367,9 @@ class Pacdef:
             else:
                 link_target.symlink_to(path.absolute())
 
-    def remove_group(self, args: argparse.Namespace) -> None:
-        groups = args.group
+    def remove_group(self, args: Arguments) -> None:
         found_groups = []
-        for group_name in groups:
+        for group_name in args.groups:
             group_file = self._conf.groups_path.joinpath(group_name)
             if group_file.is_symlink() or file_exists(group_file):
                 found_groups.append(group_file)
@@ -339,7 +379,7 @@ class Pacdef:
         for path in found_groups:
             path.unlink()
 
-    def search_package(self, args: argparse.Namespace):
+    def search_package(self, args: Arguments):
         for group in self._conf.groups_path.iterdir():
             packages = get_packages_from_group(group)
             if args.package in packages:
@@ -348,8 +388,8 @@ class Pacdef:
         else:
             sys.exit(1)
 
-    def show_group(self, args: argparse.Namespace) -> None:
-        groups_to_show = args.group
+    def show_group(self, args: Arguments) -> None:
+        groups_to_show = args.groups
         imported_groups_name = self._get_group_names()
         for group_name in groups_to_show:
             if group_name not in imported_groups_name:
