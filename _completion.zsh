@@ -23,6 +23,13 @@ _pacdef() {
         "1: :_actions" \
         "*::arg:->args"
 
+    if [ -z "${XDG_CONFIG_HOME}" ]; then
+        GROUPDIR="~/.config/pacdef/groups"
+    else
+        GROUPDIR="${XDG_CONFIG_HOME}/pacdef/groups"
+    fi
+
+
     case $line[1] in
         import)
             _arguments "*:new group file(s):_files"
@@ -31,10 +38,10 @@ _pacdef() {
             _arguments "1:package:"
         ;;
         show)
-            _arguments "1:group file:_files -W ~/.config/pacdef/groups"
+            _arguments "1:group file:_files -W '$GROUPDIR'"
         ;;
         remove)
-            _arguments "*:group file:_files -W ~/.config/pacdef/groups"
+            _arguments "*:group file:_files -W '$GROUPDIR'"
         ;;
         "") ;;
         *)
