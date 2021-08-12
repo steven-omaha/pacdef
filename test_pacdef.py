@@ -201,6 +201,7 @@ class TestAURHelper:
     @pytest.mark.parametrize(
         'packages',
         [
+            [],
             ['neovim'],
             ['neovim', 'python'],
             ['neovim', 'repo/python'],
@@ -220,6 +221,7 @@ class TestAURHelper:
     @pytest.mark.parametrize(
         'packages',
         [
+            [],
             ['neovim'],
             ['neovim', 'python'],
         ]
