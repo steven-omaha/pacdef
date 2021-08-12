@@ -3,6 +3,7 @@ import logging
 import subprocess
 from os import environ
 from pathlib import Path
+from typing import Optional
 from unittest import mock
 
 import builtins
@@ -194,7 +195,6 @@ class TestAURHelper:
         for package in packages:
             assert package in command
 
-    @classmethod
     @pytest.mark.parametrize(
         'packages',
         [
@@ -203,17 +203,16 @@ class TestAURHelper:
             ['neovim', 'repo/python'],
         ]
     )
-    def test_install(cls, packages):
+    def test_install(self, packages):
         def check_valid(command):
-            cls.check_switches_valid(command, pacdef.AURHelper._Switches.install.value)
-            cls.check_switches_before_packages(command, pacdef.AURHelper._Switches.install.value)
-            cls.check_packages_present(command, packages)
+            self.check_switches_valid(command, pacdef.AURHelper._Switches.install.value)
+            self.check_switches_before_packages(command, pacdef.AURHelper._Switches.install.value)
+            self.check_packages_present(command, packages)
 
         with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
             instance = pacdef.AURHelper(pacdef.PARU)
             instance.install(packages)
 
-    @classmethod
     @pytest.mark.parametrize(
         'packages',
         [
@@ -221,11 +220,11 @@ class TestAURHelper:
             ['neovim', 'python'],
         ]
     )
-    def test_remove(cls, packages):
+    def test_remove(self, packages):
         def check_valid(command):
-            cls.check_switches_valid(command, pacdef.AURHelper._Switches.remove.value)
-            cls.check_switches_before_packages(command, pacdef.AURHelper._Switches.remove.value)
-            cls.check_packages_present(command, packages)
+            self.check_switches_valid(command, pacdef.AURHelper._Switches.remove.value)
+            self.check_switches_before_packages(command, pacdef.AURHelper._Switches.remove.value)
+            self.check_packages_present(command, packages)
 
         with mock.patch.object(pacdef.AURHelper, '_execute', check_valid):
             instance = pacdef.AURHelper(pacdef.PARU)
@@ -254,7 +253,7 @@ class TestAURHelper:
 
 class TestPacdef:
     def _test_basic_printing_function(self, test_method: str, patched_method: str, capsys):
-        instance = self._get_test_instance()
+        instance = self._get_instance()
         method = instance.__getattribute__(test_method)
         with mock.patch.object(instance, patched_method, lambda: None):
             with pytest.raises(TypeError):
@@ -283,34 +282,34 @@ class TestPacdef:
         assert len(err) == 0
 
     @staticmethod
-    def _get_test_instance() -> pacdef.Pacdef:
+    def _get_instance(tmpdir: Optional[Path] = None) -> pacdef.Pacdef:
         instance = object.__new__(pacdef.Pacdef)
         conf = object.__new__(pacdef.Config)
         aur_helper = object.__new__(pacdef.AURHelper)
         conf.aur_helper = aur_helper
+        if tmpdir is not None:
+            conf.groups_path = tmpdir
         instance._conf = conf
         return instance
 
-    @classmethod
-    def test_remove_unmanaged_packages_none(cls):
-        instance = cls._get_test_instance()
+    def test_remove_unmanaged_packages_none(self):
+        instance = self._get_instance()
         with mock.patch.object(instance, '_get_unmanaged_packages', lambda: []):
             with pytest.raises(SystemExit):
                 instance.remove_unmanaged_packages()
 
-    @classmethod
     @pytest.mark.parametrize('packages', [
         [
             ['neovim'],
             ['neovim', 'python'],
         ]
     ])
-    def test_remove_unmanaged_packages_for_packages(cls, packages):
+    def test_remove_unmanaged_packages_for_packages(self, packages):
         def check_valid(_, args: list[str]) -> None:
             for arg in args:
                 assert arg in packages
 
-        instance = cls._get_test_instance()
+        instance = self._get_instance()
         with mock.patch.object(instance._conf.aur_helper, 'remove', check_valid):
             with mock.patch.object(instance, '_get_unmanaged_packages', lambda: packages):
                 with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
@@ -331,14 +330,12 @@ class TestPacdef:
     def test_show_group(self):
         pass  # TODO
 
-    @classmethod
-    def test_install_packages_from_groups_none(cls):
-        instance = cls._get_test_instance()
+    def test_install_packages_from_groups_none(self):
+        instance = self._get_instance()
         with mock.patch.object(instance, '_calculate_packages_to_install', lambda: []):
             with pytest.raises(SystemExit):
                 instance.install_packages_from_groups()
 
-    @classmethod
     @pytest.mark.parametrize(
         'packages',
         [
@@ -347,12 +344,12 @@ class TestPacdef:
             ['neovim', 'repo/python'],
         ]
     )
-    def test_install_packages_from_groups_for_packages(cls, packages):
+    def test_install_packages_from_groups_for_packages(self, packages):
         def check_valid(_, args: list[str]) -> None:
             for arg in args:
                 assert arg in packages
 
-        instance = cls._get_test_instance()
+        instance = self._get_instance()
         with mock.patch.object(instance._conf.aur_helper, 'install', check_valid):
             with mock.patch.object(instance, '_calculate_packages_to_install', lambda: packages):
                 with mock.patch.object(pacdef, 'get_user_confirmation', lambda: None):
@@ -361,7 +358,6 @@ class TestPacdef:
     def test_show_unmanaged_packages(self, capsys):
         self._test_basic_printing_function('show_unmanaged_packages', '_get_unmanaged_packages', capsys)
 
-    @classmethod
     @pytest.mark.parametrize(
         'pacdef_packages, installed_packages, expected_result',
         [
@@ -373,14 +369,13 @@ class TestPacdef:
             (['repo/base'], ['base'], []),
         ]
     )
-    def test__calculate_packages_to_install(cls, pacdef_packages, installed_packages, expected_result):
-        instance = cls._get_test_instance()
+    def test__calculate_packages_to_install(self, pacdef_packages, installed_packages, expected_result):
+        instance = self._get_instance()
         with mock.patch.object(instance, '_get_managed_packages', lambda: pacdef_packages):
             with mock.patch.object(instance._conf.aur_helper, 'get_all_installed_packages', lambda: installed_packages):
                 result = instance._calculate_packages_to_install()
                 assert result == expected_result
 
-    @classmethod
     @pytest.mark.parametrize(
         'pacdef_packages, installed_packages, expected_result',
         [
@@ -392,8 +387,8 @@ class TestPacdef:
             (['repo/base'], ['base'], []),
         ]
     )
-    def test_get_unmanaged_packages(cls, pacdef_packages, installed_packages, expected_result):
-        instance = cls._get_test_instance()
+    def test_get_unmanaged_packages(self, pacdef_packages, installed_packages, expected_result):
+        instance = self._get_instance()
         with mock.patch.object(instance, '_get_managed_packages', lambda: pacdef_packages):
             with mock.patch.object(instance._conf.aur_helper, 'get_explicitly_installed_packages',
                                    lambda: installed_packages):
@@ -408,7 +403,7 @@ class TestPacdef:
 
     def test__get_groups(self, tmpdir, caplog):
         tmpdir = Path(tmpdir)
-        instance = self._get_test_instance()
+        instance = self._get_instance()
         instance._conf.groups_path = tmpdir
         caplog.set_level(logging.WARNING)
 
