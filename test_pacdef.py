@@ -204,7 +204,7 @@ class TestAURHelper:
         ]
     )
     def test_install(self, packages):
-        def check_valid(command):
+        def check_valid(_, command):
             self.check_switches_valid(command, pacdef.AURHelper._Switches.install.value)
             self.check_switches_before_packages(command, pacdef.AURHelper._Switches.install.value)
             self.check_packages_present(command, packages)
@@ -221,7 +221,7 @@ class TestAURHelper:
         ]
     )
     def test_remove(self, packages):
-        def check_valid(command):
+        def check_valid(_, command):
             self.check_switches_valid(command, pacdef.AURHelper._Switches.remove.value)
             self.check_switches_before_packages(command, pacdef.AURHelper._Switches.remove.value)
             self.check_packages_present(command, packages)
@@ -305,7 +305,7 @@ class TestPacdef:
         ]
     ])
     def test_remove_unmanaged_packages_for_packages(self, packages):
-        def check_valid(_, args: list[str]) -> None:
+        def check_valid(args: list[str]) -> None:
             for arg in args:
                 assert arg in packages
 
@@ -345,7 +345,7 @@ class TestPacdef:
         ]
     )
     def test_install_packages_from_groups_for_packages(self, packages):
-        def check_valid(_, args: list[str]) -> None:
+        def check_valid(args: list[str]) -> None:
             for arg in args:
                 assert arg in packages
 
