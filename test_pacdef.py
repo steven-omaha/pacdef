@@ -95,7 +95,7 @@ class TestConfig:
         pacdef.Config._write_config_stub(tmpfile)
         config = configparser.ConfigParser()
         config.read(tmpfile)
-        assert config['misc']['aur_helper'] == 'paru'
+        assert config['misc']['aur_helper'] == str(pacdef.PARU)
 
     @staticmethod
     def test___init__(tmpdir, monkeypatch):

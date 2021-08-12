@@ -282,7 +282,7 @@ class Config:
         logging.info(f'Created config stub under {config_file}')
         with open(config_file, 'w') as fd:
             fd.write('[misc]\n')
-            fd.write('aur_helper = paru\n')
+            fd.write(f'aur_helper = {PARU}\n')
 
 
 class AURHelper:
