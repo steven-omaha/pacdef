@@ -318,8 +318,52 @@ class TestPacdef:
     def test_show_groups(self, capsys):
         self._test_basic_printing_function('show_groups', '_get_group_names', capsys)
 
-    def test_import_groups(self):
-        pass  # TODO
+    def test_import_groups(self, caplog, tmpdir):
+        def test_nonexistant(args):
+            caplog.clear()
+            with pytest.raises(SystemExit):
+                instance.import_groups(args)
+
+        def test_existing(args):
+            caplog.clear()
+            count_before = len(list(groupdir.iterdir()))
+            instance.import_groups(args)
+            assert len(caplog.records) == 0
+            count_after = len(list(groupdir.iterdir()))
+            assert count_after == count_before + len(args.files)
+
+        def test_already_imported(args):
+            caplog.clear()
+            count_before = len(list(groupdir.iterdir()))
+            instance.import_groups(args)
+            assert len(caplog.records) == 2
+            for package, record in zip(args.files, caplog.records):
+                assert str(package) in record.message
+            count_after = len(list(groupdir.iterdir()))
+            assert count_after == count_before
+
+        tmpdir = Path(tmpdir)
+        groupdir = tmpdir.joinpath('groups')
+        workdir = tmpdir.joinpath('work')
+        groupdir.mkdir()
+        workdir.mkdir()
+        caplog.set_level(logging.WARNING)
+
+        new_group_files = [workdir.joinpath(f'new_group_{x}') for x in range(3)]
+        instance = self._get_instance(groupdir)
+        args = object.__new__(pacdef.Arguments)
+        args.files = [new_group_files[0]]
+
+        test_nonexistant(args)
+        new_group_files[0].touch()
+        test_existing(args)
+
+        for f in new_group_files:
+            f.touch()
+        args.files = new_group_files[1:]
+        test_existing(args)
+
+        test_already_imported(args)
 
     def test_remove_group(self):
         pass  # TODO
