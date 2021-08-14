@@ -121,8 +121,8 @@ def _get_path_from_group_name(conf: Config, group_name: str) -> Path:
 
 
 def _get_user_confirmation() -> None:
-    user_input = input('Continue? [y/N] ').lower()
-    if len(user_input) > 1 or user_input != 'y':
+    user_input = input('Continue? [Y/n] ').lower()
+    if user_input != 'y' or len(user_input) == 0:
         sys.exit(0)
 
 
