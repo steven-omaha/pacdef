@@ -12,6 +12,10 @@ from os import environ
 from pathlib import Path
 from typing import Optional
 
+EXIT_SUCCESS = 0
+EXIT_ERROR = 1
+EXIT_INTERRUPT = 130
+
 COMMENT = '#'
 PARU = Path('/usr/bin/paru')
 VERSION = 'unknown'
@@ -198,7 +202,7 @@ class Arguments:
                 return action
         else:
             logging.error('Did not understand what you want me to do')
-            sys.exit(1)
+            sys.exit(EXIT_ERROR)
 
     @staticmethod
     def _parse_groups(args: argparse.Namespace) -> Optional[list[str]]:
@@ -307,7 +311,7 @@ class AURHelper:
             subprocess.call([str(self._path)] + command)
         except FileNotFoundError:
             logging.error(f'Could not start the AUR helper "{self._path}".')
-            sys.exit(1)
+            sys.exit(EXIT_ERROR)
 
     def _check_output(self, query: list[str]) -> list[str]:
         command = [str(self._path)] + query
@@ -340,7 +344,7 @@ class Pacdef:
         unmanaged_packages = self._get_unmanaged_packages()
         if len(unmanaged_packages) == 0:
             print('nothing to do')
-            sys.exit(0)
+            sys.exit(EXIT_SUCCESS)
         print('Would remove the following packages and their dependencies:')
         for package in unmanaged_packages:
             print(package)
@@ -358,7 +362,7 @@ class Pacdef:
             path = Path(f)
             if not file_exists(path):
                 logging.error(f'Cannot import {f}. Is it an existing file?')
-                sys.exit(1)
+                sys.exit(EXIT_ERROR)
         for f in args.files:
             path = Path(f)
             link_target = self._conf.groups_path.joinpath(f.name)
@@ -375,7 +379,7 @@ class Pacdef:
                 found_groups.append(group_file)
             else:
                 logging.error(f'Did not find the group {group_name}')
-                sys.exit(1)
+                sys.exit(EXIT_ERROR)
         for path in found_groups:
             path.unlink()
 
@@ -384,9 +388,9 @@ class Pacdef:
             packages = get_packages_from_group(group)
             if args.package in packages:
                 print(group.name)
-                sys.exit(0)
+                sys.exit(EXIT_SUCCESS)
         else:
-            sys.exit(1)
+            sys.exit(EXIT_ERROR)
 
     def show_group(self, args: Arguments) -> None:
         groups_to_show = args.groups
@@ -394,7 +398,7 @@ class Pacdef:
         for group_name in groups_to_show:
             if group_name not in imported_groups_name:
                 logging.error(f"I don't know the group {group_name}.")
-                sys.exit(1)
+                sys.exit(EXIT_ERROR)
         for group_name in groups_to_show:
             group = get_path_from_group_name(self._conf, group_name)
             packages = get_packages_from_group(group)
@@ -405,7 +409,7 @@ class Pacdef:
         to_install = self._calculate_packages_to_install()
         if len(to_install) == 0:
             print('nothing to do')
-            sys.exit(0)
+            sys.exit(EXIT_SUCCESS)
         print('Would install the following packages:')
         for package in to_install:
             print(package)
@@ -479,4 +483,4 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        sys.exit(130)
+        sys.exit(EXIT_INTERRUPT)
