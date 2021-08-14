@@ -346,14 +346,14 @@ class Pacdef:
         for group in groups:
             print(group)
 
-    def import_groups(self, args: Arguments) -> None:
+    def import_groups(self) -> None:
         # check if all file-arguments exist before we do anything (be atomic)
-        for f in args.files:
+        for f in self._args.files:
             path = Path(f)
             if not _file_exists(path):
                 logging.error(f'Cannot import {f}. Is it an existing file?')
                 sys.exit(EXIT_ERROR)
-        for f in args.files:
+        for f in self._args.files:
             path = Path(f)
             link_target = self._conf.groups_path.joinpath(f.name)
             if _file_exists(link_target):
@@ -361,9 +361,9 @@ class Pacdef:
             else:
                 link_target.symlink_to(path.absolute())
 
-    def remove_group(self, args: Arguments) -> None:
+    def remove_group(self) -> None:
         found_groups = []
-        for group_name in args.groups:
+        for group_name in self._args.groups:
             group_file = self._conf.groups_path.joinpath(group_name)
             if group_file.is_symlink() or _file_exists(group_file):
                 found_groups.append(group_file)
@@ -373,17 +373,17 @@ class Pacdef:
         for path in found_groups:
             path.unlink()
 
-    def search_package(self, args: Arguments):
+    def search_package(self):
         for group in self._conf.groups_path.iterdir():
             packages = _get_packages_from_group(group)
-            if args.package in packages:
+            if self._args.package in packages:
                 print(group.name)
                 sys.exit(EXIT_SUCCESS)
         else:
             sys.exit(EXIT_ERROR)
 
-    def show_group(self, args: Arguments) -> None:
-        groups_to_show = args.groups
+    def show_group(self) -> None:
+        groups_to_show = self._args.groups
         imported_groups_name = self._get_group_names()
         for group_name in groups_to_show:
             if group_name not in imported_groups_name:
