@@ -30,7 +30,7 @@ def _main():
     pacdef.run_action_from_arg()
 
 
-def _get_packages_from_group(group: Path) -> list[str]:
+def _get_packages_from_group(group: Path) -> list[Package]:
     text = group.read_text()
     lines = text.split('\n')[:-1]  # last line is empty
     packages = []
@@ -41,44 +41,17 @@ def _get_packages_from_group(group: Path) -> list[str]:
     return packages
 
 
-def _get_package_from_line(line: str) -> Optional[str]:
+def _get_package_from_line(line: str) -> Optional[Package]:
     before_comment = line.split(COMMENT)[0]
     package_name = before_comment.strip()
     if len(package_name) >= 0:
-        return package_name
+        return Package(package_name)
     else:
         return None
 
 
-def _remove_repo_prefix_from_packages(pacdef_packages: list[str]) -> list[str]:
-    result = []
-    for package_string in pacdef_packages:
-        package = _remove_repo_prefix_from_package(package_string)
-        result.append(package)
-    return result
-
-
-def _remove_repo_prefix_from_package(package_string: str) -> str:
-    """
-    Takes a string in the form `repository/package` and returns the package name only. Returns `package_string` if it
-    does not contain a repository prefix.
-    :param package_string: string of a single package, optionally starting with a repository prefix
-    :return: package name
-    """
-    if '/' in package_string:
-        try:
-            repo, package = package_string.split('/')
-        except ValueError:  # too many values to unpack
-            logging.error(f'could not split this line into repo and package:\n{package_string}')
-            sys.exit(1)
-    else:
-        package = package_string
-    return package
-
-
 def _calculate_package_diff(
-        system_packages: list[str], pacdef_packages: list[str], keep_prefix: bool = False
-) -> tuple[list[str], list[str]]:
+        system_packages: list[Package], pacdef_packages: list[Package]) -> tuple[list[Package], list[Package]]:
     """
     Using a custom repository that contains a different version of a package that is also present in the standard repos
     requires distinguishing which version we want to install. Adding the repo in front of the package name (like
@@ -87,7 +60,6 @@ def _calculate_package_diff(
 
     :param system_packages: list of packages known by the system
     :param pacdef_packages: list of packages known by pacdef, optionally with repository prefix
-    :param keep_prefix: if a repository prefix exists in a pacdef package, keep it (default: False)
     :return: 2-tuple: list of packages exclusively in argument 1, list of packages exclusively in argument 2
     """
     logging.debug('calculate_package_diff')
@@ -95,16 +67,12 @@ def _calculate_package_diff(
     logging.debug(f'{pacdef_packages=}')
     system_only = []
     pacdef_only = []
-    pacdef_packages_without_prefix = _remove_repo_prefix_from_packages(pacdef_packages)
     for package in system_packages:
-        if package not in pacdef_packages_without_prefix:
+        if package not in pacdef_packages:
             system_only.append(package)
-    for package, package_without_prefix in zip(pacdef_packages, pacdef_packages_without_prefix):
-        if package_without_prefix not in system_packages:
-            if keep_prefix:
-                pacdef_only.append(package)
-            else:
-                pacdef_only.append(package_without_prefix)
+    for package in pacdef_packages:
+        if package not in system_packages:
+            pacdef_only.append(package)
     logging.debug(f'{system_only=}')
     logging.debug(f'{pacdef_only=}')
     return system_only, pacdef_only
@@ -133,13 +101,13 @@ class Arguments:
         self.action: Action = self._parse_action(args)
         self.files: Optional[list[Path]] = self._parse_files(args)
         self.groups: Optional[list[str]] = self._parse_groups(args)
-        self.package: Optional[str] = self._parse_package(args)
+        self.package: Optional[Package] = self._parse_package(args)
 
     @staticmethod
-    def _parse_package(args: argparse.Namespace) -> Optional[str]:
+    def _parse_package(args: argparse.Namespace) -> Optional[Package]:
         if not hasattr(args, 'package'):
             return
-        return args.package
+        return Package(args.package)
 
     @staticmethod
     def _setup_parser() -> argparse.ArgumentParser:
@@ -287,19 +255,25 @@ class AURHelper:
         result_list = result.split('\n')[:-1]  # last entry is zero-length
         return result_list
 
-    def install(self, packages: list[str]) -> None:
-        command: list[str] = self._Switches.install + packages
+    def install(self, packages: list[Package]) -> None:
+        packages_str = [str(p) for p in packages]
+        command: list[str] = self._Switches.install + packages_str
         self._execute(command)
 
-    def remove(self, packages: list[str]) -> None:
-        command: list[str] = self._Switches.remove + packages
+    def remove(self, packages: list[Package]) -> None:
+        packages_str = [str(p) for p in packages]
+        command: list[str] = self._Switches.remove + packages_str
         self._execute(command)
 
-    def get_all_installed_packages(self) -> list[str]:
-        return self._get_output(self._Switches.installed_packages)
+    def get_all_installed_packages(self) -> list[Package]:
+        packages: list[str] = self._get_output(self._Switches.installed_packages)
+        instances = [Package(p) for p in packages]
+        return instances
 
-    def get_explicitly_installed_packages(self) -> list[str]:
-        return self._get_output(self._Switches.explicitly_installed_packages)
+    def get_explicitly_installed_packages(self) -> list[Package]:
+        packages = self._get_output(self._Switches.explicitly_installed_packages)
+        instances = [Package(p) for p in packages]
+        return instances
 
     @classmethod
     def from_config(cls, config: Config) -> AURHelper:
@@ -411,20 +385,20 @@ class Pacdef:
         for package in unmanaged_packages:
             print(package)
 
-    def _calculate_packages_to_install(self) -> list[str]:
+    def _calculate_packages_to_install(self) -> list[Package]:
         pacdef_packages = self._get_managed_packages()
         installed_packages = self._aur_helper.get_all_installed_packages()
-        _, pacdef_only = _calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
+        _, pacdef_only = _calculate_package_diff(installed_packages, pacdef_packages)
         return pacdef_only
 
-    def _get_unmanaged_packages(self) -> list[str]:
+    def _get_unmanaged_packages(self) -> list[Package]:
         managed_packages = self._get_managed_packages()
         explicitly_installed_packages = self._aur_helper.get_explicitly_installed_packages()
         unmanaged_packages, _ = _calculate_package_diff(explicitly_installed_packages, managed_packages)
         unmanaged_packages.sort()
         return unmanaged_packages
 
-    def _get_managed_packages(self) -> list[str]:
+    def _get_managed_packages(self) -> list[Package]:
         packages = []
         for group in self._conf.groups_path.iterdir():
             content = _get_packages_from_group(group)
@@ -442,14 +416,58 @@ class Pacdef:
         groups = [group for group in self._conf.groups_path.iterdir()]
         groups.sort()
         for group in groups:
-            if group.is_dir():
-                logging.warning(f'found directory {group} in {self._conf.groups_path}')
-            if group.is_symlink() and not group.exists():
-                logging.warning(f'found group {group}, but it is a broken symlink')
-            if not group.is_symlink() and group.is_file():
-                logging.warning(f'found group {group}, but it is not a symlink')
+            self._sanity_check(group)
         logging.debug(f'{groups=}')
         return groups
+
+    def _sanity_check(self, group):
+        if group.is_dir():
+            logging.warning(f'found directory {group} in {self._conf.groups_path}')
+        elif group.is_symlink() and not group.exists():
+            logging.warning(f'found group {group}, but it is a broken symlink')
+        elif not group.is_symlink() and group.is_file():
+            logging.warning(f'found group {group}, but it is not a symlink')
+        else:
+            ...
+
+
+class Package:
+    def __init__(self, package_string: str):
+        self.name: str
+        self.repo: Optional[str]
+        self.name, self.repo = self._split_into_name_and_repo(package_string)
+
+    def __eq__(self, other: Package):
+        return self.name == other.name
+
+    def __repr__(self):
+        if self.repo is not None:
+            result = f"{self.repo}/{self.name}"
+        else:
+            result = self.name
+        return result
+
+    def __lt__(self, other: Package):
+        return self.name < other.name
+
+    @staticmethod
+    def _split_into_name_and_repo(package_string: str) -> tuple[str, Optional[str]]:
+        """
+        Takes a string in the form `repository/package` and returns the package name only. Returns `package_string` if
+        it does not contain a repository prefix.
+        :param package_string: string of a single package, optionally starting with a repository prefix
+        :return: package name
+        """
+        if '/' in package_string:
+            try:
+                repo, name = package_string.split('/')
+            except ValueError:  # too many values to unpack
+                logging.error(f'could not split this line into repo and package:\n{package_string}')
+                sys.exit(EXIT_ERROR)
+        else:
+            repo = None
+            name = package_string
+        return name, repo
 
 
 def _setup_logger():
