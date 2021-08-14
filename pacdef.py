@@ -293,8 +293,6 @@ class AURHelper:
         installed_packages = ['--query', '--quiet']
         explicitly_installed_packages = ['--query', '--quiet', '--explicit']
 
-    _path: Path
-
     def __init__(self, path: Path):
         if not path.is_absolute():
             path = Path('/usr/bin').joinpath(path)
