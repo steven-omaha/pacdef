@@ -127,17 +127,13 @@ def _get_user_confirmation() -> None:
 
 
 class Arguments:
-    action: Action
-    files: Optional[list[Path]]
-    groups: Optional[list[str]]
-    package: Optional[str]
-
     def __init__(self):
-        args = self._parse_basic_args()
-        self.action = self._parse_action(args)
-        self.files = self._parse_files(args)
-        self.groups = self._parse_groups(args)
-        self.package = self._parse_package(args)
+        parser = self._setup_parser()
+        args = parser.parse_args()
+        self.action: Action = self._parse_action(args)
+        self.files: Optional[list[Path]] = self._parse_files(args)
+        self.groups: Optional[list[str]] = self._parse_groups(args)
+        self.package: Optional[str] = self._parse_package(args)
 
     @staticmethod
     def _parse_package(args: argparse.Namespace) -> Optional[str]:
@@ -146,8 +142,7 @@ class Arguments:
         return args.package
 
     @staticmethod
-    def _parse_basic_args() -> argparse.Namespace:
-        # REFACTOR: Split responsibilities: set up parser, do the parsing
+    def _setup_parser() -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
         subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
         subparsers.add_parser(Action.clean.value, help='uninstall packages not managed by pacdef')
@@ -163,8 +158,7 @@ class Arguments:
         subparsers.add_parser(Action.sync.value, help='install packages from all imported groups')
         subparsers.add_parser(Action.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
         subparsers.add_parser(Action.version.value, help='show version info')
-        args = parser.parse_args()
-        return args
+        return parser
 
     @staticmethod
     def _parse_files(args: argparse.Namespace) -> Optional[list[Path]]:
@@ -198,7 +192,6 @@ def _file_exists(path: Path) -> bool:
 
 
 class Action(Enum):
-    # REFACTOR: Use singular for class name?
     clean = 'clean'
     groups = 'groups'
     import_ = 'import'
