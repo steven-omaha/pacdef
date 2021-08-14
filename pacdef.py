@@ -10,7 +10,7 @@ import sys
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Callable
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
@@ -23,30 +23,11 @@ VERSION = 'unknown'
 
 def _main():
     _setup_logger()
-    pacdef = Pacdef()
     args = Arguments()
-
-    if args.action == Actions.clean:
-        pacdef.remove_unmanaged_packages()
-    elif args.action == Actions.groups:
-        pacdef.show_groups()
-    elif args.action == Actions.import_:
-        pacdef.import_groups(args)
-    elif args.action == Actions.remove:
-        pacdef.remove_group(args)
-    elif args.action == Actions.search:
-        pacdef.search_package(args)
-    elif args.action == Actions.show:
-        pacdef.show_group(args)
-    elif args.action == Actions.sync:
-        pacdef.install_packages_from_groups()
-    elif args.action == Actions.unmanaged:
-        pacdef.show_unmanaged_packages()
-    elif args.action == Actions.version:
-        show_version()
-    else:
-        logging.error('This should not happen.')
-        sys.exit(1)
+    config = Config()
+    helper = AURHelper.from_config(config)
+    pacdef = Pacdef(args=args, config=config, aur_helper=helper)
+    pacdef.run_action_from_arg()
 
 
 def _get_packages_from_group(group: Path) -> list[str]:
@@ -230,7 +211,7 @@ class Action(Enum):
 
 
 class Config:
-    aur_helper: AURHelper
+    aur_helper: Path
     groups_path: Path
     _CONFIG_STUB = f"[misc]\naur_helper = {PARU}\n"
 
@@ -262,7 +243,7 @@ class Config:
         return config_base_dir
 
     @classmethod
-    def _get_aur_helper(cls, config_file: Path) -> AURHelper:
+    def _get_aur_helper(cls, config_file: Path) -> Path:
         config = configparser.ConfigParser()
 
         try:
@@ -277,8 +258,7 @@ class Config:
             path = PARU
             cls._write_config_stub(config_file)
 
-        aur_helper = AURHelper(path)
-        return aur_helper
+        return path
 
     @classmethod
     def _write_config_stub(cls, config_file: Path):
@@ -328,12 +308,34 @@ class AURHelper:
     def get_explicitly_installed_packages(self) -> list[str]:
         return self._get_output(self._Switches.explicitly_installed_packages)
 
+    @classmethod
+    def from_config(cls, config: Config) -> AURHelper:
+        return cls(path=config.aur_helper)
+
 
 class Pacdef:
-    _conf: Config
+    def __init__(self, args: Arguments = None, config: Config = None, aur_helper: AURHelper = None):
+        self._conf = config or Config()
+        self._args = args or Arguments()
+        self._aur_helper = aur_helper or AURHelper(PARU)
 
-    def __init__(self):
-        self._conf = Config()
+    def _get_action_map(self) -> dict[Action, Callable]:
+        ACTION_MAP = {
+            Action.clean: self.remove_unmanaged_packages,
+            Action.groups: self.show_groups,
+            Action.import_: self.import_groups,
+            Action.remove: self.remove_group,
+            Action.search: self.search_package,
+            Action.show: self.show_group,
+            Action.sync: self.install_packages_from_groups,
+            Action.unmanaged: self.show_unmanaged_packages,
+            Action.version: _show_version,
+        }
+        return ACTION_MAP
+
+    def run_action_from_arg(self):
+        action_fn = self._get_action_map()[self._args.action]
+        return action_fn()
 
     def remove_unmanaged_packages(self):
         unmanaged_packages = self._get_unmanaged_packages()
@@ -344,7 +346,7 @@ class Pacdef:
         for package in unmanaged_packages:
             print(package)
         _get_user_confirmation()
-        self._conf.aur_helper.remove(unmanaged_packages)
+        self._aur_helper.remove(unmanaged_packages)
 
     def show_groups(self):
         groups = self._get_group_names()
@@ -409,7 +411,7 @@ class Pacdef:
         for package in to_install:
             print(package)
         _get_user_confirmation()
-        self._conf.aur_helper.install(to_install)
+        self._aur_helper.install(to_install)
 
     def show_unmanaged_packages(self) -> None:
         unmanaged_packages = self._get_unmanaged_packages()
@@ -418,13 +420,13 @@ class Pacdef:
 
     def _calculate_packages_to_install(self) -> list[str]:
         pacdef_packages = self._get_managed_packages()
-        installed_packages = self._conf.aur_helper.get_all_installed_packages()
+        installed_packages = self._aur_helper.get_all_installed_packages()
         _, pacdef_only = _calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
         return pacdef_only
 
     def _get_unmanaged_packages(self) -> list[str]:
         managed_packages = self._get_managed_packages()
-        explicitly_installed_packages = self._conf.aur_helper.get_explicitly_installed_packages()
+        explicitly_installed_packages = self._aur_helper.get_explicitly_installed_packages()
         unmanaged_packages, _ = _calculate_package_diff(explicitly_installed_packages, managed_packages)
         unmanaged_packages.sort()
         return unmanaged_packages
