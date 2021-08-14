@@ -287,7 +287,7 @@ class Config:
 
 
 class AURHelper:
-    class _Switches(Enum):
+    class _Switches:
         install = ['--sync', '--refresh', '--needed']
         remove = ['--remove', '--recursive']
         installed_packages = ['--query', '--quiet']
@@ -317,18 +317,18 @@ class AURHelper:
         return result_list
 
     def install(self, packages: list[str]) -> None:
-        command: list[str] = self._Switches.install.value + packages
+        command: list[str] = self._Switches.install + packages
         self._execute(command)
 
     def remove(self, packages: list[str]) -> None:
-        command: list[str] = self._Switches.remove.value + packages
+        command: list[str] = self._Switches.remove + packages
         self._execute(command)
 
     def get_all_installed_packages(self) -> list[str]:
-        return self._check_output(self._Switches.installed_packages.value)
+        return self._check_output(self._Switches.installed_packages)
 
     def get_explicitly_installed_packages(self) -> list[str]:
-        return self._check_output(self._Switches.explicitly_installed_packages.value)
+        return self._get_output(self._Switches.explicitly_installed_packages)
 
 
 class Pacdef:
