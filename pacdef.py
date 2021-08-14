@@ -170,6 +170,7 @@ class Arguments:
 
     @staticmethod
     def _parse_basic_args() -> argparse.Namespace:
+        # REFACTOR: Split responsibilities: set up parser, do the parsing
         parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
         subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
         subparsers.add_parser(Actions.clean.value, help='uninstall packages not managed by pacdef')
@@ -220,6 +221,7 @@ def file_exists(path: Path) -> bool:
 
 
 class Actions(Enum):
+    # REFACTOR: Use singular for class name?
     clean = 'clean'
     groups = 'groups'
     import_ = 'import'
