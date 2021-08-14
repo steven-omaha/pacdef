@@ -308,7 +308,7 @@ class AURHelper:
             logging.error(f'Could not start the AUR helper "{self._path}".')
             sys.exit(EXIT_ERROR)
 
-    def _check_output(self, query: list[str]) -> list[str]:
+    def _get_output(self, query: list[str]) -> list[str]:
         command = [str(self._path)] + query
         result = subprocess.check_output(command).decode('utf-8')
         result_list = result.split('\n')[:-1]  # last entry is zero-length
@@ -323,7 +323,7 @@ class AURHelper:
         self._execute(command)
 
     def get_all_installed_packages(self) -> list[str]:
-        return self._check_output(self._Switches.installed_packages)
+        return self._get_output(self._Switches.installed_packages)
 
     def get_explicitly_installed_packages(self) -> list[str]:
         return self._get_output(self._Switches.explicitly_installed_packages)
