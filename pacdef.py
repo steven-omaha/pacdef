@@ -32,7 +32,7 @@ def _main():
 
 def _get_packages_from_group(group: Path) -> list[str]:
     text = group.read_text()
-    lines = text.split('\n')
+    lines = text.split('\n')[:-1]  # last line is empty
     packages = []
     for line in lines:
         package = _get_package_from_line(line)
