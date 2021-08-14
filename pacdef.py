@@ -463,7 +463,7 @@ def _setup_logger():
     except KeyError:
         level_name = 'WARNING'
 
-    level: int = logging.getLevelName(level_name)
+    level: int = logging.getLevelName(level_name.upper())
     if level < logging.WARNING:
         logging.basicConfig(format='%(levelname)s:%(lineno)d: %(message)s', level=level)
     else:
