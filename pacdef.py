@@ -146,7 +146,7 @@ def _get_user_confirmation() -> None:
 
 
 class Arguments:
-    action: Actions
+    action: Action
     files: Optional[list[Path]]
     groups: Optional[list[str]]
     package: Optional[str]
@@ -169,19 +169,19 @@ class Arguments:
         # REFACTOR: Split responsibilities: set up parser, do the parsing
         parser = argparse.ArgumentParser(description='a declarative manager of Arch packages')
         subparsers = parser.add_subparsers(dest='action', required=True, metavar='<action>')
-        subparsers.add_parser(Actions.clean.value, help='uninstall packages not managed by pacdef')
-        subparsers.add_parser(Actions.groups.value, help='show names of imported groups')
-        parser_import = subparsers.add_parser(Actions.import_.value, help='import a new group file')
+        subparsers.add_parser(Action.clean.value, help='uninstall packages not managed by pacdef')
+        subparsers.add_parser(Action.groups.value, help='show names of imported groups')
+        parser_import = subparsers.add_parser(Action.import_.value, help='import a new group file')
         parser_import.add_argument('file', nargs='+', help='a group file')
-        parser_remove = subparsers.add_parser(Actions.remove.value, help='remove previously imported group')
+        parser_remove = subparsers.add_parser(Action.remove.value, help='remove previously imported group')
         parser_remove.add_argument('group', nargs='+', help='a previously imported group')
-        parser_search = subparsers.add_parser(Actions.search.value, help='show the group containing a package')
+        parser_search = subparsers.add_parser(Action.search.value, help='show the group containing a package')
         parser_search.add_argument('package', help='the package to search for')
-        parser_show_group = subparsers.add_parser(Actions.show.value, help='show packages under an imported group')
+        parser_show_group = subparsers.add_parser(Action.show.value, help='show packages under an imported group')
         parser_show_group.add_argument('group', nargs='+', help='a previously imported group')
-        subparsers.add_parser(Actions.sync.value, help='install packages from all imported groups')
-        subparsers.add_parser(Actions.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
-        subparsers.add_parser(Actions.version.value, help='show version info')
+        subparsers.add_parser(Action.sync.value, help='install packages from all imported groups')
+        subparsers.add_parser(Action.unmanaged.value, help='show explicitly installed packages not managed by pacdef')
+        subparsers.add_parser(Action.version.value, help='show version info')
         args = parser.parse_args()
         return args
 
@@ -193,8 +193,8 @@ class Arguments:
         return files
 
     @staticmethod
-    def _parse_action(args: argparse.Namespace) -> Actions:
-        for _, action in Actions.__members__.items():
+    def _parse_action(args: argparse.Namespace) -> Action:
+        for _, action in Action.__members__.items():
             if action.value == args.action:
                 return action
         else:
@@ -216,7 +216,7 @@ def _file_exists(path: Path) -> bool:
     return path.exists() and path.is_file()
 
 
-class Actions(Enum):
+class Action(Enum):
     # REFACTOR: Use singular for class name?
     clean = 'clean'
     groups = 'groups'
