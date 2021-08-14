@@ -50,12 +50,8 @@ def main():
 
 
 def get_packages_from_group(group: Path) -> list[str]:
-    try:
-        with open(group, 'r') as fd:
-            lines = fd.readlines()
-    except (IOError, FileNotFoundError):
-        logging.error(f'Could not read group file {group.absolute()}')
-        sys.exit(1)
+    text = group.read_text()
+    lines = text.split('\n')
     packages = []
     for line in lines:
         package = get_package_from_line(line)
@@ -236,6 +232,7 @@ class Actions(Enum):
 class Config:
     aur_helper: AURHelper
     groups_path: Path
+    _CONFIG_STUB = f"[misc]\naur_helper = {PARU}\n"
 
     def __init__(self):
         config_base_dir = self._get_xdg_config_home()
@@ -286,9 +283,7 @@ class Config:
     @classmethod
     def _write_config_stub(cls, config_file: Path):
         logging.info(f'Created config stub under {config_file}')
-        with open(config_file, 'w') as fd:
-            fd.write('[misc]\n')
-            fd.write(f'aur_helper = {PARU}\n')
+        config_file.write_text(cls._CONFIG_STUB)
 
 
 class AURHelper:
