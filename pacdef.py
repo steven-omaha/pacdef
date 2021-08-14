@@ -459,7 +459,7 @@ class Pacdef:
 
 def _setup_logger():
     try:
-        level_name = environ['LOGLEVEL']
+        level_name: str = environ['LOGLEVEL']
     except KeyError:
         level_name = 'WARNING'
 
