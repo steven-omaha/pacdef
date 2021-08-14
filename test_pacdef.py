@@ -22,20 +22,20 @@ def test_dir_exists(tmpdir):
     tmpdir = Path(tmpdir)
     tmpfile = tmpdir.joinpath('tmpfile')
     tmpfile.touch()
-    assert not pacdef.dir_exists(tmpfile)
+    assert not pacdef._dir_exists(tmpfile)
     tmpfile.unlink()
-    assert not pacdef.dir_exists(tmpfile)
-    assert pacdef.dir_exists(tmpdir)
+    assert not pacdef._dir_exists(tmpfile)
+    assert pacdef._dir_exists(tmpdir)
 
 
 def test_file_exists(tmpdir):
     tmpfile = Path(tmpdir).joinpath('tmpfile')
     tmpfile.touch()
-    assert pacdef.file_exists(tmpfile)
+    assert pacdef._file_exists(tmpfile)
     tmpfile.unlink()
-    assert not pacdef.file_exists(tmpfile)
+    assert not pacdef._file_exists(tmpfile)
     tmpfile.mkdir()
-    assert not pacdef.file_exists(tmpfile)
+    assert not pacdef._file_exists(tmpfile)
 
 
 class TestConfig:
@@ -117,14 +117,14 @@ class TestConfig:
 @pytest.mark.parametrize('user_input', ['Y', 'y'])
 def test_get_user_confirmation_continue(user_input):
     with mock.patch.object(builtins, 'input', lambda _: user_input):
-        assert pacdef.get_user_confirmation() is None
+        assert pacdef._get_user_confirmation() is None
 
 
 @pytest.mark.parametrize('user_input', ['', 'n', 'N', 'asd#!|^l;"f'])
 def test_get_user_confirmation_exit(user_input):
     with mock.patch.object(builtins, 'input', lambda _: user_input):
         with pytest.raises(SystemExit):
-            pacdef.get_user_confirmation()
+            pacdef._get_user_confirmation()
 
 
 def test_get_path_from_group_name(tmpdir):
@@ -132,19 +132,19 @@ def test_get_path_from_group_name(tmpdir):
     conf.groups_path = Path(tmpdir)
     exists = Path(conf.groups_path.joinpath('exists'))
     exists.touch()
-    result = pacdef.get_path_from_group_name(conf, exists.name)
+    result = pacdef._get_path_from_group_name(conf, exists.name)
     assert result == exists
 
     with pytest.raises(FileNotFoundError):
-        pacdef.get_path_from_group_name(conf, "does not exist")
+        pacdef._get_path_from_group_name(conf, "does not exist")
 
     symlink = conf.groups_path.joinpath('symlink')
     symlink.symlink_to(exists)
-    result = pacdef.get_path_from_group_name(conf, symlink.name)
+    result = pacdef._get_path_from_group_name(conf, symlink.name)
     assert result == symlink
 
     exists.unlink()
-    result = pacdef.get_path_from_group_name(conf, symlink.name)
+    result = pacdef._get_path_from_group_name(conf, symlink.name)
     assert result == symlink
 
 
@@ -527,7 +527,7 @@ def test_remove_repo_prefix_from_package():
     ]
 )
 def test_calculate_package_diff_keep_prefix_no(pacdef_packages, system_packages, pacdef_only, system_only):
-    system_result, pacdef_result = pacdef.calculate_package_diff(system_packages, pacdef_packages, keep_prefix=False)
+    system_result, pacdef_result = pacdef._calculate_package_diff(system_packages, pacdef_packages, keep_prefix=False)
     assert system_result == system_only
     assert pacdef_result == pacdef_only
 
@@ -544,6 +544,6 @@ def test_calculate_package_diff_keep_prefix_no(pacdef_packages, system_packages,
     ]
 )
 def test_calculate_package_diff_keep_prefix_yes(pacdef_packages, system_packages, pacdef_only, system_only):
-    system_result, pacdef_result = pacdef.calculate_package_diff(system_packages, pacdef_packages, keep_prefix=True)
+    system_result, pacdef_result = pacdef._calculate_package_diff(system_packages, pacdef_packages, keep_prefix=True)
     assert system_result == system_only
     assert pacdef_result == pacdef_only

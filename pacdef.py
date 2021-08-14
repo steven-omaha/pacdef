@@ -21,8 +21,8 @@ PARU = Path('/usr/bin/paru')
 VERSION = 'unknown'
 
 
-def main():
-    setup_logger()
+def _main():
+    _setup_logger()
     pacdef = Pacdef()
     args = Arguments()
 
@@ -49,18 +49,18 @@ def main():
         sys.exit(1)
 
 
-def get_packages_from_group(group: Path) -> list[str]:
+def _get_packages_from_group(group: Path) -> list[str]:
     text = group.read_text()
     lines = text.split('\n')
     packages = []
     for line in lines:
-        package = get_package_from_line(line)
+        package = _get_package_from_line(line)
         if package is not None:
             packages.append(package)
     return packages
 
 
-def get_package_from_line(line: str) -> Optional[str]:
+def _get_package_from_line(line: str) -> Optional[str]:
     before_comment = line.split(COMMENT)[0]
     package_name = before_comment.strip()
     if len(package_name) >= 0:
@@ -69,15 +69,15 @@ def get_package_from_line(line: str) -> Optional[str]:
         return None
 
 
-def remove_repo_prefix_from_packages(pacdef_packages: list[str]) -> list[str]:
+def _remove_repo_prefix_from_packages(pacdef_packages: list[str]) -> list[str]:
     result = []
     for package_string in pacdef_packages:
-        package = remove_repo_prefix_from_package(package_string)
+        package = _remove_repo_prefix_from_package(package_string)
         result.append(package)
     return result
 
 
-def remove_repo_prefix_from_package(package_string: str) -> str:
+def _remove_repo_prefix_from_package(package_string: str) -> str:
     """
     Takes a string in the form `repository/package` and returns the package name only. Returns `package_string` if it
     does not contain a repository prefix.
@@ -95,7 +95,7 @@ def remove_repo_prefix_from_package(package_string: str) -> str:
     return package
 
 
-def calculate_package_diff(
+def _calculate_package_diff(
         system_packages: list[str], pacdef_packages: list[str], keep_prefix: bool = False
 ) -> tuple[list[str], list[str]]:
     """
@@ -114,7 +114,7 @@ def calculate_package_diff(
     logging.debug(f'{pacdef_packages=}')
     system_only = []
     pacdef_only = []
-    pacdef_packages_without_prefix = remove_repo_prefix_from_packages(pacdef_packages)
+    pacdef_packages_without_prefix = _remove_repo_prefix_from_packages(pacdef_packages)
     for package in system_packages:
         if package not in pacdef_packages_without_prefix:
             system_only.append(package)
@@ -129,9 +129,9 @@ def calculate_package_diff(
     return system_only, pacdef_only
 
 
-def get_path_from_group_name(conf: Config, group_name: str) -> Path:
+def _get_path_from_group_name(conf: Config, group_name: str) -> Path:
     group = conf.groups_path.joinpath(group_name)
-    if not file_exists(group):
+    if not _file_exists(group):
         if group.is_symlink():
             logging.warning(f'found group {group.absolute()}, but it is a broken symlink')
         else:
@@ -139,7 +139,7 @@ def get_path_from_group_name(conf: Config, group_name: str) -> Path:
     return group
 
 
-def get_user_confirmation() -> None:
+def _get_user_confirmation() -> None:
     user_input = input('Continue? [y/N] ').lower()
     if len(user_input) > 1 or user_input != 'y':
         sys.exit(0)
@@ -208,11 +208,11 @@ class Arguments:
         return args.group
 
 
-def dir_exists(path: Path) -> bool:
+def _dir_exists(path: Path) -> bool:
     return path.exists() and path.is_dir()
 
 
-def file_exists(path: Path) -> bool:
+def _file_exists(path: Path) -> bool:
     return path.exists() and path.is_file()
 
 
@@ -241,11 +241,11 @@ class Config:
         config_file = pacdef_path.joinpath('pacdef.conf')
         self.groups_path = pacdef_path.joinpath('groups')
 
-        if not dir_exists(pacdef_path):
+        if not _dir_exists(pacdef_path):
             pacdef_path.mkdir(parents=True)
-        if not dir_exists(self.groups_path):
+        if not _dir_exists(self.groups_path):
             self.groups_path.mkdir()
-        if not file_exists(config_file):
+        if not _file_exists(config_file):
             config_file.touch()
 
         self.aur_helper = self._get_aur_helper(config_file)
@@ -298,7 +298,7 @@ class AURHelper:
     def __init__(self, path: Path):
         if not path.is_absolute():
             path = Path('/usr/bin').joinpath(path)
-        if not file_exists(path):
+        if not _file_exists(path):
             raise FileNotFoundError(f'{path} not found.')
         self._path = path
         logging.info(f"AUR helper: {self._path}")
@@ -345,7 +345,7 @@ class Pacdef:
         print('Would remove the following packages and their dependencies:')
         for package in unmanaged_packages:
             print(package)
-        get_user_confirmation()
+        _get_user_confirmation()
         self._conf.aur_helper.remove(unmanaged_packages)
 
     def show_groups(self):
@@ -357,13 +357,13 @@ class Pacdef:
         # check if all file-arguments exist before we do anything (be atomic)
         for f in args.files:
             path = Path(f)
-            if not file_exists(path):
+            if not _file_exists(path):
                 logging.error(f'Cannot import {f}. Is it an existing file?')
                 sys.exit(EXIT_ERROR)
         for f in args.files:
             path = Path(f)
             link_target = self._conf.groups_path.joinpath(f.name)
-            if file_exists(link_target):
+            if _file_exists(link_target):
                 logging.warning(f'{f} already exists, skipping')
             else:
                 link_target.symlink_to(path.absolute())
@@ -372,7 +372,7 @@ class Pacdef:
         found_groups = []
         for group_name in args.groups:
             group_file = self._conf.groups_path.joinpath(group_name)
-            if group_file.is_symlink() or file_exists(group_file):
+            if group_file.is_symlink() or _file_exists(group_file):
                 found_groups.append(group_file)
             else:
                 logging.error(f'Did not find the group {group_name}')
@@ -382,7 +382,7 @@ class Pacdef:
 
     def search_package(self, args: Arguments):
         for group in self._conf.groups_path.iterdir():
-            packages = get_packages_from_group(group)
+            packages = _get_packages_from_group(group)
             if args.package in packages:
                 print(group.name)
                 sys.exit(EXIT_SUCCESS)
@@ -397,8 +397,8 @@ class Pacdef:
                 logging.error(f"I don't know the group {group_name}.")
                 sys.exit(EXIT_ERROR)
         for group_name in groups_to_show:
-            group = get_path_from_group_name(self._conf, group_name)
-            packages = get_packages_from_group(group)
+            group = _get_path_from_group_name(self._conf, group_name)
+            packages = _get_packages_from_group(group)
             for package in packages:
                 print(package)
 
@@ -410,7 +410,7 @@ class Pacdef:
         print('Would install the following packages:')
         for package in to_install:
             print(package)
-        get_user_confirmation()
+        _get_user_confirmation()
         self._conf.aur_helper.install(to_install)
 
     def show_unmanaged_packages(self) -> None:
@@ -421,20 +421,20 @@ class Pacdef:
     def _calculate_packages_to_install(self) -> list[str]:
         pacdef_packages = self._get_managed_packages()
         installed_packages = self._conf.aur_helper.get_all_installed_packages()
-        _, pacdef_only = calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
+        _, pacdef_only = _calculate_package_diff(installed_packages, pacdef_packages, keep_prefix=True)
         return pacdef_only
 
     def _get_unmanaged_packages(self) -> list[str]:
         managed_packages = self._get_managed_packages()
         explicitly_installed_packages = self._conf.aur_helper.get_explicitly_installed_packages()
-        unmanaged_packages, _ = calculate_package_diff(explicitly_installed_packages, managed_packages)
+        unmanaged_packages, _ = _calculate_package_diff(explicitly_installed_packages, managed_packages)
         unmanaged_packages.sort()
         return unmanaged_packages
 
     def _get_managed_packages(self) -> list[str]:
         packages = []
         for group in self._conf.groups_path.iterdir():
-            content = get_packages_from_group(group)
+            content = _get_packages_from_group(group)
             packages.extend(content)
         if len(packages) == 0:
             logging.warning('pacdef does not know any groups. Import one.')
@@ -459,7 +459,7 @@ class Pacdef:
         return groups
 
 
-def setup_logger():
+def _setup_logger():
     try:
         level_name = environ['LOGLEVEL']
     except KeyError:
@@ -472,12 +472,12 @@ def setup_logger():
         logging.basicConfig(format='%(levelname)s: %(message)s', level=level)
 
 
-def show_version():
+def _show_version():
     print(f'pacdef, version: {VERSION}')
 
 
 if __name__ == '__main__':
     try:
-        main()
+        _main()
     except KeyboardInterrupt:
         sys.exit(EXIT_INTERRUPT)
