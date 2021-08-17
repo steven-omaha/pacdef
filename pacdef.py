@@ -507,11 +507,17 @@ class Pacdef:
         self._aur_helper.install(to_install)
 
     def _show_unmanaged_packages(self) -> None:
+        """Print unmanaged packages to STDOUT."""
         unmanaged_packages = self._get_unmanaged_packages()
         for package in unmanaged_packages:
             print(package)
 
     def _calculate_packages_to_install(self) -> list[Package]:
+        """
+        Determine which packages must be installed to satisfy the dependencies in the group files.
+
+        :return: list of packages that will be installed
+        """
         pacdef_packages = self._get_managed_packages()
         installed_packages = self._aur_helper.get_all_installed_packages()
         _, pacdef_only = _calculate_package_diff(installed_packages, pacdef_packages)
@@ -533,6 +539,11 @@ class Pacdef:
         return unmanaged_packages
 
     def _get_managed_packages(self) -> list[Package]:
+        """
+        Get all packaged that are known to pacdef (i.e. are located in imported group files).
+
+        :return: list of packages
+        """
         packages = []
         for group in self._conf.groups_path.iterdir():
             content = _get_packages_from_group(group)
@@ -542,11 +553,21 @@ class Pacdef:
         return packages
 
     def _get_group_names(self) -> list[str]:
+        """
+        Get list of the names of all imported groups (= list of filenames in the pacdef group directory).
+
+        :return: list of imported group names
+        """
         groups = [group.name for group in self._get_groups()]
         logging.info(f"{groups=}")
         return groups
 
     def _get_groups(self) -> list[Path]:
+        """
+        Get list of the paths of all imported groups (= list of files in the pacdef group directory).
+
+        :return: list of imported group paths
+        """
         groups = [group for group in self._conf.groups_path.iterdir()]
         groups.sort()
         for group in groups:
