@@ -117,7 +117,7 @@ def _get_user_confirmation() -> None:
     """Asks the user if he wants to continue. Exits if the answer is not `y` or of length zero."""
     user_input = input("Continue? [Y/n] ").lower()
     if user_input != "y" or len(user_input) == 0:
-        sys.exit(0)
+        sys.exit(EXIT_SUCCESS)
 
 
 class Arguments:
