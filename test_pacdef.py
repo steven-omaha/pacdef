@@ -312,7 +312,7 @@ class TestPacdef:
         instance = self._get_instance()
         with mock.patch.object(instance, "_get_unmanaged_packages", lambda: []):
             with pytest.raises(SystemExit):
-                instance.remove_unmanaged_packages()
+                instance._remove_unmanaged_packages()
 
     @pytest.mark.parametrize(
         "packages",
@@ -334,21 +334,21 @@ class TestPacdef:
                 instance, "_get_unmanaged_packages", lambda: packages
             ):
                 with mock.patch.object(pacdef, "get_user_confirmation", lambda: None):
-                    instance.remove_unmanaged_packages()
+                    instance._remove_unmanaged_packages()
 
     def test_show_groups(self, capsys):
-        self._test_basic_printing_function("show_groups", "_get_group_names", capsys)
+        self._test_basic_printing_function("_show_groups", "_get_group_names", capsys)
 
     def test_import_groups(self, caplog, tmpdir):
         def test_nonexistant(args):
             caplog.clear()
             with pytest.raises(SystemExit):
-                instance.import_groups(args)
+                instance._import_groups(args)
 
         def test_existing(args):
             caplog.clear()
             count_before = len(list(groupdir.iterdir()))
-            instance.import_groups(args)
+            instance._import_groups(args)
             assert len(caplog.records) == 0
             count_after = len(list(groupdir.iterdir()))
             assert count_after == count_before + len(args.files)
@@ -356,7 +356,7 @@ class TestPacdef:
         def test_already_imported(args):
             caplog.clear()
             count_before = len(list(groupdir.iterdir()))
-            instance.import_groups(args)
+            instance._import_groups(args)
             assert len(caplog.records) == 2
             for package, record in zip(args.files, caplog.records):
                 assert str(package) in record.message
@@ -399,7 +399,7 @@ class TestPacdef:
         instance = self._get_instance()
         with mock.patch.object(instance, "_calculate_packages_to_install", lambda: []):
             with pytest.raises(SystemExit):
-                instance.install_packages_from_groups()
+                instance._install_packages_from_groups()
 
     @pytest.mark.parametrize(
         "packages",
@@ -420,11 +420,11 @@ class TestPacdef:
                 instance, "_calculate_packages_to_install", lambda: packages
             ):
                 with mock.patch.object(pacdef, "get_user_confirmation", lambda: None):
-                    instance.install_packages_from_groups()
+                    instance._install_packages_from_groups()
 
     def test_show_unmanaged_packages(self, capsys):
         self._test_basic_printing_function(
-            "show_unmanaged_packages", "_get_unmanaged_packages", capsys
+            "_show_unmanaged_packages", "_get_unmanaged_packages", capsys
         )
 
     @pytest.mark.parametrize(
