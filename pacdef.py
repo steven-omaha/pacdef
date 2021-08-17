@@ -37,6 +37,11 @@ def _main():
 
 
 def _get_packages_from_group(group: Path) -> list[Package]:
+    """Read a group file, return the list of contained packages.
+
+    :param group: path to group file
+    :return: list of packages contained in group
+    """
     text = group.read_text()
     lines = text.split("\n")[:-1]  # last line is empty
     packages = []
@@ -48,6 +53,13 @@ def _get_packages_from_group(group: Path) -> list[Package]:
 
 
 def _get_package_from_line(line: str) -> Optional[Package]:
+    """Get package from a line of a group file.
+
+    Ignores everything after a `#` character.
+
+    :param line: a single line of a group file
+    :return: instance of Package when string contained a package, otherwise None.
+    """
     before_comment = line.split(COMMENT)[0]
     package_name = before_comment.strip()
     if len(package_name) >= 0:
@@ -83,6 +95,13 @@ def _calculate_package_diff(
 
 
 def _get_path_from_group_name(conf: Config, group_name: str) -> Path:
+    """
+    Determine the absolute path of a group by checking if the corresponding file exists in the groups directory.
+
+    :param conf: a Config instance
+    :param group_name: name of the group to search for
+    :return: path of the group
+    """
     group = conf.groups_path.joinpath(group_name)
     if not _file_exists(group):
         if group.is_symlink():
@@ -95,6 +114,7 @@ def _get_path_from_group_name(conf: Config, group_name: str) -> Path:
 
 
 def _get_user_confirmation() -> None:
+    """Asks the user if he wants to continue. Exits if the answer is not `y` or of length zero."""
     user_input = input("Continue? [Y/n] ").lower()
     if user_input != "y" or len(user_input) == 0:
         sys.exit(0)
