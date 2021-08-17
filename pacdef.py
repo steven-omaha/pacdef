@@ -456,14 +456,21 @@ class Pacdef:
         return groups
 
     def _sanity_check(self, group):
-        if group.is_dir():
-            logging.warning(f"found directory {group} in {self._conf.groups_path}")
-        elif group.is_symlink() and not group.exists():
-            logging.warning(f"found group {group}, but it is a broken symlink")
-        elif not group.is_symlink() and group.is_file():
-            logging.warning(f"found group {group}, but it is not a symlink")
-        else:
-            ...
+        def check_dir():
+            if group.is_dir():
+                logging.warning(f"found directory {group} in {self._conf.groups_path}")
+
+        def check_broken_symlink():
+            if group.is_symlink() and not group.exists():
+                logging.warning(f"found group {group}, but it is a broken symlink")
+
+        def check_not_symlink():
+            if not group.is_symlink() and group.is_file():
+                logging.warning(f"found group {group}, but it is not a symlink")
+
+        check_dir()
+        check_broken_symlink()
+        check_not_symlink()
 
 
 class Package:
