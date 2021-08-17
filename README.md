@@ -1,4 +1,7 @@
 [![pytest](https://github.com/steven-omaha/pacdef/actions/workflows/pytest.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/pytest.yml)
+[![pep257](https://github.com/steven-omaha/pacdef/actions/workflows/pep257.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/pep257.yml)
+[![bandit](https://github.com/steven-omaha/pacdef/actions/workflows/bandit.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/bandit.yml)
+[![black](https://github.com/steven-omaha/pacdef/actions/workflows/black.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/black.yml)
 
 # pacdef
 declarative manager of Arch packages
