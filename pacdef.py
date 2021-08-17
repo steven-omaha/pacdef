@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+"""
+Declarative package manager for Arch Linux.
+
+https://github.com/steven-omaha/pacdef
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -95,7 +101,10 @@ def _get_user_confirmation() -> None:
 
 
 class Arguments:
+    """Class providing the command line arguments."""
+
     def __init__(self):
+        """Setup the argument parser, parse the args, collect the results in attributes."""
         parser = self._setup_parser()
         args = parser.parse_args()
         self.action: Action = self._parse_action(args)
@@ -183,6 +192,8 @@ def _file_exists(path: Path) -> bool:
 
 
 class Action(Enum):
+    """Enum of actions that can be provided as first argument to `pacdef`."""
+
     clean = "clean"
     groups = "groups"
     import_ = "import"
@@ -195,11 +206,14 @@ class Action(Enum):
 
 
 class Config:
+    """Class reading and holding the runtime configuration."""
+
     aur_helper: Path
     groups_path: Path
     _CONFIG_STUB = f"[misc]\naur_helper = {PARU}\n"
 
     def __init__(self):
+        """Instantiate using the config file. If it does not exist, use defaults."""
         config_base_dir = self._get_xdg_config_home()
 
         pacdef_path = config_base_dir.joinpath("pacdef")
@@ -251,13 +265,22 @@ class Config:
 
 
 class AURHelper:
+    """Abstraction of AUR helpers that act as pacman wrappers."""
+
     class _Switches:
+        """CLI switches for AUR helpers that wrap pacman."""
+
         install = ["--sync", "--refresh", "--needed"]
         remove = ["--remove", "--recursive"]
         installed_packages = ["--query", "--quiet"]
         explicitly_installed_packages = ["--query", "--quiet", "--explicit"]
 
     def __init__(self, path: Path):
+        """Default constructor for AURHelper.
+
+        If the AUR helper is not found, and error is raised.
+        :param path: path to the AUR helper to use (example: `/usr/bin/paru`).
+        """
         if not path.is_absolute():
             path = Path("/usr/bin").joinpath(path)
         if not _file_exists(path):
@@ -266,6 +289,10 @@ class AURHelper:
         logging.info(f"AUR helper: {self._path}")
 
     def _execute(self, command: list[str]) -> None:
+        """Execute an AUR helper command without checking the output.
+
+        :param command: the command to execute, list of strings.
+        """
         try:
             subprocess.call([str(self._path)] + command)
         except FileNotFoundError:
@@ -273,66 +300,103 @@ class AURHelper:
             sys.exit(EXIT_ERROR)
 
     def _get_output(self, query: list[str]) -> list[str]:
+        """Forward the query to the AUR helper, return its STDOUT.
+
+        :param query: command arguments as list of strings
+        :return: AUR helper output as list of strings
+        """
         command = [str(self._path)] + query
         result = subprocess.check_output(command).decode("utf-8")
         result_list = result.split("\n")[:-1]  # last entry is zero-length
         return result_list
 
     def install(self, packages: list[Package]) -> None:
+        """Install packages in the system.
+
+        :param packages: list of packages to be installed.
+        """
         packages_str = [str(p) for p in packages]
         command: list[str] = self._Switches.install + packages_str
         self._execute(command)
 
     def remove(self, packages: list[Package]) -> None:
+        """Remove the packages from the system.
+
+        :param packages: list of packages to be removed.
+        """
         packages_str = [str(p) for p in packages]
         command: list[str] = self._Switches.remove + packages_str
         self._execute(command)
 
     def get_all_installed_packages(self) -> list[Package]:
+        """Query the AUR helper for all installed packages.
+
+        :return: list of `Package`s that are installed.
+        """
         packages: list[str] = self._get_output(self._Switches.installed_packages)
         instances = [Package(p) for p in packages]
         return instances
 
     def get_explicitly_installed_packages(self) -> list[Package]:
+        """Query the AUR helper for all explicitly installed packages.
+
+        :return: list of `Package`s that were explicitly installed.
+        """
         packages = self._get_output(self._Switches.explicitly_installed_packages)
         instances = [Package(p) for p in packages]
         return instances
 
     @classmethod
     def from_config(cls, config: Config) -> AURHelper:
+        """Create an AUR helper instance using `config.aur_helper`.
+
+        :param config: a instance of Config
+        :return: an instance of AURHelper
+        """
         return cls(path=config.aur_helper)
 
 
 class Pacdef:
+    """Class representing the main routines of pacdef."""
+
     def __init__(
         self,
         args: Arguments = None,
         config: Config = None,
         aur_helper: AURHelper = None,
     ):
+        """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()
         self._args = args or Arguments()
         self._aur_helper = aur_helper or AURHelper(PARU)
 
     def _get_action_map(self) -> dict[Action, Callable]:
+        """Return a dict matching all actions to their corresponding Pacdef methods."""
         ACTION_MAP = {
-            Action.clean: self.remove_unmanaged_packages,
-            Action.groups: self.show_groups,
-            Action.import_: self.import_groups,
-            Action.remove: self.remove_group,
-            Action.search: self.search_package,
-            Action.show: self.show_group,
-            Action.sync: self.install_packages_from_groups,
-            Action.unmanaged: self.show_unmanaged_packages,
+            Action.clean: self._remove_unmanaged_packages,
+            Action.groups: self._show_groups,
+            Action.import_: self._import_groups,
+            Action.remove: self._remove_group,
+            Action.search: self._search_package,
+            Action.show: self._show_group,
+            Action.sync: self._install_packages_from_groups,
+            Action.unmanaged: self._show_unmanaged_packages,
             Action.version: _show_version,
         }
         return ACTION_MAP
 
-    def run_action_from_arg(self):
-        action_fn = self._get_action_map()[self._args.action]
-        return action_fn()
+    def run_action_from_arg(self) -> None:
+        """Get the function from the provided action arg, execute the function."""
+        action_map = self._get_action_map()
+        action_fn = action_map[self._args.action]
+        action_fn()
 
-    def remove_unmanaged_packages(self):
+    def _remove_unmanaged_packages(self) -> None:
+        """Remove packages not managed by pacdef.
+
+        Fetches unmanaged packages, then asks the user to confirm removing the packages. Then removes them using
+        the AUR helper.
+        """
         unmanaged_packages = self._get_unmanaged_packages()
         if len(unmanaged_packages) == 0:
             print("nothing to do")
@@ -343,12 +407,13 @@ class Pacdef:
         _get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
-    def show_groups(self):
+    def _show_groups(self):
+        """Print names of the imported groups to STDOUT."""
         groups = self._get_group_names()
         for group in groups:
             print(group)
 
-    def import_groups(self) -> None:
+    def _import_groups(self) -> None:
         # check if all file-arguments exist before we do anything (be atomic)
         for f in self._args.files:
             path = Path(f)
@@ -363,7 +428,11 @@ class Pacdef:
             else:
                 link_target.symlink_to(path.absolute())
 
-    def remove_group(self) -> None:
+    def _remove_group(self) -> None:
+        """Remove the provided groups from the pacdef groups directory.
+
+        More than one group can be provided. This method is atomic: If not all groups are found, none are removed.
+        """
         found_groups = []
         for group_name in self._args.groups:
             group_file = self._conf.groups_path.joinpath(group_name)
@@ -375,7 +444,11 @@ class Pacdef:
         for path in found_groups:
             path.unlink()
 
-    def search_package(self):
+    def _search_package(self):
+        """Show imported group with contains `_args.package`.
+
+        Only one package may be provided in the args. Exits with `EXIT_ERROR` if the package cannot be found.
+        """
         for group in self._conf.groups_path.iterdir():
             packages = _get_packages_from_group(group)
             if self._args.package in packages:
@@ -384,7 +457,11 @@ class Pacdef:
         else:
             sys.exit(EXIT_ERROR)
 
-    def show_group(self) -> None:
+    def _show_group(self) -> None:
+        """Show all packages required by an imported group.
+
+        More than one group may be provided, which prints the contents of all groups in order.
+        """
         groups_to_show = self._args.groups
         imported_groups_name = self._get_group_names()
         for group_name in groups_to_show:
@@ -397,7 +474,8 @@ class Pacdef:
             for package in packages:
                 print(package)
 
-    def install_packages_from_groups(self) -> None:
+    def _install_packages_from_groups(self) -> None:
+        """Install all packages from the imported package groups."""
         to_install = self._calculate_packages_to_install()
         if len(to_install) == 0:
             print("nothing to do")
@@ -408,7 +486,7 @@ class Pacdef:
         _get_user_confirmation()
         self._aur_helper.install(to_install)
 
-    def show_unmanaged_packages(self) -> None:
+    def _show_unmanaged_packages(self) -> None:
         unmanaged_packages = self._get_unmanaged_packages()
         for package in unmanaged_packages:
             print(package)
@@ -420,6 +498,10 @@ class Pacdef:
         return pacdef_only
 
     def _get_unmanaged_packages(self) -> list[Package]:
+        """Get explicitly installed packages which are not in the imported pacdef groups.
+
+        :return: list of unmanaged packages
+        """
         managed_packages = self._get_managed_packages()
         explicitly_installed_packages = (
             self._aur_helper.get_explicitly_installed_packages()
@@ -471,15 +553,24 @@ class Pacdef:
 
 
 class Package:
+    """Class that represents a single package."""
+
     def __init__(self, package_string: str):
+        """Initialize an instance by a package string.
+
+        :param package_string: The string describing the package. May contain a repository prefix followed by a `/`.
+                               Examples: `zsh` or `repo/spotify`.
+        """
         self.name: str
         self.repo: Optional[str]
         self.name, self.repo = self._split_into_name_and_repo(package_string)
 
     def __eq__(self, other: Package):
+        """Check if equal to other package by comparing the name only."""
         return self.name == other.name
 
     def __repr__(self):
+        """Print `repo/package` if a repo was provided, otherwise print `package`."""
         if self.repo is not None:
             result = f"{self.repo}/{self.name}"
         else:
@@ -487,15 +578,21 @@ class Package:
         return result
 
     def __lt__(self, other: Package):
+        """Compare position to another package in lexical ordering by comparing the names.
+
+        :param other: another Package
+        :return: True if this package comes before the other package in lexical ordering, otherwise False.
+        """
         return self.name < other.name
 
     @staticmethod
     def _split_into_name_and_repo(package_string: str) -> tuple[str, Optional[str]]:
         """
-        Takes a string in the form `repository/package` and returns the package name only. Returns `package_string` if
-        it does not contain a repository prefix.
+        Take a string in the form `repository/package`, return package and repository.
+
+        Returns `(package_name, None)` if it does not contain a repository prefix.
         :param package_string: string of a single package, optionally starting with a repository prefix
-        :return: package name
+        :return: package name, repository
         """
         if "/" in package_string:
             try:
@@ -511,7 +608,12 @@ class Package:
         return name, repo
 
 
-def _setup_logger():
+def _setup_logger() -> None:
+    """Setup the logger.
+
+    When the log level is below WARNING (i.e. INFO or DEBUG), the line number of the logging statement is printed as
+    well.
+    """
     try:
         level_name: str = environ["LOGLEVEL"]
     except KeyError:
@@ -524,7 +626,11 @@ def _setup_logger():
         logging.basicConfig(format="%(levelname)s: %(message)s", level=level)
 
 
-def _show_version():
+def _show_version() -> None:
+    """Print version information to STDOUT.
+
+    The value of `VERSION` is set during compile time by the PKGBUILD using `build()`.
+    """
     print(f"pacdef, version: {VERSION}")
 
 
