@@ -69,7 +69,7 @@ def _get_package_from_line(line: str) -> Optional[Package]:
 
 
 def _calculate_package_diff(
-        system_packages: list[Package], pacdef_packages: list[Package]
+    system_packages: list[Package], pacdef_packages: list[Package]
 ) -> tuple[list[Package], list[Package]]:
     """
     Determine difference in packages between system and pacdef.
@@ -236,7 +236,12 @@ class Config:
 
     _CONFIG_STUB = f"[misc]\naur_helper = {PARU}\n"
 
-    def __init__(self, groups_path: Path = None, aur_helper: Path = None, config_file: Path = None):
+    def __init__(
+        self,
+        groups_path: Path = None,
+        aur_helper: Path = None,
+        config_file: Path = None,
+    ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
         config_base_dir = self._get_xdg_config_home()
         pacdef_path = config_base_dir.joinpath("pacdef")
@@ -383,10 +388,10 @@ class Pacdef:
     """Class representing the main routines of pacdef."""
 
     def __init__(
-            self,
-            args: Arguments = None,
-            config: Config = None,
-            aur_helper: AURHelper = None,
+        self,
+        args: Arguments = None,
+        config: Config = None,
+        aur_helper: AURHelper = None,
     ):
         """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()

@@ -421,11 +421,11 @@ class TestPacdef:
                 assert arg in packages
 
         instance = self._get_instance()
-        with mock.patch.object(instance._conf.aur_helper, "install", check_valid):
+        with mock.patch.object(instance._aur_helper, "install", check_valid):
             with mock.patch.object(
                 instance, "_calculate_packages_to_install", lambda: packages
             ):
-                with mock.patch.object(pacdef, "get_user_confirmation", lambda: None):
+                with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._install_packages_from_groups()
 
     def test_show_unmanaged_packages(self, capsys):
@@ -448,16 +448,17 @@ class TestPacdef:
         self, pacdef_packages, installed_packages, expected_result
     ):
         instance = self._get_instance()
-        with mock.patch.object(
-            instance, "_get_managed_packages", lambda: pacdef_packages
-        ):
+        pp = [pacdef.Package(item) for item in pacdef_packages]
+        ip = [pacdef.Package(item) for item in installed_packages]
+        er = [pacdef.Package(item) for item in expected_result]
+        with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
-                instance._conf.aur_helper,
+                instance._aur_helper,
                 "get_all_installed_packages",
-                lambda: installed_packages,
+                lambda: ip,
             ):
                 result = instance._calculate_packages_to_install()
-                assert result == expected_result
+                assert result == er
 
     @pytest.mark.parametrize(
         "pacdef_packages, installed_packages, expected_result",
@@ -474,16 +475,17 @@ class TestPacdef:
         self, pacdef_packages, installed_packages, expected_result
     ):
         instance = self._get_instance()
-        with mock.patch.object(
-            instance, "_get_managed_packages", lambda: pacdef_packages
-        ):
+        pp = [pacdef.Package(item) for item in pacdef_packages]
+        ip = [pacdef.Package(item) for item in installed_packages]
+        er = [pacdef.Package(item) for item in expected_result]
+        with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
-                instance._conf.aur_helper,
+                instance._aur_helper,
                 "get_explicitly_installed_packages",
-                lambda: installed_packages,
+                lambda: ip,
             ):
                 result = instance._get_unmanaged_packages()
-                assert result == expected_result
+                assert result == er
 
     def test__get_managed_packages(self):
         pass  # TODO
