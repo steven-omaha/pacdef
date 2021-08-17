@@ -1,4 +1,4 @@
-name: pep257
+name: bandit
 
 on:
   push:
