@@ -571,11 +571,20 @@ class Pacdef:
         groups = [group for group in self._conf.groups_path.iterdir()]
         groups.sort()
         for group in groups:
-            self._sanity_check(group)
+            self._sanity_check_imported_group(group)
         logging.debug(f"{groups=}")
         return groups
 
-    def _sanity_check(self, group):
+    def _sanity_check_imported_group(self, group: Path) -> None:
+        """
+        Sanity check an imported group file.
+
+        Checks for broken symlinks, directories and actual files (instead of symlinks). Prints a warning if a
+        check fails.
+
+        :param group: path to a group to be imported
+        """
+
         def check_dir():
             if group.is_dir():
                 logging.warning(f"found directory {group} in {self._conf.groups_path}")
