@@ -69,7 +69,7 @@ def _get_package_from_line(line: str) -> Optional[Package]:
 
 
 def _calculate_package_diff(
-    system_packages: list[Package], pacdef_packages: list[Package]
+        system_packages: list[Package], pacdef_packages: list[Package]
 ) -> tuple[list[Package], list[Package]]:
     """
     Determine difference in packages between system and pacdef.
@@ -123,14 +123,20 @@ def _get_user_confirmation() -> None:
 class Arguments:
     """Class providing the command line arguments."""
 
-    def __init__(self):
+    def __init__(self, process_args: bool = True):
         """Setup the argument parser, parse the args, collect the results in attributes."""
-        parser = self._setup_parser()
-        args = parser.parse_args()
-        self.action: Action = self._parse_action(args)
-        self.files: Optional[list[Path]] = self._parse_files(args)
-        self.groups: Optional[list[str]] = self._parse_groups(args)
-        self.package: Optional[Package] = self._parse_package(args)
+        if process_args:
+            parser = self._setup_parser()
+            args = parser.parse_args()
+            self.action: Action = self._parse_action(args)
+            self.files: Optional[list[Path]] = self._parse_files(args)
+            self.groups: Optional[list[str]] = self._parse_groups(args)
+            self.package: Optional[Package] = self._parse_package(args)
+        else:
+            self.action = None
+            self.files = None
+            self.groups = None
+            self.package = None
 
     @staticmethod
     def _parse_package(args: argparse.Namespace) -> Optional[Package]:
@@ -228,27 +234,24 @@ class Action(Enum):
 class Config:
     """Class reading and holding the runtime configuration."""
 
-    aur_helper: Path
-    groups_path: Path
     _CONFIG_STUB = f"[misc]\naur_helper = {PARU}\n"
 
-    def __init__(self):
-        """Instantiate using the config file. If it does not exist, use defaults."""
+    def __init__(self, groups_path: Path = None, aur_helper: Path = None, config_file: Path = None):
+        """Instantiate using the provided values. If these are None, use the config file / defaults."""
         config_base_dir = self._get_xdg_config_home()
-
         pacdef_path = config_base_dir.joinpath("pacdef")
-        config_file = pacdef_path.joinpath("pacdef.conf")
-        self.groups_path = pacdef_path.joinpath("groups")
+        config_file = config_file or pacdef_path.joinpath("pacdef.conf")
 
+        self.groups_path: Path = groups_path or pacdef_path.joinpath("groups")
+        logging.info(f"{self.groups_path=}")
         if not _dir_exists(pacdef_path):
             pacdef_path.mkdir(parents=True)
         if not _dir_exists(self.groups_path):
             self.groups_path.mkdir()
         if not _file_exists(config_file):
             config_file.touch()
-
-        self.aur_helper = self._get_aur_helper(config_file)
-        logging.info(f"{self.groups_path=}")
+        self.aur_helper: Path = aur_helper or self._get_aur_helper(config_file)
+        logging.info(f"{self.aur_helper=}")
 
     @staticmethod
     def _get_xdg_config_home() -> Path:
@@ -274,14 +277,14 @@ class Config:
         except KeyError:
             logging.warning(f"No AUR helper set. Defaulting to {PARU}")
             path = PARU
-            cls._write_config_stub(config_file)
+            cls._write_config_stub(config_file, cls._CONFIG_STUB)
 
         return path
 
-    @classmethod
-    def _write_config_stub(cls, config_file: Path):
+    @staticmethod
+    def _write_config_stub(config_file: Path, stub: str):
         logging.info(f"Created config stub under {config_file}")
-        config_file.write_text(cls._CONFIG_STUB)
+        config_file.write_text(stub)
 
 
 class AURHelper:
@@ -380,10 +383,10 @@ class Pacdef:
     """Class representing the main routines of pacdef."""
 
     def __init__(
-        self,
-        args: Arguments = None,
-        config: Config = None,
-        aur_helper: AURHelper = None,
+            self,
+            args: Arguments = None,
+            config: Config = None,
+            aur_helper: AURHelper = None,
     ):
         """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()

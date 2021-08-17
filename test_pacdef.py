@@ -52,51 +52,52 @@ class TestConfig:
     @staticmethod
     def test__get_aur_helper(tmpdir):
         with mock.patch.object(
-            pacdef, "file_exists", lambda x: x == Path("/usr/bin/paru")
+            pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
         ):
             tmpfile = Path(tmpdir).joinpath("tmp.conf")
 
-            helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper._path == pacdef.PARU
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper == pacdef.PARU
 
             with open(tmpfile, "w") as fd:
                 fd.write("some strange content")
-            helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper._path == pacdef.PARU
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper == pacdef.PARU
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\nsomething")
-            helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper._path == pacdef.PARU
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper == pacdef.PARU
 
+            something = "something"
             with open(tmpfile, "w") as fd:
-                fd.write("[misc]\naur_helper=something")
-            with pytest.raises(FileNotFoundError):
-                pacdef.Config._get_aur_helper(tmpfile)
+                fd.write(f"[misc]\naur_helper={something}")
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper == Path(something)
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\naur___hELPer=paru")
-            helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper._path == pacdef.PARU
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper == pacdef.PARU
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\naur_helper=paru")
-            helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper._path == pacdef.PARU
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper.name == pacdef.PARU.name
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\naur_helper=/usr/bin/paru")
-            helper = pacdef.Config._get_aur_helper(tmpfile)
-            assert helper._path == pacdef.PARU
+            conf = pacdef.Config(config_file=tmpfile)
+            assert conf.aur_helper == pacdef.PARU
 
     @staticmethod
     def test__write_config_stub(tmpdir):
         tmpfile = Path("/a")
         with pytest.raises(PermissionError):
-            pacdef.Config._write_config_stub(tmpfile)
+            pacdef.Config._write_config_stub(tmpfile, pacdef.Config._CONFIG_STUB)
 
         tmpfile = Path(tmpdir).joinpath("pacdef.conf")
-        pacdef.Config._write_config_stub(tmpfile)
+        pacdef.Config._write_config_stub(tmpfile, pacdef.Config._CONFIG_STUB)
         config = configparser.ConfigParser()
         config.read(tmpfile)
         assert config["misc"]["aur_helper"] == str(pacdef.PARU)
@@ -108,13 +109,13 @@ class TestConfig:
         conf_file = Path(tmpdir).joinpath("pacdef/pacdef.conf")
 
         with mock.patch.object(
-            pacdef, "file_exists", lambda x: x == Path("/usr/bin/paru")
+            pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
         ):
             config = pacdef.Config()
         aur_helper = Path("/usr/bin/paru")
 
         assert config.groups_path == groups
-        assert config.aur_helper._path == aur_helper
+        assert config.aur_helper == aur_helper
         assert conf_file.is_file()
 
 
@@ -213,9 +214,9 @@ class TestAURHelper:
     )
     def test_install(self, packages):
         def check_valid(_, command):
-            self.check_switches_valid(command, pacdef.AURHelper._Switches.install.value)
+            self.check_switches_valid(command, pacdef.AURHelper._Switches.install)
             self.check_switches_before_packages(
-                command, pacdef.AURHelper._Switches.install.value
+                command, pacdef.AURHelper._Switches.install
             )
             self.check_packages_present(command, packages)
 
@@ -234,9 +235,9 @@ class TestAURHelper:
     )
     def test_remove(self, packages):
         def check_valid(_, command):
-            self.check_switches_valid(command, pacdef.AURHelper._Switches.remove.value)
+            self.check_switches_valid(command, pacdef.AURHelper._Switches.remove)
             self.check_switches_before_packages(
-                command, pacdef.AURHelper._Switches.remove.value
+                command, pacdef.AURHelper._Switches.remove
             )
             self.check_packages_present(command, packages)
 
@@ -248,11 +249,11 @@ class TestAURHelper:
     def test_get_all_installed_packages_arch(self):
         instance = pacdef.AURHelper(PACMAN)  # pacman is good enough for the test case
         result = instance.get_all_installed_packages()
-        assert type(result) == list
+        assert isinstance(result, list)
         assert len(result) > 0
         for item in result:
-            assert type(item) == str
-            assert len(item) > 0
+            assert isinstance(item, pacdef.Package)
+            assert len(item.name) > 0
 
     @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
     def test_get_explicitly_installed_packages_arch(self):
@@ -261,8 +262,8 @@ class TestAURHelper:
         assert type(result) == list
         assert len(result) > 0
         for item in result:
-            assert type(item) == str
-            assert len(item) > 0
+            assert isinstance(item, pacdef.Package)
+            assert len(item.name) > 0
 
 
 class TestPacdef:
@@ -299,13 +300,10 @@ class TestPacdef:
 
     @staticmethod
     def _get_instance(tmpdir: Optional[Path] = None) -> pacdef.Pacdef:
-        instance = object.__new__(pacdef.Pacdef)
-        conf = object.__new__(pacdef.Config)
-        aur_helper = object.__new__(pacdef.AURHelper)
-        conf.aur_helper = aur_helper
-        if tmpdir is not None:
-            conf.groups_path = tmpdir
-        instance._conf = conf
+        conf = pacdef.Config(groups_path=tmpdir)
+        aur_helper = pacdef.AURHelper(pacdef.PARU)
+        args = pacdef.Arguments(process_args=False)
+        instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
         return instance
 
     def test_remove_unmanaged_packages_none(self):
@@ -329,39 +327,48 @@ class TestPacdef:
                 assert arg in packages
 
         instance = self._get_instance()
-        with mock.patch.object(instance._conf.aur_helper, "remove", check_valid):
+        with mock.patch.object(instance._aur_helper, "remove", check_valid):
             with mock.patch.object(
                 instance, "_get_unmanaged_packages", lambda: packages
             ):
-                with mock.patch.object(pacdef, "get_user_confirmation", lambda: None):
+                with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._remove_unmanaged_packages()
 
     def test_show_groups(self, capsys):
         self._test_basic_printing_function("_show_groups", "_get_group_names", capsys)
 
     def test_import_groups(self, caplog, tmpdir):
-        def test_nonexistant(args):
+        def test_nonexistant():
             caplog.clear()
             with pytest.raises(SystemExit):
-                instance._import_groups(args)
+                instance._import_groups()
 
-        def test_existing(args):
+        def test_existing():
             caplog.clear()
             count_before = len(list(groupdir.iterdir()))
-            instance._import_groups(args)
+            instance._import_groups()
             assert len(caplog.records) == 0
             count_after = len(list(groupdir.iterdir()))
-            assert count_after == count_before + len(args.files)
+            count_after_expected = count_before + len(instance._args.files)
+            assert count_after == count_after_expected
 
-        def test_already_imported(args):
+        def test_already_imported():
             caplog.clear()
             count_before = len(list(groupdir.iterdir()))
-            instance._import_groups(args)
+            instance._import_groups()
             assert len(caplog.records) == 2
-            for package, record in zip(args.files, caplog.records):
+            for package, record in zip(instance._args.files, caplog.records):
                 assert str(package) in record.message
             count_after = len(list(groupdir.iterdir()))
             assert count_after == count_before
+
+        def get_instance(new_group_files: list[Path]) -> pacdef.Pacdef:
+            conf = pacdef.Config(groups_path=groupdir)
+            aur_helper = pacdef.AURHelper(pacdef.PARU)
+            args = pacdef.Arguments(process_args=False)
+            args.files = new_group_files
+            instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
+            return instance
 
         tmpdir = Path(tmpdir)
         groupdir = tmpdir.joinpath("groups")
@@ -371,20 +378,19 @@ class TestPacdef:
         caplog.set_level(logging.WARNING)
 
         new_group_files = [workdir.joinpath(f"new_group_{x}") for x in range(3)]
-        instance = self._get_instance(groupdir)
-        args = object.__new__(pacdef.Arguments)
-        args.files = [new_group_files[0]]
+        instance = get_instance(new_group_files)
+        test_nonexistant()
 
-        test_nonexistant(args)
         new_group_files[0].touch()
-        test_existing(args)
+        instance = get_instance([new_group_files[0]])
+        test_existing()
 
         for f in new_group_files:
             f.touch()
-        args.files = new_group_files[1:]
-        test_existing(args)
+        instance._args.files = new_group_files[1:]
+        test_existing()
 
-        test_already_imported(args)
+        test_already_imported()
 
     def test_remove_group(self):
         pass  # TODO
@@ -560,32 +566,14 @@ def test_remove_repo_prefix_from_package():
         (["repo/base"], [], ["base"], []),
     ],
 )
-def test_calculate_package_diff_keep_prefix_no(
+def test_calculate_package_diff(
     pacdef_packages, system_packages, pacdef_only, system_only
 ):
-    system_result, pacdef_result = pacdef._calculate_package_diff(
-        system_packages, pacdef_packages, keep_prefix=False
-    )
-    assert system_result == system_only
-    assert pacdef_result == pacdef_only
+    def to_package(x: list[str]):
+        return [pacdef.Package(item) for item in x]
 
-
-@pytest.mark.parametrize(
-    "pacdef_packages, system_packages, pacdef_only, system_only",
-    [
-        (["base"], [], ["base"], []),
-        ([], ["base"], [], ["base"]),
-        ([], [], [], []),
-        (["base"], ["base"], [], []),
-        (["repo/base"], ["base"], [], []),
-        (["repo/base"], [], ["repo/base"], []),
-    ],
-)
-def test_calculate_package_diff_keep_prefix_yes(
-    pacdef_packages, system_packages, pacdef_only, system_only
-):
     system_result, pacdef_result = pacdef._calculate_package_diff(
-        system_packages, pacdef_packages, keep_prefix=True
+        to_package(system_packages), to_package(pacdef_packages)
     )
-    assert system_result == system_only
-    assert pacdef_result == pacdef_only
+    assert system_result == to_package(system_only)
+    assert pacdef_result == to_package(pacdef_only)
