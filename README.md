@@ -1,4 +1,4 @@
-[![pytest](https://github.com/steven-omaha/pacdef/actions/workflows/main.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/main.yml)
+[![pytest](https://github.com/steven-omaha/pacdef/actions/workflows/pytest.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/pytest.yml)
 
 # pacdef
 declarative manager of Arch packages
