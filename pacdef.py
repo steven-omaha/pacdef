@@ -54,10 +54,7 @@ def _calculate_package_diff(
     system_packages: list[Package], pacdef_packages: list[Package]
 ) -> tuple[list[Package], list[Package]]:
     """
-    Using a custom repository that contains a different version of a package that is also present in the standard repos
-    requires distinguishing which version we want to install. Adding the repo in front of the package name (like
-    `panthera/zsh-theme-powerlevel10k`) is understood by at least some AUR helpers (paru). If the string contains a
-    slash, we check if the part after the slash is a known package.
+    Determine difference in packages between system and pacdef.
 
     :param system_packages: list of packages known by the system
     :param pacdef_packages: list of packages known by pacdef, optionally with repository prefix
