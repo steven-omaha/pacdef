@@ -1,4 +1,3 @@
-
 name: metrics
 
 on:
@@ -27,5 +26,6 @@ jobs:
           pip install radon
       - name: Calculate metrics
         run: |
-          radon cc *.py
+          radon cc -a pacdef.py
+          radon cc -a test_pacdef.py
           
