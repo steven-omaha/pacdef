@@ -26,5 +26,5 @@ jobs:
           pip install pep257
       - name: Check pep257 conformity
         run: |
-          pep257 pacdef.py test_pacdef.py
-          
+          pep257 --ignore=D202,D203 pacdef.py test_pacdef.py
+
