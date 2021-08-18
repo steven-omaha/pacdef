@@ -36,6 +36,12 @@ def _main():
     pacdef.run_action_from_arg()
 
 
+# TODO class System, cached_property field _packages, constructor from AURHelper,
+#   remember get_all_installed_packages and get_explicitly_installed_packages
+#   should also implement the magic methods like Group
+#   abstract base class PackageContainer?
+# TODO class Group, constructor from Path,property field _packages,
+#   implement __contains__, __getitem__, __len__
 def _get_packages_from_group(group: Path) -> list[Package]:
     """Read a group file, return the list of contained packages.
 
@@ -435,7 +441,7 @@ class Pacdef:
         _get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
-    def _show_groups(self):
+    def _show_groups(self):  # TODO rename _list_groups
         """Print names of the imported groups to STDOUT."""
         groups = self._get_group_names()
         for group in groups:
@@ -609,7 +615,8 @@ class Pacdef:
         check_broken_symlink()
         check_not_symlink()
 
-
+        
+# TODO make dataclass, keep __repr__ and __eq__, delete __lt__
 class Package:
     """Class that represents a single package."""
 
