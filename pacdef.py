@@ -66,7 +66,9 @@ def _calculate_package_diff(
 def _get_user_confirmation() -> None:
     """Ask the user if he wants to continue. Exits if the answer is not `y` or of length zero."""
     user_input = input("Continue? [Y/n] ").lower()
-    if user_input != "y" or len(user_input) == 0:
+    if user_input == "" or user_input == "y":
+        return
+    else:
         sys.exit(EXIT_SUCCESS)
 
 
