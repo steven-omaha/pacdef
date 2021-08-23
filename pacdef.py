@@ -13,6 +13,7 @@ import configparser
 import logging
 import subprocess
 import sys
+from dataclasses import dataclass
 from enum import Enum
 from os import environ
 from pathlib import Path
@@ -616,7 +617,7 @@ class Pacdef:
         check_not_symlink()
 
 
-# TODO make dataclass, keep __repr__ and __eq__, delete __lt__
+@dataclass
 class Package:
     """Class that represents a single package."""
 
@@ -641,14 +642,6 @@ class Package:
         else:
             result = self.name
         return result
-
-    def __lt__(self, other: Package):
-        """Compare position to another package in lexical ordering by comparing the names.
-
-        :param other: another Package
-        :return: True if this package comes before the other package in lexical ordering, otherwise False.
-        """
-        return self.name < other.name
 
     @staticmethod
     def _split_into_name_and_repo(package_string: str) -> tuple[str, Optional[str]]:
