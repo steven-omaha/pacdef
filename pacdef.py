@@ -43,36 +43,6 @@ def _main():
 #   abstract base class PackageContainer?
 # TODO class Group, constructor from Path,property field _packages,
 #   implement __contains__, __getitem__, __len__
-def _get_packages_from_group(group: Path) -> list[Package]:
-    """Read a group file, return the list of contained packages.
-
-    :param group: path to group file
-    :return: list of packages contained in group
-    """
-    text = group.read_text()
-    lines = text.split("\n")[:-1]  # last line is empty
-    packages = []
-    for line in lines:
-        package = _get_package_from_line(line)
-        if package is not None:
-            packages.append(package)
-    return packages
-
-
-def _get_package_from_line(line: str) -> Optional[Package]:
-    """Get package from a line of a group file.
-
-    Ignores everything after a `#` character.
-
-    :param line: a single line of a group file
-    :return: instance of Package when string contained a package, otherwise None.
-    """
-    before_comment = line.split(COMMENT)[0]
-    package_name = before_comment.strip()
-    if len(package_name) >= 0:
-        return Package(package_name)
-    else:
-        return None
 
 
 def _calculate_package_diff(
@@ -387,6 +357,56 @@ class AURHelper:
         :return: an instance of AURHelper
         """
         return cls(path=config.aur_helper)
+
+
+class Group:
+    def __init__(self, packages: list[Package]):
+        self.packages = packages
+
+    def __contains__(self, item: Package):
+        return item in self.packages
+
+    def __getitem__(self, item):
+        return self.packages[item]
+
+    def __len__(self):
+        return len(self.packages)
+
+    @classmethod
+    def from_file(cls, path: Path):
+        """Read a group file, return an instance of Group containing the packages.
+
+        :param path: path to group file
+        :return: instance of Group
+        """
+        text = path.read_text()
+        lines = text.split("\n")[:-1]  # last line is empty
+        packages = []
+        for line in lines:
+            package = cls._get_package_from_line(line)
+            if package is not None:
+                packages.append(package)
+        instance = cls(packages)
+        return instance
+
+    @staticmethod
+    def _get_package_from_line(line: str) -> Optional[Package]:
+        """Get package from a line of a group file.
+
+        Ignores everything after a `#` character.
+
+        :param line: a single line of a group file
+        :return: instance of Package when string contained a package, otherwise None.
+        """
+        before_comment = line.split(COMMENT)[0]
+        package_name = before_comment.strip()
+        if len(package_name) >= 0:
+            return Package(package_name)
+        else:
+            return None
+
+
+
 
 
 class Pacdef:
