@@ -41,8 +41,6 @@ def _main():
 #   remember get_all_installed_packages and get_explicitly_installed_packages
 #   should also implement the magic methods like Group
 #   abstract base class PackageContainer?
-# TODO class Group, constructor from Path,property field _packages,
-#   implement __contains__, __getitem__, __len__
 
 
 def _calculate_package_diff(
@@ -68,24 +66,6 @@ def _calculate_package_diff(
     logging.debug(f"{system_only=}")
     logging.debug(f"{pacdef_only=}")
     return system_only, pacdef_only
-
-
-def _get_path_from_group_name(conf: Config, group_name: str) -> Path:
-    """Determine the absolute path of a group by checking if the corresponding file exists in the groups directory.
-
-    :param conf: a Config instance
-    :param group_name: name of the group to search for
-    :return: path of the group
-    """
-    group = conf.groups_path.joinpath(group_name)
-    if not _file_exists(group):
-        if group.is_symlink():
-            logging.warning(
-                f"found group {group.absolute()}, but it is a broken symlink"
-            )
-        else:
-            raise FileNotFoundError
-    return group
 
 
 def _get_user_confirmation() -> None:
@@ -360,20 +340,45 @@ class AURHelper:
 
 
 class Group:
-    def __init__(self, packages: list[Package]):
+    """Class representing a group file."""
+
+    def __init__(self, packages: list[Package], path: Path):
+        """Default constructor. Consider Group.from_file where applicable."""
         self.packages = packages
+        self._path: Path = path
+
+    @property
+    def name(self) -> str:
+        """Return the name of the group."""
+        return self._path.name
 
     def __contains__(self, item: Package):
+        """Check if package exists in group."""
         return item in self.packages
 
     def __getitem__(self, item):
+        """Get the package at index `item`."""
         return self.packages[item]
 
     def __len__(self):
+        """Get length of packages."""
         return len(self.packages)
 
+    def __eq__(self, other: Group | str):
+        """Compare with other groups or strings."""
+        if isinstance(other, Group):
+            return self.name == other.name
+        elif isinstance(other, str):
+            return self.name == other
+        else:
+            raise ValueError("Must be compared with Group or string.")
+
+    def __repr__(self):
+        """Representation are the newline-separated names of the packages."""
+        return "\n".join([package.name for package in self.packages])
+
     @classmethod
-    def from_file(cls, path: Path):
+    def from_file(cls, path: Path) -> Group:
         """Read a group file, return an instance of Group containing the packages.
 
         :param path: path to group file
@@ -386,7 +391,7 @@ class Group:
             package = cls._get_package_from_line(line)
             if package is not None:
                 packages.append(package)
-        instance = cls(packages)
+        instance = cls(packages, path)
         return instance
 
     @staticmethod
@@ -406,9 +411,6 @@ class Group:
             return None
 
 
-
-
-
 class Pacdef:
     """Class representing the main routines of pacdef."""
 
@@ -422,6 +424,7 @@ class Pacdef:
         self._conf = config or Config()
         self._args = args or Arguments()
         self._aur_helper = aur_helper or AURHelper(PARU)
+        self._groups: list[Group] = self._read_groups()
 
     def _get_action_map(self) -> dict[Action, Callable]:
         """Return a dict matching all actions to their corresponding Pacdef methods."""
@@ -502,9 +505,8 @@ class Pacdef:
 
         Only one package may be provided in the args. Exits with `EXIT_ERROR` if the package cannot be found.
         """
-        for group in self._conf.groups_path.iterdir():
-            packages = _get_packages_from_group(group)
-            if self._args.package in packages:
+        for group in self._groups:
+            if self._args.package in group:
                 print(group.name)
                 sys.exit(EXIT_SUCCESS)
         else:
@@ -515,17 +517,17 @@ class Pacdef:
 
         More than one group may be provided, which prints the contents of all groups in order.
         """
-        groups_to_show = self._args.groups
-        imported_groups_name = self._get_group_names()
-        for group_name in groups_to_show:
-            if group_name not in imported_groups_name:
-                logging.error(f"I don't know the group {group_name}.")
+        self._verify_argument_groups_exist()  # be atomic (only print stuff if all args exist)
+        for argument_group in self._args.groups:
+            for imported_group in self._groups:
+                if imported_group == argument_group:
+                    print(imported_group)
+
+    def _verify_argument_groups_exist(self):
+        for arg_group in self._args.groups:
+            if arg_group not in self._groups:
+                logging.error(f"I don't know the group {self._args.groups}.")
                 sys.exit(EXIT_ERROR)
-        for group_name in groups_to_show:
-            group = _get_path_from_group_name(self._conf, group_name)
-            packages = _get_packages_from_group(group)
-            for package in packages:
-                print(package)
 
     def _install_packages_from_groups(self) -> None:
         """Install all packages from the imported package groups."""
@@ -560,7 +562,7 @@ class Pacdef:
 
         :return: list of unmanaged packages
         """
-        managed_packages = self._get_managed_packages()
+        managed_packages: list[Package] = self._get_managed_packages()
         explicitly_installed_packages = (
             self._aur_helper.get_explicitly_installed_packages()
         )
@@ -576,11 +578,10 @@ class Pacdef:
         :return: list of packages
         """
         packages = []
-        for group in self._conf.groups_path.iterdir():
-            content = _get_packages_from_group(group)
-            packages.extend(content)
+        for group in self._groups:
+            packages.extend(group.packages)
         if len(packages) == 0:
-            logging.warning("pacdef does not know any groups. Import one.")
+            logging.warning("pacdef does not know any packages.")
         return packages
 
     def _get_group_names(self) -> list[str]:
@@ -588,20 +589,28 @@ class Pacdef:
 
         :return: list of imported group names
         """
-        groups = [group.name for group in self._get_groups()]
-        logging.info(f"{groups=}")
+        groups = [group.name for group in self._groups]
         return groups
 
-    def _get_groups(self) -> list[Path]:
-        """Get list of the paths of all imported groups (= list of files in the pacdef group directory).
+    def _read_groups(self) -> list[Group]:
+        """Read all imported groups (= list of files in the pacdef group directory).
 
-        :return: list of imported group paths
+        :return: list of imported groups
         """
-        groups = [group for group in self._conf.groups_path.iterdir()]
-        groups.sort()
-        for group in groups:
-            self._sanity_check_imported_group(group)
+        paths = [group for group in self._conf.groups_path.iterdir()]
+        paths.sort()
+        groups = []
+        for path in paths:
+            self._sanity_check_imported_group(path)
+            # noinspection PyBroadException
+            try:
+                groups.append(Group.from_file(path))
+            except Exception:
+                logging.error(f"Could not parse group file {path}.")
+                print(sys.exit(EXIT_ERROR))
         logging.debug(f"{groups=}")
+        if len(groups) == 0:
+            logging.warning("pacdef does not know any groups. Import one.")
         return groups
 
     def _sanity_check_imported_group(self, group: Path) -> None:
@@ -612,6 +621,7 @@ class Pacdef:
 
         :param group: path to a group to be imported
         """
+
         def check_dir():
             if group.is_dir():
                 logging.warning(f"found directory {group} in {self._conf.groups_path}")
@@ -643,9 +653,14 @@ class Package:
         self.repo: Optional[str]
         self.name, self.repo = self._split_into_name_and_repo(package_string)
 
-    def __eq__(self, other: Package):
+    def __eq__(self, other: Package | str):
         """Check if equal to other package by comparing the name only."""
-        return self.name == other.name
+        if isinstance(other, Package):
+            return self.name == other.name
+        elif isinstance(other, str):
+            return self.name == other
+        else:
+            raise ValueError("Must be compared with Package or string.")
 
     def __repr__(self):
         """Print `repo/package` if a repo was provided, otherwise print `package`."""
@@ -670,7 +685,7 @@ class Package:
                 logging.error(
                     f"could not split this line into repo and package:\n{package_string}"
                 )
-                sys.exit(EXIT_ERROR)
+                raise
         else:
             repo = None
             name = package_string
