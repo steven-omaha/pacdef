@@ -407,7 +407,7 @@ class Pacdef:
         """Return a dict matching all actions to their corresponding Pacdef methods."""
         ACTION_MAP = {
             Action.clean: self._remove_unmanaged_packages,
-            Action.groups: self._show_groups,
+            Action.groups: self._list_groups,
             Action.import_: self._import_groups,
             Action.remove: self._remove_group,
             Action.search: self._search_package,
@@ -440,7 +440,7 @@ class Pacdef:
         _get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
-    def _show_groups(self):  # TODO rename _list_groups
+    def _list_groups(self):  # TODO rename _list_groups
         """Print names of the imported groups to STDOUT."""
         groups = self._get_group_names()
         for group in groups:

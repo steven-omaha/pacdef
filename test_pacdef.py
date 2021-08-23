@@ -334,8 +334,8 @@ class TestPacdef:
                 with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._remove_unmanaged_packages()
 
-    def test_show_groups(self, capsys):
-        self._test_basic_printing_function("_show_groups", "_get_group_names", capsys)
+    def test_list_groups(self, capsys):
+        self._test_basic_printing_function("_list_groups", "_get_group_names", capsys)
 
     def test_import_groups(self, caplog, tmpdir):
         def test_nonexistant():
