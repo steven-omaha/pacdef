@@ -78,8 +78,7 @@ def _get_package_from_line(line: str) -> Optional[Package]:
 def _calculate_package_diff(
     system_packages: list[Package], pacdef_packages: list[Package]
 ) -> tuple[list[Package], list[Package]]:
-    """
-    Determine difference in packages between system and pacdef.
+    """Determine difference in packages between system and pacdef.
 
     :param system_packages: list of packages known by the system
     :param pacdef_packages: list of packages known by pacdef, optionally with repository prefix
@@ -102,8 +101,7 @@ def _calculate_package_diff(
 
 
 def _get_path_from_group_name(conf: Config, group_name: str) -> Path:
-    """
-    Determine the absolute path of a group by checking if the corresponding file exists in the groups directory.
+    """Determine the absolute path of a group by checking if the corresponding file exists in the groups directory.
 
     :param conf: a Config instance
     :param group_name: name of the group to search for
@@ -528,8 +526,7 @@ class Pacdef:
             print(package)
 
     def _calculate_packages_to_install(self) -> list[Package]:
-        """
-        Determine which packages must be installed to satisfy the dependencies in the group files.
+        """Determine which packages must be installed to satisfy the dependencies in the group files.
 
         :return: list of packages that will be installed
         """
@@ -554,8 +551,7 @@ class Pacdef:
         return unmanaged_packages
 
     def _get_managed_packages(self) -> list[Package]:
-        """
-        Get all packaged that are known to pacdef (i.e. are located in imported group files).
+        """Get all packaged that are known to pacdef (i.e. are located in imported group files).
 
         :return: list of packages
         """
@@ -568,8 +564,7 @@ class Pacdef:
         return packages
 
     def _get_group_names(self) -> list[str]:
-        """
-        Get list of the names of all imported groups (= list of filenames in the pacdef group directory).
+        """Get list of the names of all imported groups (= list of filenames in the pacdef group directory).
 
         :return: list of imported group names
         """
@@ -578,8 +573,7 @@ class Pacdef:
         return groups
 
     def _get_groups(self) -> list[Path]:
-        """
-        Get list of the paths of all imported groups (= list of files in the pacdef group directory).
+        """Get list of the paths of all imported groups (= list of files in the pacdef group directory).
 
         :return: list of imported group paths
         """
@@ -591,15 +585,13 @@ class Pacdef:
         return groups
 
     def _sanity_check_imported_group(self, group: Path) -> None:
-        """
-        Sanity check an imported group file.
+        """Sanity check an imported group file.
 
         Checks for broken symlinks, directories and actual files (instead of symlinks). Prints a warning if a
         check fails.
 
         :param group: path to a group to be imported
         """
-
         def check_dir():
             if group.is_dir():
                 logging.warning(f"found directory {group} in {self._conf.groups_path}")
@@ -645,8 +637,7 @@ class Package:
 
     @staticmethod
     def _split_into_name_and_repo(package_string: str) -> tuple[str, Optional[str]]:
-        """
-        Take a string in the form `repository/package`, return package and repository.
+        """Take a string in the form `repository/package`, return package and repository.
 
         Returns `(package_name, None)` if it does not contain a repository prefix.
         :param package_string: string of a single package, optionally starting with a repository prefix
