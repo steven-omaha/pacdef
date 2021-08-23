@@ -615,7 +615,7 @@ class Pacdef:
         check_broken_symlink()
         check_not_symlink()
 
-        
+
 # TODO make dataclass, keep __repr__ and __eq__, delete __lt__
 class Package:
     """Class that represents a single package."""
