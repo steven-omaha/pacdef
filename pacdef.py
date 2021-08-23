@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import configparser
 import logging
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ EXIT_INTERRUPT = 130
 
 COMMENT = "#"
 PARU = Path("/usr/bin/paru")
+VIM = Path("/usr/bin/vim")
 VERSION = "unknown"
 
 
@@ -110,6 +112,10 @@ class Arguments:
         subparsers.add_parser(
             Action.clean.value, help="uninstall packages not managed by pacdef"
         )
+        parser_edit = subparsers.add_parser(
+            Action.edit.value, help="edit one or more existing group files"
+        )
+        parser_edit.add_argument("group", nargs="+", help="a group file")
         subparsers.add_parser(Action.groups.value, help="show names of imported groups")
         parser_import = subparsers.add_parser(
             Action.import_.value, help="import a new group file"
@@ -176,6 +182,7 @@ class Action(Enum):
     """Enum of actions that can be provided as first argument to `pacdef`."""
 
     clean = "clean"
+    edit = "edit"
     groups = "groups"
     import_ = "import"
     remove = "remove"
@@ -189,19 +196,20 @@ class Action(Enum):
 class Config:
     """Class reading and holding the runtime configuration."""
 
-    _CONFIG_STUB = f"[misc]\naur_helper = {PARU}\n"
-
     def __init__(
         self,
         groups_path: Path = None,
         aur_helper: Path = None,
         config_file: Path = None,
+        editor: Path = None,
     ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
+        # TODO clean this up, split into multiple parts?
         config_base_dir = self._get_xdg_config_home()
         pacdef_path = config_base_dir.joinpath("pacdef")
         config_file = config_file or pacdef_path.joinpath("pacdef.conf")
 
+        self._config_file = self._read_config_file(config_file)
         self.groups_path: Path = groups_path or pacdef_path.joinpath("groups")
         logging.info(f"{self.groups_path=}")
         if not _dir_exists(pacdef_path):
@@ -210,8 +218,23 @@ class Config:
             self.groups_path.mkdir()
         if not _file_exists(config_file):
             config_file.touch()
-        self.aur_helper: Path = aur_helper or self._get_aur_helper(config_file)
+
+        self.aur_helper: Path = aur_helper or self._get_aur_helper()
+        self._editor: Path | None = editor or self._get_editor()
         logging.info(f"{self.aur_helper=}")
+
+    @property
+    def editor(self) -> Path:
+        """Get the editor. Error out if none is found."""
+        if self._editor is None:
+            msg = (
+                "I do not know which editor to use.\n"
+                "  Either set the environment variables EDITOR or VISUAL, or set\n"
+                "  editor in the [misc] section in pacdef.conf."
+            )
+            logging.error(msg)
+            sys.exit(EXIT_ERROR)
+        return self._editor
 
     @staticmethod
     def _get_xdg_config_home() -> Path:
@@ -223,28 +246,49 @@ class Config:
         logging.debug(f"{config_base_dir=}")
         return config_base_dir
 
-    @classmethod
-    def _get_aur_helper(cls, config_file: Path) -> Path:
+    @staticmethod
+    def _read_config_file(config_file: Path) -> configparser.ConfigParser:
         config = configparser.ConfigParser()
-
         try:
             config.read(config_file)
         except configparser.ParsingError as e:
             logging.error(f"Could not parse the config: {e}")
+        return config
 
+    def _get_value_from_conf(
+        self, section: str, key: str, warn_missing: bool = False
+    ) -> str | None:
         try:
-            path = Path(config["misc"]["aur_helper"])
+            result = self._config_file[section][key]
         except KeyError:
+            if warn_missing:
+                logging.warning(f"{key} in section [{section}] not set")
+            result = None
+        return result
+
+    def _get_editor(self) -> Path | None:
+        editor = self._get_value_from_conf("misc", "editor", False)
+        if editor is not None:
+            return Path(editor)
+        try:
+            editor = os.environ["EDITOR"]
+            return Path(editor)
+        except KeyError:
+            pass
+        try:
+            editor = os.environ["VISUAL"]
+            return Path(editor)
+        except KeyError:
+            pass
+        return None
+
+    def _get_aur_helper(self) -> Path:
+        aur_helper = self._get_value_from_conf("misc", "aur_helper", True)
+        if aur_helper is None:
             logging.warning(f"No AUR helper set. Defaulting to {PARU}")
-            path = PARU
-            cls._write_config_stub(config_file, cls._CONFIG_STUB)
-
-        return path
-
-    @staticmethod
-    def _write_config_stub(config_file: Path, stub: str):
-        logging.info(f"Created config stub under {config_file}")
-        config_file.write_text(stub)
+            return PARU
+        else:
+            return Path(aur_helper)
 
 
 class AURHelper:
@@ -430,6 +474,7 @@ class Pacdef:
         """Return a dict matching all actions to their corresponding Pacdef methods."""
         ACTION_MAP = {
             Action.clean: self._remove_unmanaged_packages,
+            Action.edit: self._edit_group_file,
             Action.groups: self._list_groups,
             Action.import_: self._import_groups,
             Action.remove: self._remove_group,
@@ -440,6 +485,13 @@ class Pacdef:
             Action.version: _show_version,
         }
         return ACTION_MAP
+
+    def _edit_group_file(self) -> None:
+        groups = self._get_group_paths_matching_arguments()
+        try:
+            subprocess.run([self._conf.editor, *groups], check=True)
+        except subprocess.CalledProcessError:
+            sys.exit(EXIT_ERROR)
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
@@ -463,7 +515,7 @@ class Pacdef:
         _get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
-    def _list_groups(self):  # TODO rename _list_groups
+    def _list_groups(self):
         """Print names of the imported groups to STDOUT."""
         groups = self._get_group_names()
         for group in groups:
@@ -489,6 +541,11 @@ class Pacdef:
 
         More than one group can be provided. This method is atomic: If not all groups are found, none are removed.
         """
+        found_groups = self._get_group_paths_matching_arguments()
+        for path in found_groups:
+            path.unlink()
+
+    def _get_group_paths_matching_arguments(self) -> list[Path]:
         found_groups = []
         for group_name in self._args.groups:
             group_file = self._conf.groups_path.joinpath(group_name)
@@ -497,8 +554,7 @@ class Pacdef:
             else:
                 logging.error(f"Did not find the group {group_name}")
                 sys.exit(EXIT_ERROR)
-        for path in found_groups:
-            path.unlink()
+        return found_groups
 
     def _search_package(self):
         """Show imported group with contains `_args.package`.
