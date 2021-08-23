@@ -26,7 +26,6 @@ EXIT_INTERRUPT = 130
 
 COMMENT = "#"
 PARU = Path("/usr/bin/paru")
-VIM = Path("/usr/bin/vim")
 VERSION = "unknown"
 
 
