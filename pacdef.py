@@ -39,12 +39,6 @@ def _main():
     pacdef.run_action_from_arg()
 
 
-# TODO class System, cached_property field _packages, constructor from AURHelper,
-#   remember get_all_installed_packages and get_explicitly_installed_packages
-#   should also implement the magic methods like Group
-#   abstract base class PackageContainer?
-
-
 def _calculate_package_diff(
     system_packages: list[Package], pacdef_packages: list[Package]
 ) -> tuple[list[Package], list[Package]]:
