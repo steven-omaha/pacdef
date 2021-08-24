@@ -400,6 +400,7 @@ class Group:
 
     @property
     def path(self) -> Path:
+        """Return path of the group."""
         return self._path
 
     def __contains__(self, item: Package):
@@ -461,6 +462,7 @@ class Group:
             return None
 
     def remove(self):
+        """Delete the symlink under the group path."""
         logging.info(f"removing group {self.name}")
         self._path.unlink()
 
