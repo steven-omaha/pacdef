@@ -534,11 +534,10 @@ class Pacdef:
             print(group)
 
     def _import_groups(self) -> None:
-        for f in self._args.files:
-            path = Path(f)
-            link_target = self._conf.groups_path.joinpath(f.name)
+        for path in self._args.files:
+            link_target = self._conf.groups_path / path.name
             if _file_exists(link_target):
-                logging.warning(f"{f} already exists, skipping")
+                logging.warning(f"{path.name} already exists, skipping")
             else:
                 link_target.symlink_to(path.absolute())
 
