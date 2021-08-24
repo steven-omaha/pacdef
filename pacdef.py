@@ -442,6 +442,7 @@ class Group:
         else:
             raise ValueError("Must be compared with Group or string.")
 
+    @property
     def content(self) -> str:
         """Representation are the newline-separated names of the packages."""
         return "\n".join([package.name for package in self.packages])
@@ -612,7 +613,7 @@ class Pacdef:
             logging.error(e)
             sys.exit(EXIT_ERROR)
         for group in found_groups:
-            print(group)
+            print(group.content)
 
     def _install_packages_from_groups(self) -> None:
         """Install all packages from the imported package groups."""
