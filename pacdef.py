@@ -398,6 +398,10 @@ class Group:
         """Return the name of the group."""
         return self._path.name
 
+    @property
+    def path(self) -> Path:
+        return self._path
+
     def __contains__(self, item: Package):
         """Check if package exists in group."""
         return item in self.packages
@@ -456,6 +460,10 @@ class Group:
         else:
             return None
 
+    def remove(self):
+        logging.info(f"removing group {self.name}")
+        self._path.unlink()
+
 
 class Pacdef:
     """Class representing the main routines of pacdef."""
@@ -489,7 +497,7 @@ class Pacdef:
         return ACTION_MAP
 
     def _edit_group_file(self) -> None:
-        groups = self._get_group_paths_matching_arguments()
+        groups = self._get_groups_matching_arguments()
         try:
             subprocess.run([self._conf.editor, *groups], check=True)
         except subprocess.CalledProcessError:
@@ -537,20 +545,25 @@ class Pacdef:
 
         More than one group can be provided. This method is atomic: If not all groups are found, none are removed.
         """
-        found_groups = self._get_group_paths_matching_arguments()
-        for path in found_groups:
-            path.unlink()
+        found_groups = self._get_groups_matching_arguments()
+        for group in found_groups:
+            group.remove()
 
-    def _get_group_paths_matching_arguments(self) -> list[Path]:
+    def _get_groups_matching_arguments(self) -> list[Group]:
         found_groups = []
-        for group_name in self._args.groups:
-            group_file = self._conf.groups_path.joinpath(group_name)
-            if group_file.is_symlink() or _file_exists(group_file):
-                found_groups.append(group_file)
-            else:
-                logging.error(f"Did not find the group {group_name}")
-                sys.exit(EXIT_ERROR)
+        for name in self._args.groups:
+            found_groups.append(self._find_group_by_name(name))
         return found_groups
+
+    def _find_group_by_name(self, name: str) -> Group:
+        logging.info(f"Searching for group '{name}'")
+        for group in self._groups:
+            if group == name:
+                logging.info(f"found group under {group.path}")
+                return group
+        else:
+            logging.error(f"Did not find the group '{name}'.")
+            sys.exit(EXIT_ERROR)
 
     def _search_package(self):
         """Show imported group with contains `_args.package`.
@@ -660,7 +673,7 @@ class Pacdef:
             except Exception:
                 logging.error(f"Could not parse group file {path}.")
                 print(sys.exit(EXIT_ERROR))
-        logging.debug(f"{groups=}")
+        logging.debug(f"groups: {[group.name for group in groups]}")
         if len(groups) == 0:
             logging.warning("pacdef does not know any groups. Import one.")
         return groups
