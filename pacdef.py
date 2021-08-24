@@ -587,17 +587,13 @@ class Pacdef:
 
         More than one group may be provided, which prints the contents of all groups in order.
         """
-        self._verify_argument_groups_exist()  # be atomic (only print stuff if all args exist)
-        for argument_group in self._args.groups:
-            for imported_group in self._groups:
-                if imported_group == argument_group:
-                    print(imported_group)
-
-    def _verify_argument_groups_exist(self):
-        for arg_group in self._args.groups:
-            if arg_group not in self._groups:
-                logging.error(f"I don't know the group {self._args.groups}.")
-                sys.exit(EXIT_ERROR)
+        try:
+            found_groups = self._get_groups_matching_arguments()
+        except FileNotFoundError as e:
+            logging.error(e)
+            sys.exit(EXIT_ERROR)
+        for group in found_groups:
+            print(group)
 
     def _install_packages_from_groups(self) -> None:
         """Install all packages from the imported package groups."""
