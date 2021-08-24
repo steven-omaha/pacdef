@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Callable
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
@@ -81,9 +81,9 @@ class Arguments:
             parser = self._setup_parser()
             args = parser.parse_args()
             self.action: Action = self._parse_action(args)
-            self.files: Optional[list[Path]] = self._parse_files(args)
-            self.groups: Optional[list[str]] = self._parse_groups(args)
-            self.package: Optional[Package] = self._parse_package(args)
+            self.files: list[Path] | None = self._parse_files(args)
+            self.groups: list[str] | None = self._parse_groups(args)
+            self.package: Package | None = self._parse_package(args)
         else:
             self.action = None
             self.files = None
@@ -91,7 +91,7 @@ class Arguments:
             self.package = None
 
     @staticmethod
-    def _parse_package(args: argparse.Namespace) -> Optional[Package]:
+    def _parse_package(args: argparse.Namespace) -> Package | None:
         if not hasattr(args, "package"):
             return
         return Package(args.package)
@@ -143,7 +143,7 @@ class Arguments:
         return parser
 
     @staticmethod
-    def _parse_files(args: argparse.Namespace) -> Optional[list[Path]]:
+    def _parse_files(args: argparse.Namespace) -> list[Path] | None:
         if not hasattr(args, "file"):
             return
         files = [Path(f) for f in args.file]
@@ -166,7 +166,7 @@ class Arguments:
             sys.exit(EXIT_ERROR)
 
     @staticmethod
-    def _parse_groups(args: argparse.Namespace) -> Optional[list[str]]:
+    def _parse_groups(args: argparse.Namespace) -> list[str] | None:
         if not hasattr(args, "group"):
             return
         return args.group
@@ -446,7 +446,7 @@ class Group:
         return instance
 
     @staticmethod
-    def _get_package_from_line(line: str) -> Optional[Package]:
+    def _get_package_from_line(line: str) -> Package | None:
         """Get package from a line of a group file.
 
         Ignores everything after a `#` character.
@@ -715,7 +715,7 @@ class Package:
                                Examples: `zsh` or `repo/spotify`.
         """
         self.name: str
-        self.repo: Optional[str]
+        self.repo: str | None
         self.name, self.repo = self._split_into_name_and_repo(package_string)
 
     def __eq__(self, other: Package | str):
@@ -736,7 +736,7 @@ class Package:
         return result
 
     @staticmethod
-    def _split_into_name_and_repo(package_string: str) -> tuple[str, Optional[str]]:
+    def _split_into_name_and_repo(package_string: str) -> tuple[str, str | None]:
         """Take a string in the form `repository/package`, return package and repository.
 
         Returns `(package_name, None)` if it does not contain a repository prefix.
