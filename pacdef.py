@@ -447,6 +447,7 @@ class Group:
         return "\n".join([package.name for package in self.packages])
 
     def __repr__(self):
+        """String representation."""
         return f"group: {self.name}"
 
     @classmethod
@@ -782,6 +783,7 @@ class CommandRunner:
 
     @staticmethod
     def run(command: list[str], *args, **kwargs):
+        """Wrapper of subprocess.run."""
         logging.info(f"Executing command with subprocess.run: {command, args, kwargs}")
         try:
             subprocess.run(command, *args, **kwargs)
@@ -791,11 +793,15 @@ class CommandRunner:
 
     @staticmethod
     def get_output(command: list[str], *args, **kwargs):
-        logging.info(f"Executing command with subprocess.check_output: {command, args, kwargs}")
+        """Wrapper of subprocess.check_output."""
+        logging.info(
+            f"Executing command with subprocess.check_output: {command, args, kwargs}"
+        )
         return subprocess.check_output(command, *args, **kwargs)
 
     @staticmethod
     def call(command: list[str], *args, **kwargs) -> None:
+        """Wrapper of subprocess.call."""
         logging.info(f"Executing command with subprocess.call: {command, args, kwargs}")
         try:
             subprocess.call(command, *args, **kwargs)
