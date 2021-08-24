@@ -269,20 +269,37 @@ class Config:
         return result
 
     def _get_editor(self) -> Path | None:
-        editor = self._get_value_from_conf("misc", "editor", False)
+        editor = self._get_value_from_conf("misc", "editor")
         if editor is not None:
             return Path(editor)
-        try:
-            editor = os.environ["EDITOR"]
+        editor = self._get_value_from_env_variables(["EDITOR", "VISUAL"])
+        if editor is not None:
             return Path(editor)
-        except KeyError:
-            pass
-        try:
-            editor = os.environ["VISUAL"]
-            return Path(editor)
-        except KeyError:
-            pass
         return None
+
+    @classmethod
+    def _get_value_from_env_variables(
+        cls, variables: list[str], warn_missing: bool = False
+    ) -> str | None:
+        for var in variables:
+            result = cls._get_value_from_env(var, warn_missing)
+            if result is not None:
+                return result
+        else:
+            return None
+
+    @staticmethod
+    def _get_value_from_env(
+        variable: str | list[str], warn_missing: bool = False
+    ) -> str | None:
+        try:
+            result = os.environ[variable]
+            logging.info(f"{variable} is set to {result}.")
+            return result
+        except KeyError:
+            if warn_missing:
+                logging.warning(f"Environment variable {variable} not set.")
+            return None
 
     def _get_aur_helper(self) -> Path:
         aur_helper = self._get_value_from_conf("misc", "aur_helper", True)
