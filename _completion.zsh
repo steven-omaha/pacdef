@@ -7,6 +7,7 @@ _pacdef() {
         local -a actions
         actions=(
             'clean:uninstall packages not managed by pacdef'
+            'edit:edit an imported group file'
             'groups:show names of imported groups'
             'import:import a new group file'
             'remove:remove a group file'
@@ -31,6 +32,9 @@ _pacdef() {
 
 
     case $line[1] in
+        edit)
+            _arguments "1:group file:_files -W '$GROUPDIR'"
+        ;;
         import)
             _arguments "*:new group file(s):_files"
         ;;
