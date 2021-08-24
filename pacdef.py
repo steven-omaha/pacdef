@@ -147,6 +147,13 @@ class Arguments:
         if not hasattr(args, "file"):
             return
         files = [Path(f) for f in args.file]
+        for f in files:
+            if not _file_exists(f):
+                logging.error(
+                    f"Cannot handle '{f}'. "
+                    f"Check that it exists and if it is a file."
+                )
+                sys.exit(EXIT_ERROR)
         return files
 
     @staticmethod
@@ -517,12 +524,6 @@ class Pacdef:
             print(group)
 
     def _import_groups(self) -> None:
-        # check if all file-arguments exist before we do anything (be atomic)
-        for f in self._args.files:
-            path = Path(f)
-            if not _file_exists(path):
-                logging.error(f"Cannot import {f}. Is it an existing file?")
-                sys.exit(EXIT_ERROR)
         for f in self._args.files:
             path = Path(f)
             link_target = self._conf.groups_path.joinpath(f.name)
