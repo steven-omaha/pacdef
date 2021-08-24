@@ -482,7 +482,7 @@ class Pacdef:
         self._aur_helper = aur_helper or AURHelper(PARU)
         self._groups: list[Group] = self._read_groups()
 
-    def _get_action_map(self) -> dict[Action, Callable]:
+    def _get_action_map(self) -> dict[Action, Callable[[], None]]:
         """Return a dict matching all actions to their corresponding Pacdef methods."""
         ACTION_MAP = {
             Action.clean: self._remove_unmanaged_packages,
