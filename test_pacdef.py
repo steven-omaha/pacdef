@@ -120,27 +120,6 @@ def test_get_user_confirmation_exit(user_input):
             pacdef._get_user_confirmation()
 
 
-def test_get_path_from_group_name(tmpdir):
-    conf = pacdef.Config.__new__(pacdef.Config)
-    conf.groups_path = Path(tmpdir)
-    exists = Path(conf.groups_path.joinpath("exists"))
-    exists.touch()
-    result = pacdef._get_path_from_group_name(conf, exists.name)
-    assert result == exists
-
-    with pytest.raises(FileNotFoundError):
-        pacdef._get_path_from_group_name(conf, "does not exist")
-
-    symlink = conf.groups_path.joinpath("symlink")
-    symlink.symlink_to(exists)
-    result = pacdef._get_path_from_group_name(conf, symlink.name)
-    assert result == symlink
-
-    exists.unlink()
-    result = pacdef._get_path_from_group_name(conf, symlink.name)
-    assert result == symlink
-
-
 class TestAURHelper:
     @staticmethod
     @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
