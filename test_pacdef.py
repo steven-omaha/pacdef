@@ -1,4 +1,3 @@
-import configparser
 import logging
 import subprocess
 from os import environ
@@ -459,53 +458,6 @@ class TestPacdef:
 
     def test__get_group_names(self):
         pass  # TODO
-
-    def test__get_groups(self, tmpdir, caplog):
-        tmpdir = Path(tmpdir)
-        instance = self._get_instance()
-        instance._conf.groups_path = tmpdir
-        caplog.set_level(logging.WARNING)
-
-        filenames = ["a", "b"]
-        paths = [tmpdir.joinpath(f) for f in filenames]
-        for path in paths:
-            path.symlink_to("/dev/null")
-        result = instance._get_groups()
-        for path in paths:
-            assert path in result
-            path.unlink()
-
-        directory = tmpdir.joinpath("directory")
-        directory.mkdir()
-        result = instance._get_groups()
-        assert directory in result
-        assert len(caplog.records) == 1
-        record = caplog.records[0]
-        assert record.levelname == "WARNING"
-        assert "found directory" in record.message
-        directory.rmdir()
-        caplog.clear()
-
-        tmpfile = tmpdir.joinpath("tmpfile")
-        tmpfile.touch()
-        result = instance._get_groups()
-        assert tmpfile in result
-        assert len(caplog.records) == 1
-        record = caplog.records[0]
-        assert record.levelname == "WARNING"
-        assert "it is not a symlink" in record.message
-        tmpfile.unlink()
-        caplog.clear()
-
-        symlink = tmpdir.joinpath("symlink")
-        target = tmpdir.joinpath("target")
-        symlink.symlink_to(target)
-        result = instance._get_groups()
-        assert symlink in result
-        assert len(caplog.records) >= 1
-        record = caplog.records[-1]
-        assert record.levelname == "WARNING"
-        assert "it is a broken symlink" in record.message
 
 
 def test_get_packages_from_group():
