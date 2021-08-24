@@ -670,8 +670,9 @@ class Pacdef:
             # noinspection PyBroadException
             try:
                 groups.append(Group.from_file(path))
-            except Exception:
+            except Exception as e:
                 logging.error(f"Could not parse group file {path}.")
+                logging.error(e)
                 print(sys.exit(EXIT_ERROR))
         logging.debug(f"groups: {[group.name for group in groups]}")
         if len(groups) == 0:
