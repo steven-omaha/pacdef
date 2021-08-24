@@ -547,7 +547,11 @@ class Pacdef:
 
         More than one group can be provided. This method is atomic: If not all groups are found, none are removed.
         """
-        found_groups = self._get_groups_matching_arguments()
+        try:
+            found_groups = self._get_groups_matching_arguments()
+        except FileNotFoundError as e:
+            logging.error(e)
+            sys.exit(EXIT_ERROR)
         for group in found_groups:
             group.remove()
 
@@ -564,8 +568,7 @@ class Pacdef:
                 logging.info(f"found group under {group.path}")
                 return group
         else:
-            logging.error(f"Did not find the group '{name}'.")
-            sys.exit(EXIT_ERROR)
+            raise FileNotFoundError(f"Did not find the group '{name}'.")
 
     def _search_package(self):
         """Show imported group with contains `_args.package`.
