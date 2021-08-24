@@ -91,18 +91,6 @@ class TestConfig:
             assert conf.aur_helper == pacdef.PARU
 
     @staticmethod
-    def test__write_config_stub(tmpdir):
-        tmpfile = Path("/a")
-        with pytest.raises(PermissionError):
-            pacdef.Config._write_config_stub(tmpfile, pacdef.Config._CONFIG_STUB)
-
-        tmpfile = Path(tmpdir).joinpath("pacdef.conf")
-        pacdef.Config._write_config_stub(tmpfile, pacdef.Config._CONFIG_STUB)
-        config = configparser.ConfigParser()
-        config.read(tmpfile)
-        assert config["misc"]["aur_helper"] == str(pacdef.PARU)
-
-    @staticmethod
     def test___init__(tmpdir, monkeypatch):
         monkeypatch.setenv("XDG_CONFIG_HOME", str(tmpdir))
         groups = Path(tmpdir).joinpath("pacdef/groups")
