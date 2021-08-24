@@ -330,7 +330,8 @@ class AURHelper:
         if not path.is_absolute():
             path = Path("/usr/bin").joinpath(path)
         if not _file_exists(path):
-            raise FileNotFoundError(f"{path} not found.")
+            logging.error(f"AUR helper {path} not found.")
+            sys.exit(EXIT_ERROR)
         self._path = path
         logging.info(f"AUR helper: {self._path}")
 
@@ -340,7 +341,7 @@ class AURHelper:
         :param command: the command to execute, list of strings.
         """
         try:
-            subprocess.call([str(self._path)] + command)
+            CommandRunner.call([str(self._path)] + command)
         except FileNotFoundError:
             logging.error(f'Could not start the AUR helper "{self._path}".')
             sys.exit(EXIT_ERROR)
@@ -352,7 +353,7 @@ class AURHelper:
         :return: AUR helper output as list of strings
         """
         command = [str(self._path)] + query
-        result = subprocess.check_output(command).decode("utf-8")
+        result = CommandRunner.get_output(command).decode("utf-8")
         result_list = result.split("\n")[:-1]  # last entry is zero-length
         return result_list
 
@@ -520,10 +521,8 @@ class Pacdef:
 
     def _edit_group_file(self) -> None:
         groups = self._get_groups_matching_arguments()
-        try:
-            subprocess.run([self._conf.editor, *groups], check=True)
-        except subprocess.CalledProcessError:
-            sys.exit(EXIT_ERROR)
+        paths = [group.path for group in groups]
+        CommandRunner.run([self._conf.editor, *paths], check=True)
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
@@ -776,6 +775,33 @@ class Package:
             repo = None
             name = package_string
         return name, repo
+
+
+class CommandRunner:
+    """Abstract calls of external commands to provide logging."""
+
+    @staticmethod
+    def run(command: list[str], *args, **kwargs):
+        logging.info(f"Executing command with subprocess.run: {command, args, kwargs}")
+        try:
+            subprocess.run(command, *args, **kwargs)
+        except subprocess.CalledProcessError as e:
+            logging.error(e)
+            sys.exit(EXIT_ERROR)
+
+    @staticmethod
+    def get_output(command: list[str], *args, **kwargs):
+        logging.info(f"Executing command with subprocess.check_output: {command, args, kwargs}")
+        return subprocess.check_output(command, *args, **kwargs)
+
+    @staticmethod
+    def call(command: list[str], *args, **kwargs) -> None:
+        logging.info(f"Executing command with subprocess.call: {command, args, kwargs}")
+        try:
+            subprocess.call(command, *args, **kwargs)
+        except FileNotFoundError:
+            logging.error(f'Could not execute the program "{command[0]}".')
+            sys.exit(EXIT_ERROR)
 
 
 def _setup_logger() -> None:
