@@ -307,12 +307,12 @@ class Config:
     ) -> str | None:
         try:
             result = os.environ[variable]
-            logging.info(f"{variable} is set to {result}.")
-            return result
         except KeyError:
             if warn_missing:
                 logging.warning(f"Environment variable {variable} not set.")
             return None
+        logging.info(f"{variable} is set to {result}.")
+        return result
 
     def _get_aur_helper(self) -> Path:
         aur_helper = self._get_value_from_conf("misc", "aur_helper", True)
