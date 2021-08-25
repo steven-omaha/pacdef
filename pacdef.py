@@ -298,13 +298,13 @@ class Config:
 
     @staticmethod
     def _get_value_from_env(
-        """Get the value of a single environment variable.
+        variable: str, warn_missing: bool = False
+    ) -> str | None:
+         """Get the value of a single environment variable.
         
         :param variable: environment variable to read
         :param warn_missing: print a warning if the variable is not set
         :return: value of environment variable or None"""
-        variable: str, warn_missing: bool = False
-    ) -> str | None:
         try:
             result = os.environ[variable]
         except KeyError:
