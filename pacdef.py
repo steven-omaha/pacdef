@@ -290,7 +290,7 @@ class Config:
 
     @staticmethod
     def _get_value_from_env(
-        variable: str | list[str], warn_missing: bool = False
+        variable: str, warn_missing: bool = False
     ) -> str | None:
         try:
             result = os.environ[variable]
