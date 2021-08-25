@@ -281,6 +281,14 @@ class Config:
     def _get_value_from_env_variables(
         cls, variables: list[str], warn_missing: bool = False
     ) -> str | None:
+        """Return the value of the first existing environment variable.
+        
+        For a list of environment variables, check in the provided order that they exist.
+        Return the value of the first existing environment variable.
+        
+        :param variables: list of environment variables to read
+        :param warn_missing: print a warning if none of the elements in `variables` are found
+        :return: value of environment variable or None"""
         for var in variables:
             result = cls._get_value_from_env(var, warn_missing)
             if result is not None:
@@ -290,6 +298,11 @@ class Config:
 
     @staticmethod
     def _get_value_from_env(
+        """Get the value of a single environment variable.
+        
+        :param variable: environment variable to read
+        :param warn_missing: print a warning if the variable is not set
+        :return: value of environment variable or None"""
         variable: str, warn_missing: bool = False
     ) -> str | None:
         try:
