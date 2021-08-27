@@ -282,13 +282,14 @@ class Config:
         cls, variables: list[str], warn_missing: bool = False
     ) -> str | None:
         """Return the value of the first existing environment variable.
-        
+
         For a list of environment variables, check in the provided order that they exist.
         Return the value of the first existing environment variable.
-        
+
         :param variables: list of environment variables to read
         :param warn_missing: print a warning if none of the elements in `variables` are found
-        :return: value of environment variable or None"""
+        :return: value of environment variable or None
+        """
         for var in variables:
             result = cls._get_value_from_env(var, warn_missing)
             if result is not None:
@@ -297,14 +298,13 @@ class Config:
             return None
 
     @staticmethod
-    def _get_value_from_env(
-        variable: str, warn_missing: bool = False
-    ) -> str | None:
+    def _get_value_from_env(variable: str, warn_missing: bool = False) -> str | None:
         """Get the value of a single environment variable.
-        
+
         :param variable: environment variable to read
         :param warn_missing: print a warning if the variable is not set
-        :return: value of environment variable or None"""
+        :return: value of environment variable or None
+        """
         try:
             result = os.environ[variable]
         except KeyError:
