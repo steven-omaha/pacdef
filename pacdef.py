@@ -471,6 +471,7 @@ class Group:
         :param path: path to group file
         :return: instance of Group
         """
+        cls._sanity_check(path)
         text = path.read_text()
         lines = text.split("\n")[:-1]  # last line is empty
         packages = []
@@ -501,6 +502,32 @@ class Group:
         """Delete the symlink under the group path."""
         logging.info(f"removing group {self.name}")
         self._path.unlink()
+
+    @staticmethod
+    def _sanity_check(group: Path) -> None:
+        """Sanity check an imported group file.
+
+        Checks for broken symlinks, directories and actual files (instead of symlinks). Prints a warning if a
+        check fails.
+
+        :param group: path to a group to be imported
+        """
+
+        def check_dir():
+            if group.is_dir():
+                logging.warning(f"found directory {group} instead of group file")
+
+        def check_broken_symlink():
+            if group.is_symlink() and not group.exists():
+                logging.warning(f"found group {group}, but it is a broken symlink")
+
+        def check_not_symlink():
+            if not group.is_symlink() and group.is_file():
+                logging.warning(f"found group {group}, but it is not a symlink")
+
+        check_dir()
+        check_broken_symlink()
+        check_not_symlink()
 
 
 class Pacdef:
@@ -700,7 +727,6 @@ class Pacdef:
         paths.sort()
         groups = []
         for path in paths:
-            self._sanity_check_imported_group(path)
             # noinspection PyBroadException
             try:
                 groups.append(Group.from_file(path))
@@ -712,31 +738,6 @@ class Pacdef:
         if len(groups) == 0:
             logging.warning("pacdef does not know any groups. Import one.")
         return groups
-
-    def _sanity_check_imported_group(self, group: Path) -> None:
-        """Sanity check an imported group file.
-
-        Checks for broken symlinks, directories and actual files (instead of symlinks). Prints a warning if a
-        check fails.
-
-        :param group: path to a group to be imported
-        """
-
-        def check_dir():
-            if group.is_dir():
-                logging.warning(f"found directory {group} in {self._conf.groups_path}")
-
-        def check_broken_symlink():
-            if group.is_symlink() and not group.exists():
-                logging.warning(f"found group {group}, but it is a broken symlink")
-
-        def check_not_symlink():
-            if not group.is_symlink() and group.is_file():
-                logging.warning(f"found group {group}, but it is not a symlink")
-
-        check_dir()
-        check_broken_symlink()
-        check_not_symlink()
 
 
 @dataclass
