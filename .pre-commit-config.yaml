@@ -1,0 +1,9 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: ./
+    rev: b82d6cc256b11248468e16979b269d73ccb91ce9
+    hooks:
+    -  id: black
+    -  id: pep257
+
