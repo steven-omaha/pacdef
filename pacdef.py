@@ -443,7 +443,7 @@ class Group:
         return self.packages[item]
 
     def __len__(self):
-        """Get length of packages."""
+        """Get number of packages."""
         return len(self.packages)
 
     def __eq__(self, other: Group | str):
