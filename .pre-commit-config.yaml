@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: ./
-    rev: b82d6cc256b11248468e16979b269d73ccb91ce9
+    rev: fab06f07e0c1bcf04bf6af764b7e36fba5217362
     hooks:
     -  id: black
     -  id: pep257
