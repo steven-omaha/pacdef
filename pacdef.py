@@ -744,7 +744,7 @@ class Pacdef:
         return groups
 
 
-@dataclass
+@dataclass(order=True)
 class Package:
     """Class that represents a single package."""
 
