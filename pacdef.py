@@ -218,6 +218,7 @@ class Config:
         self.aur_helper: Path = aur_helper or self._get_aur_helper()
         self._editor: Path | None = editor or self._get_editor()
         logging.info(f"{self.aur_helper=}")
+        self._sanity_check()
 
     def _create_config_files_and_dirs(self, config_file_path, pacdef_path):
         """Create config files and dirs. Will be executed on first-time run of pacdef."""
@@ -324,6 +325,11 @@ class Config:
             return PARU
         else:
             return Path(aur_helper)
+
+    def _sanity_check(self):
+        number_group_files = len([self.groups_path.iterdir()])
+        if number_group_files == 0:
+            logging.warning("pacdef does not know any groups. Import one.")
 
 
 class AURHelper:
@@ -738,8 +744,6 @@ class Pacdef:
                 logging.error(e)
                 print(sys.exit(EXIT_ERROR))
         logging.debug(f"groups: {[group.name for group in groups]}")
-        if len(groups) == 0:
-            logging.warning("pacdef does not know any groups. Import one.")
         return groups
 
 
