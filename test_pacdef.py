@@ -52,7 +52,7 @@ class TestConfig:
     @staticmethod
     def test__get_aur_helper(tmpdir):
         with mock.patch.object(
-                pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
+            pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
         ):
             tmpfile = Path(tmpdir).joinpath("tmp.conf")
 
@@ -97,7 +97,7 @@ class TestConfig:
         conf_file = Path(tmpdir).joinpath("pacdef/pacdef.conf")
 
         with mock.patch.object(
-                pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
+            pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
         ):
             config = pacdef.Config()
         aur_helper = Path("/usr/bin/paru")
@@ -235,7 +235,7 @@ class TestAURHelper:
 
 class TestPacdef:
     def _test_basic_printing_function(
-            self, test_method: str, patched_method: str, capsys
+        self, test_method: str, patched_method: str, capsys
     ):
         instance = self._get_instance()
         method = instance.__getattribute__(test_method)
@@ -296,7 +296,7 @@ class TestPacdef:
         instance = self._get_instance()
         with mock.patch.object(instance._aur_helper, "remove", check_valid):
             with mock.patch.object(
-                    instance, "_get_unmanaged_packages", lambda: packages
+                instance, "_get_unmanaged_packages", lambda: packages
             ):
                 with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._remove_unmanaged_packages()
@@ -383,7 +383,7 @@ class TestPacdef:
         instance = self._get_instance()
         with mock.patch.object(instance._aur_helper, "install", check_valid):
             with mock.patch.object(
-                    instance, "_calculate_packages_to_install", lambda: packages
+                instance, "_calculate_packages_to_install", lambda: packages
             ):
                 with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._install_packages_from_groups()
@@ -405,7 +405,7 @@ class TestPacdef:
         ],
     )
     def test__calculate_packages_to_install(
-            self, pacdef_packages, installed_packages, expected_result
+        self, pacdef_packages, installed_packages, expected_result
     ):
         instance = self._get_instance()
         pp = [pacdef.Package(item) for item in pacdef_packages]
@@ -413,9 +413,9 @@ class TestPacdef:
         er = [pacdef.Package(item) for item in expected_result]
         with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
-                    instance._aur_helper,
-                    "get_all_installed_packages",
-                    lambda: ip,
+                instance._aur_helper,
+                "get_all_installed_packages",
+                lambda: ip,
             ):
                 result = instance._calculate_packages_to_install()
                 assert result == er
@@ -432,7 +432,7 @@ class TestPacdef:
         ],
     )
     def test_get_unmanaged_packages(
-            self, pacdef_packages, installed_packages, expected_result
+        self, pacdef_packages, installed_packages, expected_result
     ):
         instance = self._get_instance()
         pp = [pacdef.Package(item) for item in pacdef_packages]
@@ -440,9 +440,9 @@ class TestPacdef:
         er = [pacdef.Package(item) for item in expected_result]
         with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
-                    instance._aur_helper,
-                    "get_explicitly_installed_packages",
-                    lambda: ip,
+                instance._aur_helper,
+                "get_explicitly_installed_packages",
+                lambda: ip,
             ):
                 result = instance._get_unmanaged_packages()
                 assert result == er
@@ -482,7 +482,7 @@ def test_remove_repo_prefix_from_package():
     ],
 )
 def test_calculate_package_diff(
-        pacdef_packages, system_packages, pacdef_only, system_only
+    pacdef_packages, system_packages, pacdef_only, system_only
 ):
     def to_package(x: list[str]):
         return [pacdef.Package(item) for item in x]
@@ -496,8 +496,8 @@ def test_calculate_package_diff(
 
 class TestArguments:
     def test__parse_files(self, tmpdir):
-        files = [Path(tmpdir) / 'group']
+        files = [Path(tmpdir) / "group"]
         args = argparse.Namespace()
-        setattr(args, 'file', files[0].name)
+        setattr(args, "file", files[0].name)
         with pytest.raises(SystemExit):
             pacdef.Arguments._parse_files(args)
