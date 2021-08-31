@@ -1,0 +1,5 @@
+- id: black
+  name: black
+  entry: /usr/bin/black
+  types: [python]
+  language: script
