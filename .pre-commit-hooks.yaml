@@ -3,3 +3,10 @@
   entry: /usr/bin/black
   types: [python]
   language: script
+
+- id: pep257
+  name: pep257
+  entry: /usr/bin/pep257
+  types: [python]
+  language: script
+  args: ["--ignore=D202,D203"]
