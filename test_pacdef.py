@@ -1,9 +1,9 @@
+from __future__ import annotations
 import argparse
 import logging
 import subprocess
 from os import environ
 from pathlib import Path
-from typing import Optional
 from unittest import mock
 
 import builtins
@@ -16,6 +16,7 @@ PACMAN_EXISTS = PACMAN.exists()
 PARU_EXISTS = pacdef.PARU.exists()
 REASON_NOT_ARCH = "pacman not found. That's not an Arch installation."
 REASON_PARU_MISSING = "paru not found"
+NULL = Path("/dev/null")
 
 
 def test_dir_exists(tmpdir):
@@ -131,20 +132,14 @@ class TestAURHelper:
         with pytest.raises(SystemExit):
             pacdef.AURHelper(Path("does not exist"))
 
-    def test__execute(self):
+    def test__execute(self, tmpdir):
         def check_valid(command_run: list[str]):
             assert command_run[0] == str(instance._path)
             assert command_run[1:] == command_given
 
         command_given: list[str] = ["some", "command"]
-        instance = object.__new__(pacdef.AURHelper)
-        instance._path = pacdef.PARU
+        instance = self.get_dummy_aur_helper(Path(tmpdir))
         with mock.patch.object(subprocess, "call", check_valid):
-            instance._execute(command_given)
-
-        instance = object.__new__(pacdef.AURHelper)
-        instance._path = Path("does not exist")
-        with pytest.raises(SystemExit):
             instance._execute(command_given)
 
     @staticmethod
@@ -169,7 +164,6 @@ class TestAURHelper:
         for package in packages:
             assert package in command
 
-    @pytest.mark.skipif(not PARU_EXISTS, reason=REASON_PARU_MISSING)
     @pytest.mark.parametrize(
         "packages",
         [
@@ -179,7 +173,7 @@ class TestAURHelper:
             ["neovim", "repo/python"],
         ],
     )
-    def test_install(self, packages):
+    def test_install(self, tmpdir, packages):
         def check_valid(_, command):
             self.check_switches_valid(command, pacdef.AURHelper._Switches.install)
             self.check_switches_before_packages(
@@ -187,11 +181,16 @@ class TestAURHelper:
             )
             self.check_packages_present(command, packages)
 
+        instance = self.get_dummy_aur_helper(Path(tmpdir))
         with mock.patch.object(pacdef.AURHelper, "_execute", check_valid):
-            instance = pacdef.AURHelper(pacdef.PARU)
             instance.install(packages)
 
-    @pytest.mark.skipif(not PARU_EXISTS, reason=REASON_PARU_MISSING)
+    @staticmethod
+    def get_dummy_aur_helper(tmpdir: Path) -> pacdef.AURHelper:
+        path = tmpdir / "aur_helper"
+        path.touch()
+        return pacdef.AURHelper(path)
+
     @pytest.mark.parametrize(
         "packages",
         [
@@ -200,7 +199,7 @@ class TestAURHelper:
             ["neovim", "python"],
         ],
     )
-    def test_remove(self, packages):
+    def test_remove(self, tmpdir, packages):
         def check_valid(_, command):
             self.check_switches_valid(command, pacdef.AURHelper._Switches.remove)
             self.check_switches_before_packages(
@@ -208,8 +207,8 @@ class TestAURHelper:
             )
             self.check_packages_present(command, packages)
 
+        instance = self.get_dummy_aur_helper(Path(tmpdir))
         with mock.patch.object(pacdef.AURHelper, "_execute", check_valid):
-            instance = pacdef.AURHelper(pacdef.PARU)
             instance.remove(packages)
 
     @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
@@ -235,9 +234,9 @@ class TestAURHelper:
 
 class TestPacdef:
     def _test_basic_printing_function(
-        self, test_method: str, patched_method: str, capsys
+        self, test_method: str, patched_method: str, capsys, tmpdir: Path
     ):
-        instance = self._get_instance()
+        instance = self._get_instance(tmpdir)
         method = instance.__getattribute__(test_method)
         with mock.patch.object(instance, patched_method, lambda: None):
             with pytest.raises(TypeError):
@@ -266,15 +265,18 @@ class TestPacdef:
         assert len(err) == 0
 
     @staticmethod
-    def _get_instance(tmpdir: Optional[Path] = None) -> pacdef.Pacdef:
-        conf = pacdef.Config(groups_path=tmpdir)
-        aur_helper = pacdef.AURHelper(pacdef.PARU)
+    def _get_instance(tmpdir: Path | str) -> pacdef.Pacdef:
+        tmpdir = Path(tmpdir)
+        aur_helper = TestAURHelper.get_dummy_aur_helper(tmpdir)
+        conf = pacdef.Config(
+            aur_helper=NULL, groups_path=tmpdir, config_file_path=NULL, editor=NULL
+        )
         args = pacdef.Arguments(process_args=False)
         instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
         return instance
 
-    def test_remove_unmanaged_packages_none(self):
-        instance = self._get_instance()
+    def test_remove_unmanaged_packages_none(self, tmpdir):
+        instance = self._get_instance(tmpdir)
         with mock.patch.object(instance, "_get_unmanaged_packages", lambda: []):
             with pytest.raises(SystemExit):
                 instance._remove_unmanaged_packages()
@@ -288,12 +290,12 @@ class TestPacdef:
             ]
         ],
     )
-    def test_remove_unmanaged_packages_for_packages(self, packages):
+    def test_remove_unmanaged_packages_for_packages(self, packages, tmpdir):
         def check_valid(args: list[str]) -> None:
             for arg in args:
                 assert arg in packages
 
-        instance = self._get_instance()
+        instance = self._get_instance(tmpdir)
         with mock.patch.object(instance._aur_helper, "remove", check_valid):
             with mock.patch.object(
                 instance, "_get_unmanaged_packages", lambda: packages
@@ -301,8 +303,10 @@ class TestPacdef:
                 with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._remove_unmanaged_packages()
 
-    def test_list_groups(self, capsys):
-        self._test_basic_printing_function("_list_groups", "_get_group_names", capsys)
+    def test_list_groups(self, capsys, tmpdir):
+        self._test_basic_printing_function(
+            "_list_groups", "_get_group_names", capsys, Path(tmpdir)
+        )
 
     def test_import_groups(self, caplog, tmpdir):
         def test_existing():
@@ -324,9 +328,9 @@ class TestPacdef:
             count_after = len(list(groupdir.iterdir()))
             assert count_after == count_before
 
-        def get_instance(new_group_files: list[Path]) -> pacdef.Pacdef:
+        def get_instance(new_group_files: list[Path], tmpdir) -> pacdef.Pacdef:
             conf = pacdef.Config(groups_path=groupdir)
-            aur_helper = pacdef.AURHelper(pacdef.PARU)
+            aur_helper = TestAURHelper.get_dummy_aur_helper(tmpdir)
             args = pacdef.Arguments(process_args=False)
             args.files = new_group_files
             instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
@@ -342,7 +346,7 @@ class TestPacdef:
         new_group_files = [workdir.joinpath(f"new_group_{x}") for x in range(3)]
 
         new_group_files[0].touch()
-        instance = get_instance([new_group_files[0]])
+        instance = get_instance([new_group_files[0]], tmpdir)
         test_existing()
 
         for f in new_group_files:
@@ -361,8 +365,8 @@ class TestPacdef:
     def test_show_group(self):
         pass  # TODO
 
-    def test_install_packages_from_groups_none(self):
-        instance = self._get_instance()
+    def test_install_packages_from_groups_none(self, tmpdir):
+        instance = self._get_instance(tmpdir)
         with mock.patch.object(instance, "_calculate_packages_to_install", lambda: []):
             with pytest.raises(SystemExit):
                 instance._install_packages_from_groups()
@@ -375,12 +379,12 @@ class TestPacdef:
             ["neovim", "repo/python"],
         ],
     )
-    def test_install_packages_from_groups_for_packages(self, packages):
+    def test_install_packages_from_groups_for_packages(self, packages, tmpdir):
         def check_valid(args: list[str]) -> None:
             for arg in args:
                 assert arg in packages
 
-        instance = self._get_instance()
+        instance = self._get_instance(tmpdir)
         with mock.patch.object(instance._aur_helper, "install", check_valid):
             with mock.patch.object(
                 instance, "_calculate_packages_to_install", lambda: packages
@@ -388,9 +392,9 @@ class TestPacdef:
                 with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
                     instance._install_packages_from_groups()
 
-    def test_show_unmanaged_packages(self, capsys):
+    def test_show_unmanaged_packages(self, capsys, tmpdir):
         self._test_basic_printing_function(
-            "_show_unmanaged_packages", "_get_unmanaged_packages", capsys
+            "_show_unmanaged_packages", "_get_unmanaged_packages", capsys, Path(tmpdir)
         )
 
     @pytest.mark.parametrize(
@@ -405,9 +409,9 @@ class TestPacdef:
         ],
     )
     def test__calculate_packages_to_install(
-        self, pacdef_packages, installed_packages, expected_result
+        self, pacdef_packages, installed_packages, expected_result, tmpdir
     ):
-        instance = self._get_instance()
+        instance = self._get_instance(tmpdir)
         pp = [pacdef.Package(item) for item in pacdef_packages]
         ip = [pacdef.Package(item) for item in installed_packages]
         er = [pacdef.Package(item) for item in expected_result]
@@ -432,9 +436,9 @@ class TestPacdef:
         ],
     )
     def test_get_unmanaged_packages(
-        self, pacdef_packages, installed_packages, expected_result
+        self, pacdef_packages, installed_packages, expected_result, tmpdir
     ):
-        instance = self._get_instance()
+        instance = self._get_instance(tmpdir)
         pp = [pacdef.Package(item) for item in pacdef_packages]
         ip = [pacdef.Package(item) for item in installed_packages]
         er = [pacdef.Package(item) for item in expected_result]
