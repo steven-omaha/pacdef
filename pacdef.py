@@ -545,7 +545,7 @@ class Pacdef:
         """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()
         self._args = args or Arguments()
-        self._aur_helper = aur_helper or AURHelper(PARU)
+        self._aur_helper = aur_helper or AURHelper(self._conf.aur_helper)
         self._groups: list[Group] = self._read_groups()
 
     def _get_action_map(self) -> dict[Action, Callable[[], None]]:
