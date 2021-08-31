@@ -55,38 +55,38 @@ class TestConfig:
         ):
             tmpfile = Path(tmpdir).joinpath("tmp.conf")
 
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper == pacdef.PARU
 
             with open(tmpfile, "w") as fd:
                 fd.write("some strange content")
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper == pacdef.PARU
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\nsomething")
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper == pacdef.PARU
 
             something = "something"
             with open(tmpfile, "w") as fd:
                 fd.write(f"[misc]\naur_helper={something}")
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper == Path(something)
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\naur___hELPer=paru")
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper == pacdef.PARU
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\naur_helper=paru")
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper.name == pacdef.PARU.name
 
             with open(tmpfile, "w") as fd:
                 fd.write("[misc]\naur_helper=/usr/bin/paru")
-            conf = pacdef.Config(config_file=tmpfile)
+            conf = pacdef.Config(config_file_path=tmpfile)
             assert conf.aur_helper == pacdef.PARU
 
     @staticmethod

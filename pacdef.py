@@ -202,28 +202,32 @@ class Config:
         self,
         groups_path: Path = None,
         aur_helper: Path = None,
-        config_file: Path = None,
+        config_file_path: Path = None,
         editor: Path = None,
     ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
         # TODO clean this up, split into multiple parts?
         config_base_dir = self._get_xdg_config_home()
         pacdef_path = config_base_dir.joinpath("pacdef")
-        config_file = config_file or pacdef_path.joinpath("pacdef.conf")
+        config_file_path = config_file_path or pacdef_path.joinpath("pacdef.conf")
 
-        self._config_file = self._read_config_file(config_file)
+        self._config = self._read_config_file(config_file_path)
         self.groups_path: Path = groups_path or pacdef_path.joinpath("groups")
         logging.info(f"{self.groups_path=}")
-        if not _dir_exists(pacdef_path):
-            pacdef_path.mkdir(parents=True)
-        if not _dir_exists(self.groups_path):
-            self.groups_path.mkdir()
-        if not _file_exists(config_file):
-            config_file.touch()
+        self._create_config_files_and_dirs(config_file_path, pacdef_path)
 
         self.aur_helper: Path = aur_helper or self._get_aur_helper()
         self._editor: Path | None = editor or self._get_editor()
         logging.info(f"{self.aur_helper=}")
+
+    def _create_config_files_and_dirs(self, config_file_path, pacdef_path):
+        """Create config files and dirs. Will be executed on first-time run of pacdef."""
+        if not _dir_exists(pacdef_path):
+            pacdef_path.mkdir(parents=True)
+        if not _dir_exists(self.groups_path):
+            self.groups_path.mkdir()
+        if not _file_exists(config_file_path):
+            config_file_path.touch()
 
     @property
     def editor(self) -> Path:
@@ -261,7 +265,7 @@ class Config:
         self, section: str, key: str, warn_missing: bool = False
     ) -> str | None:
         try:
-            result = self._config_file[section][key]
+            result = self._config[section][key]
         except KeyError:
             if warn_missing:
                 logging.warning(f"{key} in section [{section}] not set")
