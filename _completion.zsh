@@ -11,6 +11,7 @@ _pacdef() {
             'groups:show names of imported groups'
             'import:import a new group file'
             'remove:remove a group file'
+            'review:review unmanaged packages'
             'search:show the group containing a package'
             'show:show packages under an imported group'
             'sync:install all packages from imported groups'
