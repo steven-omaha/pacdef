@@ -18,7 +18,8 @@ from dataclasses import dataclass
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional, Any
+
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
@@ -27,6 +28,8 @@ EXIT_INTERRUPT = 130
 COMMENT = "#"
 PARU = Path("/usr/bin/paru")
 VERSION = "unknown"
+
+NOTHING_TO_DO = "nothing to do"
 
 
 def _main():
@@ -122,6 +125,7 @@ class Arguments:
         parser_remove.add_argument(
             "group", nargs="+", help="a previously imported group"
         )
+        subparsers.add_parser(Action.review.value, help="review unmanaged packages")
         parser_search = subparsers.add_parser(
             Action.search.value, help="show the group containing a package"
         )
@@ -188,6 +192,7 @@ class Action(Enum):
     groups = "groups"
     import_ = "import"
     remove = "remove"
+    review = "review"
     search = "search"
     show = "show"
     sync = "sync"
@@ -538,6 +543,13 @@ class Group:
         check_broken_symlink()
         check_not_symlink()
 
+    def append(self, package: Package):
+        """Add package to group, by memorizing it and appending it to the group file."""
+        self.packages.append(package)
+        self.packages.sort()
+        with open(self.path, "a") as fd:
+            fd.write(f"{package}\n")
+
 
 class Pacdef:
     """Class representing the main routines of pacdef."""
@@ -562,6 +574,7 @@ class Pacdef:
             Action.groups: self._list_groups,
             Action.import_: self._import_groups,
             Action.remove: self._remove_group,
+            Action.review: self._review,
             Action.search: self._search_package,
             Action.show: self._show_group,
             Action.sync: self._install_packages_from_groups,
@@ -581,6 +594,13 @@ class Pacdef:
         action_fn = action_map[self._args.action]
         action_fn()
 
+    def _review(self) -> None:
+        reviewer = Reviewer(
+            self._groups, self._get_unmanaged_packages(), self._aur_helper
+        )
+        reviewer.ask_user_for_actions()
+        reviewer.run_actions()
+
     def _remove_unmanaged_packages(self) -> None:
         """Remove packages not managed by pacdef.
 
@@ -589,7 +609,7 @@ class Pacdef:
         """
         unmanaged_packages = self._get_unmanaged_packages()
         if len(unmanaged_packages) == 0:
-            print("nothing to do")
+            print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
         print("Would remove the following packages and their dependencies:")
         for package in unmanaged_packages:
@@ -668,7 +688,7 @@ class Pacdef:
         """Install all packages from the imported package groups."""
         to_install = self._calculate_packages_to_install()
         if len(to_install) == 0:
-            print("nothing to do")
+            print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
         print("Would install the following packages:")
         for package in to_install:
@@ -745,6 +765,181 @@ class Pacdef:
                 print(sys.exit(EXIT_ERROR))
         logging.debug(f"groups: {[group.name for group in groups]}")
         return groups
+
+
+class Reviewer:
+    """Handles logic related to `pacdef review`."""
+
+    def __init__(
+        self,
+        groups: list[Group],
+        unmanaged_packages: list[Package],
+        aur_helper: AURHelper,
+    ):
+        """Standard constructor."""
+        self._groups = groups
+        self._unmanaged_packages = unmanaged_packages
+        self._packages_index = 0
+        self._actions: list[Review] = []
+        self._aur_helper = aur_helper
+
+    def ask_user_for_actions(self) -> None:
+        """Populate self._actions with Reviews."""
+        self._print_unmanaged_packages()
+        while self._packages_index < len(self._unmanaged_packages):
+            print(self._current_package)
+            self._actions.append(self._get_action_from_user_input_for_current_package())
+            self._packages_index += 1
+
+    def _print_unmanaged_packages(self) -> None:
+        if self._unmanaged_packages:
+            print("Unmanaged packages:")
+            for package in self._unmanaged_packages:
+                print(f"  {package}")
+            print()
+
+    @property
+    def _current_package(self) -> Package:
+        return self._unmanaged_packages[self._packages_index]
+
+    def _get_action_from_user_input_for_current_package(self) -> Review:
+        action = self._get_user_input(
+            "(a)ssign to group, (d)elete, (s)kip? ", self._parse_input_action
+        )
+        group = None
+        if action == ReviewAction.assign_to_group:
+            self._print_enumerated_groups()
+            group = self._get_user_input("Group? ", self._parse_input_group)
+        return Review(action, self._current_package, group)
+
+    @staticmethod
+    def _get_user_input(
+        prompt: str, validator: Callable[[str], Any], *, default: Optional[str] = None
+    ) -> Any:
+        user_input = ""
+        while not user_input:
+            user_input = input(prompt).lower() or default
+            try:
+                result = validator(user_input)
+            except ValueError:
+                user_input = ""
+            except KeyboardInterrupt:
+                sys.exit(EXIT_INTERRUPT)
+        # TODO fix this
+        # noinspection PyUnboundLocalVariable
+        return result
+
+    def _parse_input_action(self, user_input: str) -> ReviewAction:
+        action_map = self._get_action_map()
+        return action_map[user_input]
+
+    @staticmethod
+    def _get_action_map() -> dict[str, ReviewAction]:
+        ACTION_MAP = {
+            "a": ReviewAction.assign_to_group,
+            "d": ReviewAction.delete,
+            "s": ReviewAction.skip,
+        }
+        return ACTION_MAP
+
+    def _print_enumerated_groups(self):
+        for i, group in enumerate(self._groups):
+            print(f"{i}: {group.name}")
+
+    def _parse_input_group(self, user_input: str) -> Group:
+        return self._groups[int(user_input)]
+
+    def run_actions(self) -> None:
+        """Run actions from self._actions."""
+        self._print_strategy()
+
+        if not (self._to_assign or self._to_delete):
+            print(NOTHING_TO_DO)
+            sys.exit(EXIT_SUCCESS)
+
+        if not self._get_user_input(
+            "Confirm? [y, N] ", lambda from_user: from_user == "y", default="n"
+        ):
+            sys.exit(EXIT_SUCCESS)
+        self._delete(self._to_delete)
+        self._assign(self._to_assign)
+
+    @property
+    def _to_delete(self) -> list[Review]:
+        return [
+            review for review in self._actions if review.action == ReviewAction.delete
+        ]
+
+    @property
+    def _to_assign(self) -> list[Review]:
+        return [
+            review
+            for review in self._actions
+            if review.action == ReviewAction.assign_to_group
+        ]
+
+    def _print_strategy(self) -> None:
+        if self._to_delete:
+            self._print_to_delete(self._to_delete)
+        if self._to_assign:
+            self._print_to_assign(self._to_assign)
+
+    @staticmethod
+    def _print_to_assign(to_assign):
+        print("\nWill assign packages as follows:")
+        for review in to_assign:
+            print(f"  {review.package} -> {review.group.name}")
+        print()
+
+    @staticmethod
+    def _print_to_delete(to_delete):
+        print("\nWill delete the following packages:")
+        for review in to_delete:
+            print(f"  {review.package}")
+        print()
+
+    def _delete(self, to_delete: list[Review]) -> None:
+        packages = [review.package for review in to_delete]
+        if packages:
+            self._aur_helper.remove(packages)
+
+    @staticmethod
+    def _assign(to_assign: list[Review]):
+        for review in to_assign:
+            review.group.append(review.package)
+
+
+class ReviewAction(Enum):
+    """Possible actions for `pacdef review`."""
+
+    assign_to_group = "assign to group"
+    delete = "delete"
+    skip = "skip"
+
+
+class Review:
+    """Holds results of review for a single package."""
+
+    def __init__(self, action: ReviewAction, package: Package, group: Optional[Group]):
+        """Standard constructor."""
+        self._action = action
+        self._package = package
+        self._group = group
+
+    @property
+    def action(self) -> ReviewAction:
+        """Get the ReviewAction of the instance."""
+        return self._action
+
+    @property
+    def group(self) -> Optional[Group]:
+        """Get the group of the instance."""
+        return self._group
+
+    @property
+    def package(self) -> Package:
+        """Get the package of the instance."""
+        return self._package
 
 
 @dataclass(order=True)

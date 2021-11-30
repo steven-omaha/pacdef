@@ -505,3 +505,29 @@ class TestArguments:
         setattr(args, "file", files[0].name)
         with pytest.raises(SystemExit):
             pacdef.Arguments._parse_files(args)
+
+
+class TestGroup:
+    def test_append_to_empty_group(self, tmpdir):
+        tmpfile = Path(tmpdir) / "group"
+        package = pacdef.Package("package")
+        group = pacdef.Group(packages=[], path=tmpfile)
+        group.append(package)
+        assert group.packages[-1] == package
+        with open(tmpfile) as fd:
+            content = fd.read()
+        assert content == f"{package.name}\n"
+
+    def test_append_to_nonempty_group(self, tmpdir):
+        tmpfile = Path(tmpdir) / "group"
+        package1 = pacdef.Package("package1")
+        with open(tmpfile, "w") as fd:
+            fd.write(f"{package1.name}\n")
+        group = pacdef.Group(packages=[package1], path=tmpfile)
+
+        package2 = pacdef.Package("package2")
+        group.append(package2)
+        assert group.packages == [package1, package2]
+        with open(tmpfile) as fd:
+            content = fd.read()
+        assert content == f"{package1.name}\n{package2.name}\n"
