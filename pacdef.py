@@ -18,8 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Callable, Optional, Any
-
+from typing import Any, Callable, Optional
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1

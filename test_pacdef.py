@@ -1,12 +1,13 @@
 from __future__ import annotations
+
 import argparse
+import builtins
 import logging
 import subprocess
 from os import environ
 from pathlib import Path
 from unittest import mock
 
-import builtins
 import pytest
 
 import pacdef
