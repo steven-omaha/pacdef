@@ -3,6 +3,7 @@
   entry: /usr/bin/black
   types: [python]
   language: script
+  args: ["--check"]
 
 - id: pep257
   name: pep257
