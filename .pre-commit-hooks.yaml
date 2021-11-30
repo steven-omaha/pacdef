@@ -11,3 +11,10 @@
   types: [python]
   language: script
   args: ["--ignore=D202,D203"]
+
+- id: isort
+  name: isort
+  entry: /usr/bin/isort
+  types: [python]
+  language: script
+  args: ["--check"]
