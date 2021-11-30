@@ -2,8 +2,9 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: ./
-    rev: 6a0ab8758268a9321a4d3eb8cc823a1e39680be4
+    rev:  a8fd79b10319c97cc293dd9e037a8e2c280e20ab
     hooks:
     -  id: black
     -  id: pep257
+    -  id: isort
 
