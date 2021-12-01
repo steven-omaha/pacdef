@@ -913,6 +913,8 @@ class ReviewAction(Enum):
     assign_to_group = "assign to group"
     delete = "delete"
     skip = "skip"
+    # TODO add info (paru -Qi)
+    # TODO add dependency (paru -D --asdeps)
 
 
 class Review:
