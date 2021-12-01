@@ -844,8 +844,9 @@ class Reviewer:
         return ACTION_MAP
 
     def _print_enumerated_groups(self):
+        width = len(str(len(self._groups)))
         for i, group in enumerate(self._groups):
-            print(f"{i}: {group.name}")
+            print(f"{str(i).rjust(width)}: {group.name}")
 
     def _parse_input_group(self, user_input: str) -> Group:
         return self._groups[int(user_input)]
