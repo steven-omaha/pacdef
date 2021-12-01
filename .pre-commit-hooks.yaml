@@ -18,3 +18,9 @@
   types: [python]
   language: script
   args: ["--check"]
+
+- id: pytest
+  name: pytest
+  entry: /usr/bin/pytest
+  types: [python]
+  language: script
