@@ -583,6 +583,7 @@ class Pacdef:
         return ACTION_MAP
 
     def _edit_group_file(self) -> None:
+        logging.info("editing group files")
         groups = self._get_groups_matching_arguments()
         paths = [group.path for group in groups]
         CommandRunner.run([self._conf.editor, *paths], check=True)
@@ -769,6 +770,7 @@ class Pacdef:
 class Reviewer:
     """Handles logic related to `pacdef review`."""
 
+    # TODO add logging
     def __init__(
         self,
         groups: list[Group],
