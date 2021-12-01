@@ -2,9 +2,10 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: ./
-    rev:  a8fd79b10319c97cc293dd9e037a8e2c280e20ab
+    rev:  c6f193faff6fe578fa1a1b9af67256918d7bb612
     hooks:
     -  id: black
     -  id: pep257
     -  id: isort
+    -  id: pytest
 
