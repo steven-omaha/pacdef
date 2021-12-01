@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from os import environ
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
@@ -251,8 +251,7 @@ class Config:
         try:
             config_base_dir = Path(environ["XDG_CONFIG_HOME"])
         except KeyError:
-            home = Path.home()
-            config_base_dir = home.joinpath(".config")
+            config_base_dir = Path.home() / ".config"
         logging.debug(f"{config_base_dir=}")
         return config_base_dir
 
@@ -590,9 +589,7 @@ class Pacdef:
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
-        action_map = self._get_action_map()
-        action_fn = action_map[self._args.action]
-        action_fn()
+        self._get_action_map()[self._args.action]()
 
     def _review(self) -> None:
         reviewer = Reviewer(
@@ -815,7 +812,7 @@ class Reviewer:
 
     @staticmethod
     def _get_user_input(
-        prompt: str, validator: Callable[[str], Any], *, default: Optional[str] = None
+        prompt: str, validator: Callable[[str], Any], *, default: str | None = None
     ) -> Any:
         user_input = ""
         while not user_input:
@@ -831,8 +828,7 @@ class Reviewer:
         return result
 
     def _parse_input_action(self, user_input: str) -> ReviewAction:
-        action_map = self._get_action_map()
-        return action_map[user_input]
+        return self._get_action_map()[user_input]
 
     @staticmethod
     def _get_action_map() -> dict[str, ReviewAction]:
@@ -922,7 +918,7 @@ class ReviewAction(Enum):
 class Review:
     """Holds results of review for a single package."""
 
-    def __init__(self, action: ReviewAction, package: Package, group: Optional[Group]):
+    def __init__(self, action: ReviewAction, package: Package, group: Group | None):
         """Standard constructor."""
         self._action = action
         self._package = package
@@ -934,7 +930,7 @@ class Review:
         return self._action
 
     @property
-    def group(self) -> Optional[Group]:
+    def group(self) -> Group | None:
         """Get the group of the instance."""
         return self._group
 
