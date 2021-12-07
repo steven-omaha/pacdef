@@ -345,6 +345,8 @@ class AURHelper:
         remove = ["--remove", "--recursive"]
         installed_packages = ["--query", "--quiet"]
         explicitly_installed_packages = ["--query", "--quiet", "--explicit"]
+        installed_package_info = ["--query", "--info"]
+        as_dependency = ["--database", "--asdeps"]
 
     def __init__(self, path: Path):
         """Default constructor for AURHelper.
@@ -426,6 +428,16 @@ class AURHelper:
         :return: an instance of AURHelper
         """
         return cls(path=config.aur_helper)
+
+    def print_info(self, package: Package) -> None:
+        """Print info for an installed package."""
+        self._execute(self._Switches.installed_package_info + [str(package)])
+
+    def as_dependency(self, packages: list[Package]) -> None:
+        """Mark packages as "installed as dependency"."""
+        self._execute(
+            self._Switches.as_dependency + [str(package) for package in packages]
+        )
 
 
 class Group:
@@ -802,12 +814,16 @@ class Reviewer:
 
     def _get_action_from_user_input_for_current_package(self) -> Review:
         action = self._get_user_input(
-            "(a)ssign to group, (d)elete, (s)kip? ", self._parse_input_action
+            "assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency? ",
+            self._parse_input_action,
         )
         group = None
         if action == ReviewAction.assign_to_group:
             self._print_enumerated_groups()
             group = self._get_user_input("Group? ", self._parse_input_group)
+        elif action == ReviewAction.info:
+            self._aur_helper.print_info(self._current_package)
+            return self._get_action_from_user_input_for_current_package()
         return Review(action, self._current_package, group)
 
     @staticmethod
@@ -833,9 +849,11 @@ class Reviewer:
     @staticmethod
     def _get_action_map() -> dict[str, ReviewAction]:
         ACTION_MAP = {
-            "a": ReviewAction.assign_to_group,
+            "g": ReviewAction.assign_to_group,
             "d": ReviewAction.delete,
             "s": ReviewAction.skip,
+            "i": ReviewAction.info,
+            "a": ReviewAction.as_dependency,
         }
         return ACTION_MAP
 
@@ -851,7 +869,7 @@ class Reviewer:
         """Run actions from self._actions."""
         self._print_strategy()
 
-        if not (self._to_assign or self._to_delete):
+        if not (self._to_assign or self._to_delete or self._as_dependency):
             print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
 
@@ -861,6 +879,7 @@ class Reviewer:
             sys.exit(EXIT_SUCCESS)
         self._delete(self._to_delete)
         self._assign(self._to_assign)
+        self._make_dependency(self._as_dependency)
 
     @property
     def _to_delete(self) -> list[Review]:
@@ -876,11 +895,21 @@ class Reviewer:
             if review.action == ReviewAction.assign_to_group
         ]
 
+    @property
+    def _as_dependency(self) -> list[Review]:
+        return [
+            review
+            for review in self._actions
+            if review.action == ReviewAction.as_dependency
+        ]
+
     def _print_strategy(self) -> None:
         if self._to_delete:
             self._print_to_delete(self._to_delete)
         if self._to_assign:
             self._print_to_assign(self._to_assign)
+        if self._as_dependency:
+            self._print_as_dependency(self._as_dependency)
 
     @staticmethod
     def _print_to_assign(to_assign):
@@ -906,6 +935,18 @@ class Reviewer:
         for review in to_assign:
             review.group.append(review.package)
 
+    @staticmethod
+    def _print_as_dependency(as_dependency: list[Review]) -> None:
+        print("\nWill mark the following packages as installed as dependency:")
+        for review in as_dependency:
+            print(f"  {review.package}")
+        print()
+
+    def _make_dependency(self, as_dependency) -> None:
+        packages = [review.package for review in as_dependency]
+        if packages:
+            self._aur_helper.as_dependency(packages)
+
 
 class ReviewAction(Enum):
     """Possible actions for `pacdef review`."""
@@ -913,8 +954,8 @@ class ReviewAction(Enum):
     assign_to_group = "assign to group"
     delete = "delete"
     skip = "skip"
-    # TODO add info (paru -Qi)
-    # TODO add dependency (paru -D --asdeps)
+    info = "info"
+    as_dependency = "as dependency"
 
 
 class Review:
