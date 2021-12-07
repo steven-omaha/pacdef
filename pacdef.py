@@ -847,7 +847,7 @@ class Reviewer:
     def _get_user_input(
         prompt: str, validator: Callable[[str], Any], *, default: str | None = None
     ) -> Any:
-        user_input = ""
+        user_input, result = "", ""
         while not user_input:
             user_input = input(prompt).lower() or default
             logging.info(f"{user_input=}")
@@ -858,8 +858,6 @@ class Reviewer:
                 user_input = ""
             except KeyboardInterrupt:
                 sys.exit(EXIT_INTERRUPT)
-        # TODO fix this
-        # noinspection PyUnboundLocalVariable
         return result
 
     def _parse_input_action(self, user_input: str) -> ReviewAction:
