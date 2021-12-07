@@ -348,6 +348,10 @@ class AURHelper:
         installed_package_info = ["--query", "--info"]
         as_dependency = ["--database", "--asdeps"]
 
+    def __repr__(self):
+        """Representation for debugging purposes."""
+        return str(self._path)
+
     def __init__(self, path: Path):
         """Default constructor for AURHelper.
 
@@ -779,7 +783,6 @@ class Pacdef:
 class Reviewer:
     """Handles logic related to `pacdef review`."""
 
-    # TODO add logging
     def __init__(
         self,
         groups: list[Group],
@@ -787,19 +790,28 @@ class Reviewer:
         aur_helper: AURHelper,
     ):
         """Standard constructor."""
+        logging.info("Reviewer initialization")
         self._groups = groups
         self._unmanaged_packages = unmanaged_packages
-        self._packages_index = 0
+        self._current_package_index = 0
         self._actions: list[Review] = []
         self._aur_helper = aur_helper
+
+        logging.debug("groups")
+        logging.debug([f"{group.name}" for group in groups])
+        logging.debug("unmanaged_packages")
+        logging.debug([f"{package}" for package in unmanaged_packages])
+        logging.debug(f"{aur_helper=}")
 
     def ask_user_for_actions(self) -> None:
         """Populate self._actions with Reviews."""
         self._print_unmanaged_packages()
-        while self._packages_index < len(self._unmanaged_packages):
+        while self._current_package_index < len(self._unmanaged_packages):
             print(self._current_package)
             self._actions.append(self._get_action_from_user_input_for_current_package())
-            self._packages_index += 1
+            logging.info("proceeding with next package")
+            self._current_package_index += 1
+        logging.info("all packages processed")
 
     def _print_unmanaged_packages(self) -> None:
         if self._unmanaged_packages:
@@ -810,7 +822,10 @@ class Reviewer:
 
     @property
     def _current_package(self) -> Package:
-        return self._unmanaged_packages[self._packages_index]
+        logging.debug(f"{self._current_package_index=}")
+        current_package = self._unmanaged_packages[self._current_package_index]
+        logging.debug(f"{current_package=}")
+        return current_package
 
     def _get_action_from_user_input_for_current_package(self) -> Review:
         action = self._get_user_input(
@@ -835,9 +850,11 @@ class Reviewer:
         user_input = ""
         while not user_input:
             user_input = input(prompt).lower() or default
+            logging.info(f"{user_input=}")
             try:
                 result = validator(user_input)
             except ValueError:
+                logging.info("parsing: ValueError, resetting user_input")
                 user_input = ""
             except KeyboardInterrupt:
                 sys.exit(EXIT_INTERRUPT)
@@ -866,10 +883,13 @@ class Reviewer:
 
     def _parse_input_group(self, user_input: str) -> Group | None:
         if user_input == "c":
+            logging.info("Group selection: cancel")
             return None
         try:
+            logging.info("Group selection")
             return self._groups[int(user_input)]
         except TypeError as e:  # No input
+            logging.info("no input")
             raise ValueError(e)
 
     def run_actions(self) -> None:
@@ -883,7 +903,9 @@ class Reviewer:
         if not self._get_user_input(
             "Confirm? [y, N] ", lambda from_user: from_user == "y", default="n"
         ):
+            logging.info("No user confirmation")
             sys.exit(EXIT_SUCCESS)
+        logging.info("user confirmation, running actions in order")
         self._delete(self._to_delete)
         self._assign(self._to_assign)
         self._make_dependency(self._as_dependency)
@@ -904,6 +926,7 @@ class Reviewer:
         return [review for review in self._actions if review.action == action]
 
     def _print_strategy(self) -> None:
+        logging.debug(f"{self._actions=}")
         if self._to_delete:
             self._print_to_delete(self._to_delete)
         if self._to_assign:
@@ -915,6 +938,7 @@ class Reviewer:
     def _print_to_assign(to_assign):
         print("\nWill assign packages as follows:")
         for review in to_assign:
+            logging.debug(review)
             print(f"  {review.package} -> {review.group.name}")
         print()
 
@@ -922,29 +946,37 @@ class Reviewer:
     def _print_to_delete(to_delete):
         print("\nWill delete the following packages:")
         for review in to_delete:
+            logging.debug(review)
             print(f"  {review.package}")
         print()
 
     def _delete(self, to_delete: list[Review]) -> None:
+        logging.info("_delete")
         packages = [review.package for review in to_delete]
         if packages:
+            logging.debug(f"{packages=}")
             self._aur_helper.remove(packages)
 
     @staticmethod
     def _assign(to_assign: list[Review]):
+        logging.info("_assign")
         for review in to_assign:
+            logging.debug(review)
             review.group.append(review.package)
 
     @staticmethod
     def _print_as_dependency(as_dependency: list[Review]) -> None:
         print("\nWill mark the following packages as installed as dependency:")
         for review in as_dependency:
+            logging.debug(review)
             print(f"  {review.package}")
         print()
 
-    def _make_dependency(self, as_dependency) -> None:
+    def _make_dependency(self, as_dependency: list[Review]) -> None:
+        logging.info("_make_dependency")
         packages = [review.package for review in as_dependency]
         if packages:
+            logging.debug(f"{packages=}")
             self._aur_helper.as_dependency(packages)
 
 
@@ -966,6 +998,10 @@ class Review:
         self._action = action
         self._package = package
         self._group = group
+
+    def __repr__(self):
+        """Representation for debugging purposes."""
+        return f"Review: {self._action}, {self._package}, {self._group}"
 
     @property
     def action(self) -> ReviewAction:
