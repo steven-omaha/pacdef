@@ -890,25 +890,18 @@ class Reviewer:
 
     @property
     def _to_delete(self) -> list[Review]:
-        return [
-            review for review in self._actions if review.action == ReviewAction.delete
-        ]
+        return self._get_reviews_by_action(ReviewAction.delete)
 
     @property
     def _to_assign(self) -> list[Review]:
-        return [
-            review
-            for review in self._actions
-            if review.action == ReviewAction.assign_to_group
-        ]
+        return self._get_reviews_by_action(ReviewAction.assign_to_group)
 
     @property
     def _as_dependency(self) -> list[Review]:
-        return [
-            review
-            for review in self._actions
-            if review.action == ReviewAction.as_dependency
-        ]
+        return self._get_reviews_by_action(ReviewAction.as_dependency)
+
+    def _get_reviews_by_action(self, action: ReviewAction) -> list[Review]:
+        return [review for review in self._actions if review.action == action]
 
     def _print_strategy(self) -> None:
         if self._to_delete:
