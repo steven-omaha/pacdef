@@ -820,7 +820,9 @@ class Reviewer:
         group = None
         if action == ReviewAction.assign_to_group:
             self._print_enumerated_groups()
-            group = self._get_user_input("Group? ", self._parse_input_group)
+            group = self._get_user_input("Group or (c)ancel? ", self._parse_input_group)
+            if not group:
+                return self._get_action_from_user_input_for_current_package()
         elif action == ReviewAction.info:
             self._aur_helper.print_info(self._current_package)
             return self._get_action_from_user_input_for_current_package()
@@ -862,8 +864,13 @@ class Reviewer:
         for i, group in enumerate(self._groups):
             print(f"{str(i).rjust(width)}: {group.name}")
 
-    def _parse_input_group(self, user_input: str) -> Group:
-        return self._groups[int(user_input)]
+    def _parse_input_group(self, user_input: str) -> Group | None:
+        if user_input == "c":
+            return None
+        try:
+            return self._groups[int(user_input)]
+        except TypeError as e:  # No input
+            raise ValueError(e)
 
     def run_actions(self) -> None:
         """Run actions from self._actions."""
