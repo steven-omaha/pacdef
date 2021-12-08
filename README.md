@@ -61,6 +61,7 @@ Usage on different machines:
 * remove packages that are not in any group: `pacdef clean`
 * show imported groups: `pacdef groups`
 * remove a previously imported group: `pacdef remove audio`
+* review all unmanaged packages interactively: `pacdef review`
 * search for the group that contains a package: `pacdef search firefox`
 * show packages of a group: `pacdef show desktop`
 
