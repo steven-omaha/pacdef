@@ -837,7 +837,7 @@ class Reviewer:
         if action == ReviewAction.assign_to_group:
             self._print_enumerated_groups()
             group = self._get_user_input("Group or (c)ancel? ", self._parse_input_group)
-            if not group:
+            if group is None:
                 return self._get_action_from_user_input_for_current_package()
         elif action == ReviewAction.info:
             self._aur_helper.print_info(self._current_package)
