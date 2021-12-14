@@ -842,6 +842,7 @@ class Reviewer:
         elif action == ReviewAction.info:
             self._aur_helper.print_info(self._current_package)
             return self._get_action_from_user_input_for_current_package()
+        print()
         return Review(action, self._current_package, group)
 
     @staticmethod
@@ -936,7 +937,7 @@ class Reviewer:
 
     @staticmethod
     def _print_to_assign(to_assign):
-        print("\nWill assign packages as follows:")
+        print("Will assign packages as follows:")
         for review in to_assign:
             logging.debug(review)
             print(f"  {review.package} -> {review.group.name}")
@@ -944,7 +945,7 @@ class Reviewer:
 
     @staticmethod
     def _print_to_delete(to_delete):
-        print("\nWill delete the following packages:")
+        print("Will delete the following packages:")
         for review in to_delete:
             logging.debug(review)
             print(f"  {review.package}")
@@ -966,7 +967,7 @@ class Reviewer:
 
     @staticmethod
     def _print_as_dependency(as_dependency: list[Review]) -> None:
-        print("\nWill mark the following packages as installed as dependency:")
+        print("Will mark the following packages as installed as dependency:")
         for review in as_dependency:
             logging.debug(review)
             print(f"  {review.package}")
