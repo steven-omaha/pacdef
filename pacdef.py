@@ -580,6 +580,7 @@ class Pacdef:
         self._aur_helper = aur_helper or AURHelper(self._conf.aur_helper)
         self._groups: list[Group] = self._read_groups()
 
+    # noinspection PyPep8Naming
     def _get_action_map(self) -> dict[Action, Callable[[], None]]:
         """Return a dict matching all actions to their corresponding Pacdef methods."""
         ACTION_MAP = {
@@ -863,6 +864,7 @@ class Reviewer:
     def _parse_input_action(self, user_input: str) -> ReviewAction:
         return self._get_action_map()[user_input]
 
+    # noinspection PyPep8Naming
     @staticmethod
     def _get_action_map() -> dict[str, ReviewAction]:
         ACTION_MAP = {
