@@ -68,13 +68,11 @@ Usage on different machines:
 
 ### Configuration
 
-On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.conf`
+On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.conf`. The program only needs to know your AUR helper of choice. Configure it as follows.
 ```ini
 [misc]
 aur_helper = paru
 ```
-
-If you would like to use another AUR helper, you will need to change the config.
 
 ### package group files
 1. One package per line. 
