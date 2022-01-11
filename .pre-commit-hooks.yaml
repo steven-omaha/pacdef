@@ -3,21 +3,21 @@
   entry: /usr/bin/black
   types: [python]
   language: script
-  args: ["--check"]
+  args: ["--check", "."]
 
-- id: pep257
-  name: pep257
-  entry: /usr/bin/pep257
+- id: pydocstyle
+  name: pydocstyle
+  entry: /usr/bin/pydocstyle
   types: [python]
   language: script
-  args: ["--ignore=D202,D203"]
+  args: ["--convention=pep257", "--add-ignore=D105", "pacdef.py", "test_pacdef.py"]
 
 - id: isort
   name: isort
   entry: /usr/bin/isort
   types: [python]
   language: script
-  args: ["--check"]
+  args: ["--check", "."]
 
 - id: pytest
   name: pytest

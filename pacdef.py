@@ -78,7 +78,7 @@ class Arguments:
     """Class providing the command line arguments."""
 
     def __init__(self, process_args: bool = True):
-        """Setup the argument parser, parse the args, collect the results in attributes."""
+        """Set up the argument parser, parse the args, collect the results in attributes."""
         if process_args:
             parser = self._setup_parser()
             args = parser.parse_args()
@@ -353,7 +353,7 @@ class AURHelper:
         return str(self._path)
 
     def __init__(self, path: Path):
-        """Default constructor for AURHelper.
+        """Initialize AURHelper.
 
         If the AUR helper is not found, and error is raised.
         :param path: path to the AUR helper to use (example: `/usr/bin/paru`).
@@ -448,7 +448,7 @@ class Group:
     """Class representing a group file."""
 
     def __init__(self, packages: list[Package], path: Path):
-        """Default constructor. Consider Group.from_file where applicable."""
+        """Initialize Group instance. Consider Group.from_file where applicable."""
         self.packages = packages
         self._path: Path = path
 
@@ -489,7 +489,6 @@ class Group:
         return "\n".join([package.name for package in self.packages])
 
     def __repr__(self):
-        """String representation."""
         return f"group: {self.name}"
 
     @classmethod
@@ -790,7 +789,7 @@ class Reviewer:
         unmanaged_packages: list[Package],
         aur_helper: AURHelper,
     ):
-        """Standard constructor."""
+        """Initialize Reviewer with data from Pacdef."""
         logging.info("Reviewer initialization")
         self._groups = groups
         self._unmanaged_packages = unmanaged_packages
@@ -995,7 +994,7 @@ class Review:
     """Holds results of review for a single package."""
 
     def __init__(self, action: ReviewAction, package: Package, group: Group | None):
-        """Standard constructor."""
+        """Initialize Review with results of review."""
         self._action = action
         self._package = package
         self._group = group
@@ -1078,7 +1077,7 @@ class CommandRunner:
 
     @staticmethod
     def run(command: list[str], *args, **kwargs):
-        """Wrapper of subprocess.run."""
+        """Run a command using subprocess.run."""
         logging.info(f"Executing command with subprocess.run: {command, args, kwargs}")
         try:
             subprocess.run(command, *args, **kwargs)
@@ -1088,7 +1087,7 @@ class CommandRunner:
 
     @staticmethod
     def get_output(command: list[str], *args, **kwargs):
-        """Wrapper of subprocess.check_output."""
+        """Run a command using subprocess.check_output."""
         logging.info(
             f"Executing command with subprocess.check_output: {command, args, kwargs}"
         )
@@ -1096,7 +1095,7 @@ class CommandRunner:
 
     @staticmethod
     def call(command: list[str], *args, **kwargs) -> None:
-        """Wrapper of subprocess.call."""
+        """Run a command using subprocess.call."""
         logging.info(f"Executing command with subprocess.call: {command, args, kwargs}")
         try:
             subprocess.call(command, *args, **kwargs)
@@ -1106,7 +1105,7 @@ class CommandRunner:
 
 
 def _setup_logger() -> None:
-    """Setup the logger.
+    """Set up the logger.
 
     When the log level is below WARNING (i.e. INFO or DEBUG), the line number of the logging statement is printed as
     well.
