@@ -4,7 +4,7 @@
 [![black](https://github.com/steven-omaha/pacdef/actions/workflows/black.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/black.yml)
 
 # pacdef
-declarative manager of Arch packages
+declarative package manager for Arch Linux
 
 ## Installation
 `pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git).
