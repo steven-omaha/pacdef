@@ -40,31 +40,6 @@ def _main():
     pacdef.run_action_from_arg()
 
 
-def _calculate_package_diff(
-    system_packages: list[Package], pacdef_packages: list[Package]
-) -> tuple[list[Package], list[Package]]:
-    """Determine difference in packages between system and pacdef.
-
-    :param system_packages: list of packages known by the system
-    :param pacdef_packages: list of packages known by pacdef, optionally with repository prefix
-    :return: 2-tuple: list of packages exclusively in argument 1, list of packages exclusively in argument 2
-    """
-    logging.debug("calculate_package_diff")
-    logging.debug(f"{system_packages=}")
-    logging.debug(f"{pacdef_packages=}")
-    system_only = []
-    pacdef_only = []
-    for package in system_packages:
-        if package not in pacdef_packages:
-            system_only.append(package)
-    for package in pacdef_packages:
-        if package not in system_packages:
-            pacdef_only.append(package)
-    logging.debug(f"{system_only=}")
-    logging.debug(f"{pacdef_only=}")
-    return system_only, pacdef_only
-
-
 def _get_user_confirmation() -> None:
     """Ask the user if he wants to continue. Exits if the answer is not `y` or of length zero."""
     user_input = input("Continue? [Y/n] ").lower()
@@ -720,9 +695,15 @@ class Pacdef:
 
         :return: list of packages that will be installed
         """
-        pacdef_packages = self._get_managed_packages()
+        managed_packages = self._get_managed_packages()
+        logging.debug(f"{managed_packages=}")
         installed_packages = self._aur_helper.get_all_installed_packages()
-        _, pacdef_only = _calculate_package_diff(installed_packages, pacdef_packages)
+        logging.debug(f"{installed_packages=}")
+        pacdef_only = [
+            package for package in managed_packages if package not in installed_packages
+        ]
+        pacdef_only.sort()
+        logging.debug(f"{pacdef_only=}")
         return pacdef_only
 
     def _get_unmanaged_packages(self) -> list[Package]:
@@ -731,13 +712,18 @@ class Pacdef:
         :return: list of unmanaged packages
         """
         managed_packages: list[Package] = self._get_managed_packages()
+        logging.debug(f"{managed_packages=}")
         explicitly_installed_packages = (
             self._aur_helper.get_explicitly_installed_packages()
         )
-        unmanaged_packages, _ = _calculate_package_diff(
-            explicitly_installed_packages, managed_packages
-        )
+        logging.debug(f"{explicitly_installed_packages=}")
+        unmanaged_packages = [
+            package
+            for package in explicitly_installed_packages
+            if package not in managed_packages
+        ]
         unmanaged_packages.sort()
+        logging.debug(f"{unmanaged_packages=}")
         return unmanaged_packages
 
     def _get_managed_packages(self) -> list[Package]:

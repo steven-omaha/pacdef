@@ -475,30 +475,6 @@ def test_remove_repo_prefix_from_package():
     pass  # TODO
 
 
-@pytest.mark.parametrize(
-    "pacdef_packages, system_packages, pacdef_only, system_only",
-    [
-        (["base"], [], ["base"], []),
-        ([], ["base"], [], ["base"]),
-        ([], [], [], []),
-        (["base"], ["base"], [], []),
-        (["repo/base"], ["base"], [], []),
-        (["repo/base"], [], ["base"], []),
-    ],
-)
-def test_calculate_package_diff(
-    pacdef_packages, system_packages, pacdef_only, system_only
-):
-    def to_package(x: list[str]):
-        return [pacdef.Package(item) for item in x]
-
-    system_result, pacdef_result = pacdef._calculate_package_diff(
-        to_package(system_packages), to_package(pacdef_packages)
-    )
-    assert system_result == to_package(system_only)
-    assert pacdef_result == to_package(pacdef_only)
-
-
 class TestArguments:
     def test__parse_files(self, tmpdir):
         files = [Path(tmpdir) / "group"]
