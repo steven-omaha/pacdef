@@ -14,7 +14,6 @@ import logging
 import os
 import subprocess
 import sys
-from dataclasses import dataclass
 from enum import Enum
 from os import environ
 from pathlib import Path
@@ -999,7 +998,6 @@ class Review:
         return self._package
 
 
-@dataclass(order=True)
 class Package:
     """Class that represents a single package."""
 
@@ -1024,6 +1022,11 @@ class Package:
 
     def __hash__(self):
         return hash(self.name)
+
+    def __lt__(self, other):
+        if not isinstance(other, Package):
+            raise NotImplementedError
+        return self.name < other.name
 
     def __repr__(self):
         """Print `repo/package` if a repo was provided, otherwise print `package`."""
