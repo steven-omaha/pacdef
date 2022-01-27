@@ -695,13 +695,11 @@ class Pacdef:
 
         :return: list of packages that will be installed
         """
-        managed_packages = self._get_managed_packages()
+        managed_packages = set(self._get_managed_packages())
         logging.debug(f"{managed_packages=}")
-        installed_packages = self._aur_helper.get_all_installed_packages()
+        installed_packages = set(self._aur_helper.get_all_installed_packages())
         logging.debug(f"{installed_packages=}")
-        pacdef_only = [
-            package for package in managed_packages if package not in installed_packages
-        ]
+        pacdef_only = list(managed_packages - installed_packages)
         pacdef_only.sort()
         logging.debug(f"{pacdef_only=}")
         return pacdef_only
@@ -711,17 +709,13 @@ class Pacdef:
 
         :return: list of unmanaged packages
         """
-        managed_packages: list[Package] = self._get_managed_packages()
+        managed_packages = set(self._get_managed_packages())
         logging.debug(f"{managed_packages=}")
-        explicitly_installed_packages = (
+        explicitly_installed_packages = set(
             self._aur_helper.get_explicitly_installed_packages()
         )
         logging.debug(f"{explicitly_installed_packages=}")
-        unmanaged_packages = [
-            package
-            for package in explicitly_installed_packages
-            if package not in managed_packages
-        ]
+        unmanaged_packages = list(explicitly_installed_packages - managed_packages)
         unmanaged_packages.sort()
         logging.debug(f"{unmanaged_packages=}")
         return unmanaged_packages
@@ -1027,6 +1021,9 @@ class Package:
             return self.name == other
         else:
             raise ValueError("Must be compared with Package or string.")
+
+    def __hash__(self):
+        return hash(self.name)
 
     def __repr__(self):
         """Print `repo/package` if a repo was provided, otherwise print `package`."""
