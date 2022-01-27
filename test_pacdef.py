@@ -407,6 +407,16 @@ class TestPacdef:
             (["base"], ["base"], []),
             (["repo/base"], [], ["repo/base"]),
             (["repo/base"], ["base"], []),
+            (["b", "a", "d", "c"], ["a", "b"], ["c", "d"]),
+        ],
+        ids=[
+            "only pacdef",
+            "only system",
+            "nothing",
+            "both equal",
+            "only pacdef with repo prefix",
+            "system with repo prefix",
+            "alphabetical ordering",
         ],
     )
     def test__calculate_packages_to_install(
@@ -434,6 +444,16 @@ class TestPacdef:
             (["base"], ["base"], []),
             (["repo/base"], [], []),
             (["repo/base"], ["base"], []),
+            (["a", "b"], ["b", "a", "d", "c"], ["c", "d"]),
+        ],
+        ids=[
+            "only pacdef",
+            "only system",
+            "nothing",
+            "both equal",
+            "only pacdef with repo prefix",
+            "system with repo prefix",
+            "alphabetical ordering",
         ],
     )
     def test_get_unmanaged_packages(
