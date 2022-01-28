@@ -19,7 +19,13 @@ from os import environ
 from pathlib import Path
 from typing import Any, Callable
 
-import pyalpm
+# does not exist on github workflow
+try:
+    import pyalpm
+except ModuleNotFoundError:
+    logging.warning("pyalpm not found")
+    pyalpm = None
+
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
@@ -1066,6 +1072,8 @@ class DB:
     def __init__(self):
         """Initialize with defaults."""
         # Handle only takes strings, not Paths
+        if pyalpm is None:
+            return
         handle = pyalpm.Handle(str(self._ROOT), str(self._get_db_path()))
         self._db = handle.get_localdb()
 

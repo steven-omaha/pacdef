@@ -480,7 +480,7 @@ class TestGroup:
 
 
 class TestDB:
-    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
+    @pytest.mark.skipif(pacdef.pyalpm is None, reason=REASON_NOT_ARCH)
     def test_get_explicitly_installed_packages_arch(self):
         instance = pacdef.DB()
         result = instance.get_explicitly_installed_packages()
@@ -490,7 +490,7 @@ class TestDB:
             assert isinstance(item, pacdef.Package)
             assert len(item.name) > 0
 
-    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
+    @pytest.mark.skipif(pacdef.pyalpm is None, reason=REASON_NOT_ARCH)
     def test_get_all_installed_packages_arch(self):
         instance = pacdef.DB()
         result = instance.get_all_installed_packages()
