@@ -1084,6 +1084,7 @@ class DB:
 
     @classmethod
     def _get_db_path(cls) -> Path:
+        # the config may contain flags, which cannot be parsed by configparser
         lines = cls._get_lines_from_config(Path("/etc/pacman.conf"))
         for line in lines:
             if cls._DB_PATH_KEY in line:
