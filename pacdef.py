@@ -19,6 +19,8 @@ from os import environ
 from pathlib import Path
 from typing import Any, Callable
 
+import pyalpm
+
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
 EXIT_INTERRUPT = 130
@@ -35,7 +37,8 @@ def _main():
     args = Arguments()
     config = Config()
     helper = AURHelper.from_config(config)
-    pacdef = Pacdef(args=args, config=config, aur_helper=helper)
+    db = DB()
+    pacdef = Pacdef(args=args, config=config, aur_helper=helper, db=db)
     pacdef.run_action_from_arg()
 
 
@@ -317,8 +320,6 @@ class AURHelper:
 
         install = ["--sync", "--refresh", "--needed"]
         remove = ["--remove", "--recursive"]
-        installed_packages = ["--query", "--quiet"]
-        explicitly_installed_packages = ["--query", "--quiet", "--explicit"]
         installed_package_info = ["--query", "--info"]
         as_dependency = ["--database", "--asdeps"]
 
@@ -351,17 +352,6 @@ class AURHelper:
             logging.error(f'Could not start the AUR helper "{self._path}".')
             sys.exit(EXIT_ERROR)
 
-    def _get_output(self, query: list[str]) -> list[str]:
-        """Forward the query to the AUR helper, return its STDOUT.
-
-        :param query: command arguments as list of strings
-        :return: AUR helper output as list of strings
-        """
-        command = [str(self._path)] + query
-        result = CommandRunner.get_output(command).decode("utf-8")
-        result_list = result.split("\n")[:-1]  # last entry is zero-length
-        return result_list
-
     def install(self, packages: list[Package]) -> None:
         """Install packages in the system.
 
@@ -379,24 +369,6 @@ class AURHelper:
         packages_str = [str(p) for p in packages]
         command: list[str] = self._Switches.remove + packages_str
         self._execute(command)
-
-    def get_all_installed_packages(self) -> list[Package]:
-        """Query the AUR helper for all installed packages.
-
-        :return: list of `Package`s that are installed.
-        """
-        packages: list[str] = self._get_output(self._Switches.installed_packages)
-        instances = [Package(p) for p in packages]
-        return instances
-
-    def get_explicitly_installed_packages(self) -> list[Package]:
-        """Query the AUR helper for all explicitly installed packages.
-
-        :return: list of `Package`s that were explicitly installed.
-        """
-        packages = self._get_output(self._Switches.explicitly_installed_packages)
-        instances = [Package(p) for p in packages]
-        return instances
 
     @classmethod
     def from_config(cls, config: Config) -> AURHelper:
@@ -546,12 +518,14 @@ class Pacdef:
         args: Arguments = None,
         config: Config = None,
         aur_helper: AURHelper = None,
+        db: DB = None,
     ):
         """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()
         self._args = args or Arguments()
         self._aur_helper = aur_helper or AURHelper(self._conf.aur_helper)
         self._groups: list[Group] = self._read_groups()
+        self._db: DB = db or DB()
 
     # noinspection PyPep8Naming
     def _get_action_map(self) -> dict[Action, Callable[[], None]]:
@@ -696,7 +670,7 @@ class Pacdef:
         """
         managed_packages = set(self._get_managed_packages())
         logging.debug(f"{managed_packages=}")
-        installed_packages = set(self._aur_helper.get_all_installed_packages())
+        installed_packages = set(self._db.get_all_installed_packages())
         logging.debug(f"{installed_packages=}")
         pacdef_only = list(managed_packages - installed_packages)
         pacdef_only.sort()
@@ -711,7 +685,7 @@ class Pacdef:
         managed_packages = set(self._get_managed_packages())
         logging.debug(f"{managed_packages=}")
         explicitly_installed_packages = set(
-            self._aur_helper.get_explicitly_installed_packages()
+            self._db.get_explicitly_installed_packages()
         )
         logging.debug(f"{explicitly_installed_packages=}")
         unmanaged_packages = list(explicitly_installed_packages - managed_packages)
@@ -1072,14 +1046,6 @@ class CommandRunner:
             sys.exit(EXIT_ERROR)
 
     @staticmethod
-    def get_output(command: list[str], *args, **kwargs):
-        """Run a command using subprocess.check_output."""
-        logging.info(
-            f"Executing command with subprocess.check_output: {command, args, kwargs}"
-        )
-        return subprocess.check_output(command, *args, **kwargs)
-
-    @staticmethod
     def call(command: list[str], *args, **kwargs) -> None:
         """Run a command using subprocess.call."""
         logging.info(f"Executing command with subprocess.call: {command, args, kwargs}")
@@ -1088,6 +1054,62 @@ class CommandRunner:
         except FileNotFoundError:
             logging.error(f'Could not execute the program "{command[0]}".')
             sys.exit(EXIT_ERROR)
+
+
+class DB:
+    """Interface for the pacman DB, wraps pyalpm."""
+
+    _ROOT = Path("/")
+    _DB_PATH_KEY = "DBPath"
+    _DEFAULT_PATH = Path("/var/lib/pacman")
+
+    def __init__(self):
+        """Initialize with defaults."""
+        # Handle only takes strings, not Paths
+        handle = pyalpm.Handle(str(self._ROOT), str(self._get_db_path()))
+        self._db = handle.get_localdb()
+
+    def get_explicitly_installed_packages(self) -> list[Package]:
+        """Get all explicitly installed packages. Equivalent to `pacman -Qqe`."""
+        instances = [
+            Package(pkg.name)
+            for pkg in self._db.pkgcache
+            if pkg.reason == pyalpm.PKG_REASON_EXPLICIT
+        ]
+        return instances
+
+    def get_all_installed_packages(self) -> list[Package]:
+        """Get all installed packages. Equivalent to `pacman -Qq`."""
+        return [Package(pkg.name) for pkg in self._db.pkgcache]
+
+    @classmethod
+    def _get_db_path(cls) -> Path:
+        lines = cls._get_lines_from_config(Path("/etc/pacman.conf"))
+        for line in lines:
+            if cls._DB_PATH_KEY in line:
+                return cls._get_path_from_line(line)
+        else:
+            return cls._DEFAULT_PATH
+
+    @staticmethod
+    def _get_lines_from_config(path: Path) -> list[str]:
+        try:
+            with open(path) as fd:
+                lines = fd.readlines()
+        except (FileNotFoundError, IOError):
+            logging.error(f"Could not parse {path}.")
+            sys.exit(EXIT_ERROR)
+        return lines
+
+    @staticmethod
+    def _get_path_from_line(line: str) -> Path:
+        segments = line.split("=")
+        try:
+            value = Path(segments[1].strip())
+        except IndexError:
+            logging.error(f"Could not get the path from this line:\n{line}")
+            sys.exit(EXIT_ERROR)
+        return value
 
 
 def _setup_logger() -> None:

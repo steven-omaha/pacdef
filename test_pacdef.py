@@ -212,26 +212,6 @@ class TestAURHelper:
         with mock.patch.object(pacdef.AURHelper, "_execute", check_valid):
             instance.remove(packages)
 
-    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
-    def test_get_all_installed_packages_arch(self):
-        instance = pacdef.AURHelper(PACMAN)  # pacman is good enough for the test case
-        result = instance.get_all_installed_packages()
-        assert isinstance(result, list)
-        assert len(result) > 0
-        for item in result:
-            assert isinstance(item, pacdef.Package)
-            assert len(item.name) > 0
-
-    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
-    def test_get_explicitly_installed_packages_arch(self):
-        instance = pacdef.AURHelper(PACMAN)  # pacman is good enough for the test case
-        result = instance.get_explicitly_installed_packages()
-        assert type(result) == list
-        assert len(result) > 0
-        for item in result:
-            assert isinstance(item, pacdef.Package)
-            assert len(item.name) > 0
-
 
 class TestPacdef:
     def _test_basic_printing_function(
@@ -357,15 +337,6 @@ class TestPacdef:
 
         test_already_imported()
 
-    def test_remove_group(self):
-        pass  # TODO
-
-    def test_search_package(self):
-        pass  # TODO
-
-    def test_show_group(self):
-        pass  # TODO
-
     def test_install_packages_from_groups_none(self, tmpdir):
         instance = self._get_instance(tmpdir)
         with mock.patch.object(instance, "_calculate_packages_to_install", lambda: []):
@@ -428,7 +399,7 @@ class TestPacdef:
         er = [pacdef.Package(item) for item in expected_result]
         with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
-                instance._aur_helper,
+                instance._db,
                 "get_all_installed_packages",
                 lambda: ip,
             ):
@@ -465,34 +436,12 @@ class TestPacdef:
         er = [pacdef.Package(item) for item in expected_result]
         with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
-                instance._aur_helper,
+                instance._db,
                 "get_explicitly_installed_packages",
                 lambda: ip,
             ):
                 result = instance._get_unmanaged_packages()
                 assert result == er
-
-    def test__get_managed_packages(self):
-        pass  # TODO
-
-    def test__get_group_names(self):
-        pass  # TODO
-
-
-def test_get_packages_from_group():
-    pass  # TODO
-
-
-def test_get_package_from_line():
-    pass  # TODO
-
-
-def test_remove_repo_prefix_from_packages():
-    pass  # TODO
-
-
-def test_remove_repo_prefix_from_package():
-    pass  # TODO
 
 
 class TestArguments:
@@ -528,3 +477,25 @@ class TestGroup:
         with open(tmpfile) as fd:
             content = fd.read()
         assert content == f"{package1.name}\n{package2.name}\n"
+
+
+class TestDB:
+    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
+    def test_get_explicitly_installed_packages_arch(self):
+        instance = pacdef.DB()
+        result = instance.get_explicitly_installed_packages()
+        assert type(result) == list
+        assert len(result) > 0
+        for item in result:
+            assert isinstance(item, pacdef.Package)
+            assert len(item.name) > 0
+
+    @pytest.mark.skipif(not PACMAN_EXISTS, reason=REASON_NOT_ARCH)
+    def test_get_all_installed_packages_arch(self):
+        instance = pacdef.DB()
+        result = instance.get_all_installed_packages()
+        assert type(result) == list
+        assert len(result) > 0
+        for item in result:
+            assert isinstance(item, pacdef.Package)
+            assert len(item.name) > 0
