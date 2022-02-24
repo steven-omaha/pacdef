@@ -580,7 +580,7 @@ class Pacdef:
             sys.exit(EXIT_SUCCESS)
         print("Would remove the following packages and their dependencies:")
         for package in unmanaged_packages:
-            print(package)
+            print(f"  {package}")
         _get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
@@ -659,7 +659,7 @@ class Pacdef:
             sys.exit(EXIT_SUCCESS)
         print("Would install the following packages:")
         for package in to_install:
-            print(package)
+            print(f"  {package}")
         _get_user_confirmation()
         self._aur_helper.install(to_install)
 
