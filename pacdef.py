@@ -1095,10 +1095,14 @@ class DB:
         # the config may contain flags, which cannot be parsed by configparser
         lines = cls._get_lines_from_config(Path("/etc/pacman.conf"))
         for line in lines:
-            if cls._DB_PATH_KEY in line:
+            if not cls._line_is_comment(line) and cls._DB_PATH_KEY in line:
                 return cls._get_path_from_line(line)
         else:
             return cls._DEFAULT_PATH
+
+    @staticmethod
+    def _line_is_comment(line: str) -> bool:
+        return line.strip().startswith(COMMENT)
 
     @staticmethod
     def _get_lines_from_config(path: Path) -> list[str]:
