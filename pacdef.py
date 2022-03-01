@@ -21,7 +21,7 @@ from typing import Any, Callable
 
 # does not exist on github workflow
 try:
-    import pyalpm
+    import pyalpm  # type: ignore
 except ModuleNotFoundError:
     logging.warning("pyalpm not found")
     pyalpm = None
@@ -559,7 +559,8 @@ class Pacdef:
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
-        self._get_action_map()[self._args.action]()
+        if self._args.action is not None:
+            self._get_action_map()[self._args.action]()
 
     def _review(self) -> None:
         reviewer = Reviewer(
@@ -591,6 +592,8 @@ class Pacdef:
             print(group)
 
     def _import_groups(self) -> None:
+        if self._args.files is None:
+            return
         for path in self._args.files:
             link_target = self._conf.groups_path / path.name
             if _file_exists(link_target):
@@ -613,6 +616,8 @@ class Pacdef:
 
     def _get_groups_matching_arguments(self) -> list[Group]:
         found_groups = []
+        if self._args.groups is None:
+            raise ValueError("no group supplied")
         for name in self._args.groups:
             found_groups.append(self._find_group_by_name(name))
         return found_groups
@@ -805,8 +810,13 @@ class Reviewer:
 
     @staticmethod
     def _get_user_input(
-        prompt: str, validator: Callable[[str], Any], *, default: str | None = None
+        prompt: str,
+        validator: Callable[[str | None], Any],
+        *,
+        default: str | None = None,
     ) -> Any:
+        user_input: str | None
+        result: str | None
         user_input, result = "", ""
         while not user_input:
             user_input = input(prompt).lower() or default
@@ -820,7 +830,9 @@ class Reviewer:
                 sys.exit(EXIT_INTERRUPT)
         return result
 
-    def _parse_input_action(self, user_input: str) -> ReviewAction:
+    def _parse_input_action(self, user_input: str | None) -> ReviewAction:
+        if user_input is None:
+            raise ValueError("Cannot provide ReviewAction identified by `None`.")
         return self._get_action_map()[user_input]
 
     # noinspection PyPep8Naming
@@ -840,7 +852,9 @@ class Reviewer:
         for i, group in enumerate(self._groups):
             print(f"{str(i).rjust(width)}: {group.name}")
 
-    def _parse_input_group(self, user_input: str) -> Group | None:
+    def _parse_input_group(self, user_input: str | None) -> Group | None:
+        if user_input is None:
+            raise ValueError("Cannot find Group identified by `None`.")
         if user_input == "c":
             logging.info("Group selection: cancel")
             return None
@@ -921,7 +935,8 @@ class Reviewer:
         logging.info("_assign")
         for review in to_assign:
             logging.debug(review)
-            review.group.append(review.package)
+            if review.group is not None:
+                review.group.append(review.package)
 
     @staticmethod
     def _print_as_dependency(as_dependency: list[Review]) -> None:
