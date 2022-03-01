@@ -65,7 +65,7 @@ class Arguments:
         if process_args:
             parser = self._setup_parser()
             args = parser.parse_args()
-            self.action: Action = self._parse_action(args)
+            self.action: Action | None = self._parse_action(args)
             self.files: list[Path] | None = self._parse_files(args)
             self.groups: list[str] | None = self._parse_groups(args)
             self.package: Package | None = self._parse_package(args)
@@ -78,7 +78,7 @@ class Arguments:
     @staticmethod
     def _parse_package(args: argparse.Namespace) -> Package | None:
         if not hasattr(args, "package"):
-            return
+            return None
         return Package(args.package)
 
     @staticmethod
@@ -131,7 +131,7 @@ class Arguments:
     @staticmethod
     def _parse_files(args: argparse.Namespace) -> list[Path] | None:
         if not hasattr(args, "file"):
-            return
+            return None
         files = [Path(f) for f in args.file]
         for f in files:
             if not _file_exists(f):
@@ -154,7 +154,7 @@ class Arguments:
     @staticmethod
     def _parse_groups(args: argparse.Namespace) -> list[str] | None:
         if not hasattr(args, "group"):
-            return
+            return None
         return args.group
 
 
@@ -426,7 +426,7 @@ class Group:
         """Get number of packages."""
         return len(self.packages)
 
-    def __eq__(self, other: Group | str):
+    def __eq__(self, other: object):
         """Compare with other groups or strings."""
         if isinstance(other, Group):
             return self.name == other.name
@@ -554,8 +554,8 @@ class Pacdef:
     def _edit_group_file(self) -> None:
         logging.info("editing group files")
         groups = self._get_groups_matching_arguments()
-        paths = [group.path for group in groups]
-        CommandRunner.run([self._conf.editor, *paths], check=True)
+        paths = [str(group.path) for group in groups]
+        CommandRunner.run([str(self._conf.editor), *paths], check=True)
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
@@ -991,7 +991,7 @@ class Package:
         self.repo: str | None
         self.name, self.repo = self._split_into_name_and_repo(package_string)
 
-    def __eq__(self, other: Package | str):
+    def __eq__(self, other: object):
         """Check if equal to other package by comparing the name only."""
         if isinstance(other, Package):
             return self.name == other.name
