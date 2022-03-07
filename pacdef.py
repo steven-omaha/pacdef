@@ -327,6 +327,7 @@ class AURHelper:
         install = ["--sync", "--refresh", "--needed"]
         remove = ["--remove", "--recursive"]
         installed_package_info = ["--query", "--info"]
+        # noinspection SpellCheckingInspection
         as_dependency = ["--database", "--asdeps"]
 
     def __repr__(self):
@@ -380,7 +381,7 @@ class AURHelper:
     def from_config(cls, config: Config) -> AURHelper:
         """Create an AUR helper instance using `config.aur_helper`.
 
-        :param config: a instance of Config
+        :param config: an instance of Config
         :return: an instance of AURHelper
         """
         return cls(path=config.aur_helper)
@@ -792,6 +793,7 @@ class Reviewer:
         return current_package
 
     def _get_action_from_user_input_for_current_package(self) -> Review:
+        # noinspection SpellCheckingInspection
         action = self._get_user_input(
             "assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency? ",
             self._parse_input_action,
@@ -799,6 +801,7 @@ class Reviewer:
         group = None
         if action == ReviewAction.assign_to_group:
             self._print_enumerated_groups()
+            # noinspection SpellCheckingInspection
             group = self._get_user_input("Group or (c)ancel? ", self._parse_input_group)
             if group is None:
                 return self._get_action_from_user_input_for_current_package()
