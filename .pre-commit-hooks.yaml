@@ -31,4 +31,3 @@
   entry: /usr/bin/mypy
   types: [python]
   language: script
-  args: ["pacdef.py"]
