@@ -4,6 +4,7 @@ import argparse
 import builtins
 import logging
 import subprocess
+import sys
 from os import environ
 from pathlib import Path
 from unittest import mock
@@ -107,19 +108,6 @@ class TestConfig:
         assert config.groups_path == groups
         assert config.aur_helper == aur_helper
         assert conf_file.is_file()
-
-
-@pytest.mark.parametrize("user_input", ["Y", "y", ""])
-def test_get_user_confirmation_continue(user_input):
-    with mock.patch.object(builtins, "input", lambda _: user_input):
-        assert pacdef._get_user_confirmation() is None
-
-
-@pytest.mark.parametrize("user_input", ["n", "N", 'asd#!|^l;"f'])
-def test_get_user_confirmation_exit(user_input):
-    with mock.patch.object(builtins, "input", lambda _: user_input):
-        with pytest.raises(SystemExit):
-            pacdef._get_user_confirmation()
 
 
 class TestAURHelper:
@@ -281,7 +269,9 @@ class TestPacdef:
             with mock.patch.object(
                 instance, "_get_unmanaged_packages", lambda: packages
             ):
-                with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
+                with mock.patch.object(
+                    pacdef.UserInput, "get_user_confirmation", lambda: None
+                ):
                     instance._remove_unmanaged_packages()
 
     def test_list_groups(self, capsys, tmpdir):
@@ -361,7 +351,9 @@ class TestPacdef:
             with mock.patch.object(
                 instance, "_calculate_packages_to_install", lambda: packages
             ):
-                with mock.patch.object(pacdef, "_get_user_confirmation", lambda: None):
+                with mock.patch.object(
+                    pacdef.UserInput, "get_user_confirmation", lambda: None
+                ):
                     instance._install_packages_from_groups()
 
     def test_show_unmanaged_packages(self, capsys, tmpdir):

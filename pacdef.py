@@ -14,6 +14,8 @@ import logging
 import os
 import subprocess
 import sys
+import termios
+import tty
 from enum import Enum
 from os import environ
 from pathlib import Path
@@ -31,6 +33,8 @@ EXIT_SUCCESS = 0
 EXIT_ERROR = 1
 EXIT_INTERRUPT = 130
 
+INTERRUPT_ASCII_CODE = "\x03"
+
 COMMENT = "#"
 PARU = Path("/usr/bin/paru")
 VERSION = "unknown"
@@ -46,15 +50,6 @@ def _main():
     db = DB()
     pacdef = Pacdef(args=args, config=config, aur_helper=helper, db=db)
     pacdef.run_action_from_arg()
-
-
-def _get_user_confirmation() -> None:
-    """Ask the user if he wants to continue. Exits if the answer is not `y` or of length zero."""
-    user_input = input("Continue? [Y/n] ").lower()
-    if user_input == "" or user_input == "y":
-        return
-    else:
-        sys.exit(EXIT_SUCCESS)
 
 
 class Arguments:
@@ -583,7 +578,7 @@ class Pacdef:
         print("Would remove the following packages and their dependencies:")
         for package in unmanaged_packages:
             print(f"  {package}")
-        _get_user_confirmation()
+        UserInput.get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
     def _list_groups(self):
@@ -666,7 +661,7 @@ class Pacdef:
         print("Would install the following packages:")
         for package in to_install:
             print(f"  {package}")
-        _get_user_confirmation()
+        UserInput.get_user_confirmation()
         self._aur_helper.install(to_install)
 
     def _show_unmanaged_packages(self) -> None:
@@ -794,15 +789,18 @@ class Reviewer:
 
     def _get_action_from_user_input_for_current_package(self) -> Review:
         # noinspection SpellCheckingInspection
-        action = self._get_user_input(
-            "assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency? ",
+        action = UserInput.get_user_input(
+            "assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? ",
             self._parse_input_action,
+            single_character=True,
         )
         group = None
         if action == ReviewAction.assign_to_group:
             self._print_enumerated_groups()
             # noinspection SpellCheckingInspection
-            group = self._get_user_input("Group or (c)ancel? ", self._parse_input_group)
+            group = UserInput.get_user_input(
+                "Group or (c)ancel? ", self._parse_input_group
+            )
             if group is None:
                 return self._get_action_from_user_input_for_current_package()
         elif action == ReviewAction.info:
@@ -811,32 +809,16 @@ class Reviewer:
         print()
         return Review(action, self._current_package, group)
 
-    @staticmethod
-    def _get_user_input(
-        prompt: str,
-        validator: Callable[[str | None], Any],
-        *,
-        default: str | None = None,
-    ) -> Any:
-        user_input: str | None
-        result: str | None
-        user_input, result = "", ""
-        while not user_input:
-            user_input = input(prompt).lower() or default
-            logging.info(f"{user_input=}")
-            try:
-                result = validator(user_input)
-            except ValueError:
-                logging.info("parsing: ValueError, resetting user_input")
-                user_input = ""
-            except KeyboardInterrupt:
-                sys.exit(EXIT_INTERRUPT)
-        return result
-
     def _parse_input_action(self, user_input: str | None) -> ReviewAction:
         if user_input is None:
             raise ValueError("Cannot provide ReviewAction identified by `None`.")
-        return self._get_action_map()[user_input]
+        if user_input == "q":
+            sys.exit(EXIT_SUCCESS)
+        try:
+            action = self._get_action_map()[user_input]
+        except KeyError:
+            raise ValueError("Invalid user input.")
+        return action
 
     # noinspection PyPep8Naming
     @staticmethod
@@ -870,14 +852,28 @@ class Reviewer:
 
     def run_actions(self) -> None:
         """Run actions from self._actions."""
+
+        def check_wants_to_continue(from_user: str | None) -> bool:
+            if from_user is None:
+                return False
+            from_user = from_user.lower().strip()
+            if from_user in ["", "n"]:
+                return False
+            if from_user == "y":
+                return True
+            return False
+
         self._print_strategy()
 
         if not (self._to_assign or self._to_delete or self._as_dependency):
             print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
 
-        if not self._get_user_input(
-            "Confirm? [y, N] ", lambda from_user: from_user == "y", default="n"
+        if not UserInput.get_user_input(
+            "Confirm? [y, N] ",
+            check_wants_to_continue,
+            default="n",
+            single_character=True,
         ):
             logging.info("No user confirmation")
             sys.exit(EXIT_SUCCESS)
@@ -1167,6 +1163,93 @@ def _show_version() -> None:
     The value of `VERSION` is set during compile time by the PKGBUILD using `build()`.
     """
     print(f"pacdef, version: {VERSION}")
+
+
+class UserInput:
+    """Handles all user input related features."""
+
+    @classmethod
+    def get_user_confirmation(cls) -> None:
+        """Ask the user if he wants to continue. Exits if the answer is not `y` or of length zero.
+
+        Wraps `get_user_input` internally.
+        """
+
+        def check_wants_to_continue(input_: str | None) -> bool:
+            if input_ is None:
+                return False
+            if input_.lower().strip() in ["", "y"]:
+                return True
+            return False
+
+        want_to_continue = cls.get_user_input(
+            "Continue? [Y/n] ",
+            check_wants_to_continue,
+            single_character=True,
+        )
+        if not want_to_continue:
+            sys.exit(EXIT_SUCCESS)
+
+    @classmethod
+    def get_user_input(
+        cls,
+        prompt: str,
+        validator: Callable[[str | None], Any],
+        *,
+        default: str | None = None,
+        single_character: bool = False,
+    ) -> Any:
+        """Show the prompt to the user and parse the input.
+
+        Exits on Ctrl-C.
+
+        :param prompt: The prompt to show to the user. Should end with a space.
+        :param validator: A function to parse / validate the user input.
+        :param default: Default value if no input was received.
+        :param single_character: If True, read only a single character, and return immediately (do not wait for newline).
+        :return:
+        """
+        user_input: str | None
+        result: Any
+        user_input, result = "", ""
+        while not user_input:
+            print(prompt, end="", flush=True)
+            if single_character:
+                user_input = cls._read_character()
+            else:
+                user_input = cls._read_line()
+            user_input = user_input or default
+            logging.info(f"{user_input=}")
+            try:
+                result = validator(user_input)
+            except ValueError:
+                logging.info("parsing: ValueError, resetting user_input")
+                user_input = ""
+            except KeyboardInterrupt:
+                sys.exit(EXIT_INTERRUPT)
+        return result
+
+    @staticmethod
+    def _read_line() -> str:
+        user_input = input()
+        print()  # finish the line of the prompt
+        return user_input
+
+    @classmethod
+    def _read_character(cls) -> str:
+        """Tweak the STDIN buffer to return immediately after a single char has been read."""
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        if ch == INTERRUPT_ASCII_CODE:
+            print()
+            sys.exit(EXIT_INTERRUPT)
+        print(ch)  # in raw mode, user input is not echoed automatically
+        return ch
 
 
 if __name__ == "__main__":
