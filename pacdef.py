@@ -424,12 +424,13 @@ class Group:
 
     def __eq__(self, other: object):
         """Compare with other groups or strings."""
-        if isinstance(other, Group):
-            return self.name == other.name
-        elif isinstance(other, str):
-            return self.name == other
-        else:
-            raise ValueError("Must be compared with Group or string.")
+        match other:
+            case Group():
+                return self.name == other.name
+            case str():
+                return self.name == other
+            case _:
+                raise ValueError("Must be compared with Group or string.")
 
     @property
     def content(self) -> str:
@@ -1007,12 +1008,13 @@ class Package:
 
     def __eq__(self, other: object):
         """Check if equal to other package by comparing the name only."""
-        if isinstance(other, Package):
-            return self.name == other.name
-        elif isinstance(other, str):
-            return self.name == other
-        else:
-            raise ValueError("Must be compared with Package or string.")
+        match other:
+            case Package():
+                return self.name == other.name
+            case str():
+                return self.name == other
+            case _:
+                raise ValueError("Must be compared with Package or string.")
 
     def __hash__(self):
         return hash(self.name)
