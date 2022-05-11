@@ -16,7 +16,7 @@ import subprocess
 import sys
 import termios
 import tty
-from enum import Enum
+from enum import Enum, auto
 from os import environ
 from pathlib import Path
 from typing import Any, Callable
@@ -564,6 +564,7 @@ class Pacdef:
             self._groups, self._get_unmanaged_packages(), self._aur_helper
         )
         reviewer.ask_user_for_actions()
+        reviewer.print_strategy()
         reviewer.run_actions()
 
     def _remove_unmanaged_packages(self) -> None:
@@ -854,34 +855,37 @@ class Reviewer:
     def run_actions(self) -> None:
         """Run actions from self._actions."""
 
-        def check_wants_to_continue(from_user: str | None) -> bool:
+        def check_wants_to_continue(from_user: str | None) -> _Intention:
             if from_user is None:
-                return False
+                return _Intention.unknown
             from_user = from_user.lower().strip()
-            if from_user in ["", "n"]:
-                return False
+            if from_user == "n":
+                return _Intention.abort
             if from_user == "y":
-                return True
-            return False
-
-        self._print_strategy()
+                return _Intention.confirm
+            return _Intention.unknown
 
         if not (self._to_assign or self._to_delete or self._as_dependency):
             print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
 
-        if not UserInput.get_user_input(
-            "Confirm? [y, N] ",
+        user_input = UserInput.get_user_input(
+            "Confirm? [y, n] ",
             check_wants_to_continue,
-            default="n",
             single_character=True,
-        ):
-            logging.info("No user confirmation")
-            sys.exit(EXIT_SUCCESS)
-        logging.info("user confirmation, running actions in order")
-        self._delete(self._to_delete)
-        self._assign(self._to_assign)
-        self._make_dependency(self._as_dependency)
+        )
+        match user_input:
+            case _Intention.confirm:
+                logging.info("user confirmation, running actions in order")
+                self._delete(self._to_delete)
+                self._assign(self._to_assign)
+                self._make_dependency(self._as_dependency)
+            case _Intention.abort:
+                logging.info("user wants to abort, exiting")
+                sys.exit(EXIT_SUCCESS)
+            case _Intention.unknown:
+                logging.info("reply not within allowed selection")
+                self.run_actions()
 
     @property
     def _to_delete(self) -> list[Review]:
@@ -898,7 +902,8 @@ class Reviewer:
     def _get_reviews_by_action(self, action: ReviewAction) -> list[Review]:
         return [review for review in self._actions if review.action == action]
 
-    def _print_strategy(self) -> None:
+    def print_strategy(self) -> None:
+        """Print the actions that will be executed, based on the reviews that have been executed."""
         logging.debug(f"{self._actions=}")
         if self._to_delete:
             self._print_to_delete(self._to_delete)
@@ -1251,6 +1256,13 @@ class UserInput:
             sys.exit(EXIT_INTERRUPT)
         print(ch)  # in raw mode, user input is not echoed automatically
         return ch
+
+
+# noinspection PyArgumentList
+class _Intention(Enum):
+    abort = auto()
+    confirm = auto()
+    unknown = auto()
 
 
 if __name__ == "__main__":
