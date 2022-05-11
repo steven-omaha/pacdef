@@ -1234,7 +1234,6 @@ class UserInput:
     @staticmethod
     def _read_line() -> str:
         user_input = input()
-        print()  # finish the line of the prompt
         return user_input
 
     @classmethod
