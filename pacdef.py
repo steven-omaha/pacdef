@@ -31,6 +31,7 @@ except ModuleNotFoundError:
 
 EXIT_SUCCESS = 0
 EXIT_ERROR = 1
+EXIT_ABORT = 2
 EXIT_INTERRUPT = 130
 
 INTERRUPT_ASCII_CODE = "\x03"
@@ -882,7 +883,7 @@ class Reviewer:
                 self._make_dependency(self._as_dependency)
             case _Intention.abort:
                 logging.info("user wants to abort, exiting")
-                sys.exit(EXIT_SUCCESS)
+                sys.exit(EXIT_ABORT)
             case _Intention.unknown:
                 logging.info("reply not within allowed selection")
                 self.run_actions()
