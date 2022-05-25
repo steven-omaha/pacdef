@@ -97,6 +97,12 @@ class Arguments:
             Action.import_.value, help="import a new group file"
         )
         parser_import.add_argument("file", nargs="+", help="a group file")
+        parser_new = subparsers.add_parser(
+            Action.new.value, help="create a new group file"
+        )
+        parser_new.add_argument(
+            "group", nargs="+", help="one or more new groups"
+        )
         parser_remove = subparsers.add_parser(
             Action.remove.value, help="remove previously imported group"
         )
@@ -169,6 +175,7 @@ class Action(Enum):
     edit = "edit"
     groups = "groups"
     import_ = "import"
+    new = "new"
     remove = "remove"
     review = "review"
     search = "search"
@@ -513,6 +520,10 @@ class Group:
         with open(self.path, "a") as fd:
             fd.write(f"{package}\n")
 
+    @classmethod
+    def new_file(cls, name: str, path: Path) -> None:
+        (path / name).touch()
+
 
 class Pacdef:
     """Class representing the main routines of pacdef."""
@@ -539,6 +550,7 @@ class Pacdef:
             Action.edit: self._edit_group_file,
             Action.groups: self._list_groups,
             Action.import_: self._import_groups,
+            Action.new: self._new_group,
             Action.remove: self._remove_group,
             Action.review: self._review,
             Action.search: self._search_package,
@@ -554,6 +566,18 @@ class Pacdef:
         groups = self._get_groups_matching_arguments()
         paths = [str(group.path) for group in groups]
         CommandRunner.run([str(self._conf.editor), *paths], check=True)
+
+    def _new_group(self) -> None:
+        if self._args.groups is None:
+            logging.error("Cannot create new group. No name supplied.")
+            exit(EXIT_ERROR)
+        # check if we can create all groups before we actually create them
+        for group in self._args.groups:
+            if group in self._groups:
+                logging.error(f"Cannot create new group '{group}', it already exists.")
+                exit(EXIT_ERROR)
+        for group in self._args.groups:
+            Group.new_file(group, self._conf.groups_path)
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""

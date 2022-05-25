@@ -10,6 +10,7 @@ _pacdef() {
             'edit:edit an imported group file'
             'groups:show names of imported groups'
             'import:import a new group file'
+            'new:create a new group file'
             'remove:remove a group file'
             'review:review unmanaged packages'
             'search:show the group containing a package'
@@ -38,6 +39,9 @@ _pacdef() {
         ;;
         import)
             _arguments "*:new group file(s):_files"
+        ;;
+        new)
+            _arguments "*:new group file(s):"
         ;;
         search)
             _arguments "1:package:"
