@@ -190,10 +190,12 @@ class Config:
 
     def __init__(
         self,
+        *,
         groups_path: Path = None,
         aur_helper: Path = None,
         config_file_path: Path = None,
         editor: Path = None,
+        warn_symlinks: bool = True,
     ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
         config_base_dir = self._get_xdg_config_home()
@@ -207,6 +209,7 @@ class Config:
 
         self.aur_helper: Path = aur_helper or self._get_aur_helper()
         self._editor: Path | None = editor or self._get_editor()
+        self._warn_symlinks: bool = warn_symlinks and self._get_warn_symlinks()
         logging.info(f"{self.aur_helper=}")
         self._sanity_check()
 
@@ -231,6 +234,10 @@ class Config:
             logging.error(msg)
             sys.exit(EXIT_ERROR)
         return self._editor
+
+    @property
+    def warn_symlinks(self) -> bool:
+        return self._warn_symlinks
 
     @staticmethod
     def _get_xdg_config_home() -> Path:
@@ -319,6 +326,19 @@ class Config:
         number_group_files = len([self.groups_path.iterdir()])
         if number_group_files == 0:
             logging.warning("pacdef does not know any groups. Import one.")
+
+    def _get_warn_symlinks(self) -> bool:
+        section = "misc"
+        key = "warn_not_symlink"
+        value = self._get_value_from_conf(section, key)
+        if value is None:
+            return True
+        if value == "false":
+            return False
+        if value == "true":
+            return True
+        msg = f"invalid value in config: [{section}] has {key}={value}\npossible values: true, false (default: true)"
+        raise ValueError(msg)
 
 
 class AURHelper:
@@ -505,13 +525,8 @@ class Group:
             if group.is_symlink() and not group.exists():
                 logging.warning(f"found group {group}, but it is a broken symlink")
 
-        def check_not_symlink():
-            if not group.is_symlink() and group.is_file():
-                logging.warning(f"found group {group}, but it is not a symlink")
-
         check_dir()
         check_broken_symlink()
-        check_not_symlink()
 
     def append(self, package: Package):
         """Add package to group, by memorizing it and appending it to the group file."""
@@ -541,6 +556,7 @@ class Pacdef:
         self._aur_helper = aur_helper or AURHelper(self._conf.aur_helper)
         self._groups: list[Group] = self._read_groups()
         self._db: DB = db or DB()
+        self._sanity_check()
 
     # noinspection PyPep8Naming
     def _get_action_map(self) -> dict[Action, Callable[[], None]]:
@@ -765,6 +781,12 @@ class Pacdef:
                 print(sys.exit(EXIT_ERROR))
         logging.debug(f"groups: {[group.name for group in groups]}")
         return groups
+
+    def _sanity_check(self) -> None:
+        if self._conf.warn_symlinks:
+            for group in self._groups:
+                if not group.path.is_symlink():
+                    logging.warning(f"group '{group.name}' is not a symlink")
 
 
 class Reviewer:
