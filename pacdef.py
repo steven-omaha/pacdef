@@ -100,9 +100,7 @@ class Arguments:
         parser_new = subparsers.add_parser(
             Action.new.value, help="create a new group file"
         )
-        parser_new.add_argument(
-            "group", nargs="+", help="one or more new groups"
-        )
+        parser_new.add_argument("group", nargs="+", help="one or more new groups")
         parser_remove = subparsers.add_parser(
             Action.remove.value, help="remove previously imported group"
         )
@@ -237,6 +235,7 @@ class Config:
 
     @property
     def warn_symlinks(self) -> bool:
+        """Get value of warn_symlinks from config, default: true."""
         return self._warn_symlinks
 
     @staticmethod
@@ -537,6 +536,7 @@ class Group:
 
     @classmethod
     def new_file(cls, name: str, path: Path) -> None:
+        """Create new group file in `path` with `name`."""
         (path / name).touch()
 
 
