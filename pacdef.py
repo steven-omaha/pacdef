@@ -645,11 +645,7 @@ class Pacdef:
 
         More than one group can be provided. This method is atomic: If not all groups are found, none are removed.
         """
-        try:
-            found_groups = self._get_groups_matching_arguments()
-        except FileNotFoundError as e:
-            logging.error(e)
-            sys.exit(EXIT_ERROR)
+        found_groups = self._get_groups_matching_arguments()
         for group in found_groups:
             group.remove()
 
@@ -658,7 +654,11 @@ class Pacdef:
         if self._args.groups is None:
             raise ValueError("no group supplied")
         for name in self._args.groups:
-            found_groups.append(self._find_group_by_name(name))
+            try:
+                found_groups.append(self._find_group_by_name(name))
+            except FileNotFoundError as err:
+                logging.error(err)
+                exit(EXIT_ERROR)
         return found_groups
 
     def _find_group_by_name(self, name: str) -> Group:
@@ -687,11 +687,7 @@ class Pacdef:
 
         More than one group may be provided, which prints the contents of all groups in order.
         """
-        try:
-            found_groups = self._get_groups_matching_arguments()
-        except FileNotFoundError as e:
-            logging.error(e)
-            sys.exit(EXIT_ERROR)
+        found_groups = self._get_groups_matching_arguments()
         for group in found_groups:
             print(group.content)
 
