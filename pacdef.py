@@ -671,8 +671,7 @@ class Pacdef:
             if group == name:
                 logging.info(f"found group under {group.path}")
                 return group
-        else:
-            raise FileNotFoundError(f"Did not find the group '{name}'.")
+        raise FileNotFoundError(f"Did not find the group '{name}'.")
 
     def _search_package(self):
         """Show imported group which contains `_args.package`.
