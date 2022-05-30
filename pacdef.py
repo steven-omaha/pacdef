@@ -324,7 +324,7 @@ class Config:
     def _sanity_check(self):
         number_group_files = len([self.groups_path.iterdir()])
         if number_group_files == 0:
-            logging.warning("pacdef does not know any groups. Import one.")
+            logging.warning("pacdef does not know any groups. Import or create one.")
 
     def _get_warn_symlinks(self) -> bool:
         section = "misc"
