@@ -675,7 +675,7 @@ class Pacdef:
             raise FileNotFoundError(f"Did not find the group '{name}'.")
 
     def _search_package(self):
-        """Show imported group with contains `_args.package`.
+        """Show imported group which contains `_args.package`.
 
         Only one package may be provided in the args. Exits with `EXIT_ERROR` if the package cannot be found.
         """
