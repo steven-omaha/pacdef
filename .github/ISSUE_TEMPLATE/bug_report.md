@@ -13,6 +13,8 @@ A clear and concise description of what the bug is.
 **Affected version**
 Output of `pacdef version`: 
 
+Output of `python --version`:
+
 **Operating System**
 
 **To Reproduce**
