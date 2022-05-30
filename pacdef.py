@@ -1097,11 +1097,11 @@ class Package:
         if "/" in package_string:
             try:
                 repo, name = package_string.split("/")
-            except ValueError:  # too many values to unpack
+            except ValueError as err:  # too many values to unpack
                 logging.error(
                     f"could not split this line into repo and package:\n{package_string}"
                 )
-                raise
+                exit(EXIT_ERROR)
         else:
             repo = None
             name = package_string
