@@ -341,7 +341,11 @@ class Config:
     def _get_warn_symlinks(self) -> bool:
         section = "misc"
         key = "warn_not_symlink"
-        return self._get_bool_from_conf(section, key, default=True)
+        try:
+            return self._get_bool_from_conf(section, key, default=True)
+        except ValueError as err:
+            logging.error(err)
+            exit(EXIT_ERROR)
 
 
 class AURHelper:
