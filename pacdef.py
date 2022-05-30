@@ -1064,8 +1064,7 @@ class Package:
                 return self.name == other.name
             case str():
                 return self.name == other
-            case _:
-                raise ValueError("Must be compared with Package or string.")
+        raise ValueError("Must be compared with Package or string.")
 
     def __hash__(self):
         return hash(self.name)
