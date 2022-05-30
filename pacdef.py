@@ -257,7 +257,7 @@ class Config:
         return config
 
     def _get_value_from_conf(
-        self, section: str, key: str, warn_missing: bool = False
+        self, section: str, key: str, *, warn_missing: bool = False
     ) -> str | None:
         try:
             result = self._config[section][key]
@@ -314,7 +314,7 @@ class Config:
         return result
 
     def _get_aur_helper(self) -> Path:
-        aur_helper = self._get_value_from_conf("misc", "aur_helper", True)
+        aur_helper = self._get_value_from_conf("misc", "aur_helper", warn_missing=True)
         if aur_helper is None:
             logging.warning(f"No AUR helper set. Defaulting to {PARU}")
             return PARU
@@ -326,18 +326,22 @@ class Config:
         if number_group_files == 0:
             logging.warning("pacdef does not know any groups. Import or create one.")
 
+    def _get_bool_from_conf(self, section: str, key: str, *, default: bool) -> bool:
+        value = self._get_value_from_conf(section, key)
+        match value:
+            case None:
+                return default
+            case "false":
+                return False
+            case "true":
+                return True
+        msg = f"invalid value in config: [{section}] has {key}={value}\npossible values: true, false (default: {default})"
+        raise ValueError(msg)
+
     def _get_warn_symlinks(self) -> bool:
         section = "misc"
         key = "warn_not_symlink"
-        value = self._get_value_from_conf(section, key)
-        if value is None:
-            return True
-        if value == "false":
-            return False
-        if value == "true":
-            return True
-        msg = f"invalid value in config: [{section}] has {key}={value}\npossible values: true, false (default: true)"
-        raise ValueError(msg)
+        return self._get_bool_from_conf(section, key, default=True)
 
 
 class AURHelper:
