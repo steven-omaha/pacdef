@@ -325,15 +325,18 @@ class Config:
 
     def _get_bool_from_conf(self, section: str, key: str, *, default: bool) -> bool:
         value = self._get_value_from_conf(section, key)
-        match value:
-            case None:
-                return default
-            case "false":
-                return False
-            case "true":
-                return True
-        msg = f"invalid value in config: [{section}] has {key}={value}\npossible values: true, false (default: {default})"
-        raise ValueError(msg)
+        # fmt: off
+        value_result_map = {
+            None: default,
+            "false": False,
+            "true": True
+        }
+        # fmt: on
+        try:
+            return value_result_map[value]
+        except KeyError:
+            msg = f"invalid value in config: [{section}] has {key}={value}\npossible values: true, false (default: {default})"
+            raise ValueError(msg)
 
     def _get_warn_symlinks(self) -> bool:
         section = "misc"
