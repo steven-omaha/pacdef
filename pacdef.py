@@ -147,15 +147,14 @@ class Arguments:
         for _, action in Action.__members__.items():
             if action.value == args.action:
                 return action
-        else:
-            logging.error("Did not understand what you want me to do")
-            sys.exit(EXIT_ERROR)
+        logging.error("Did not understand what you want me to do")
+        sys.exit(EXIT_ERROR)
 
     @staticmethod
     def _parse_groups(args: argparse.Namespace) -> list[str] | None:
-        if not hasattr(args, "group"):
-            return None
-        return args.group
+        if hasattr(args, "group"):
+            return args.group
+        return None
 
 
 def _dir_exists(path: Path) -> bool:
@@ -293,8 +292,7 @@ class Config:
             result = cls._get_value_from_env(var, warn_missing)
             if result is not None:
                 return result
-        else:
-            return None
+        return None
 
     @staticmethod
     def _get_value_from_env(variable: str, warn_missing: bool = False) -> str | None:
@@ -318,8 +316,7 @@ class Config:
         if aur_helper is None:
             logging.warning(f"No AUR helper set. Defaulting to {PARU}")
             return PARU
-        else:
-            return Path(aur_helper)
+        return Path(aur_helper)
 
     def _sanity_check(self):
         number_group_files = len([self.groups_path.iterdir()])
@@ -506,8 +503,7 @@ class Group:
         package_name = before_comment.strip()
         if len(package_name) >= 0:
             return Package(package_name)
-        else:
-            return None
+        return None
 
     def remove(self):
         """Delete the symlink under the group path."""
@@ -686,8 +682,7 @@ class Pacdef:
             if self._args.package in group:
                 print(group.name)
                 sys.exit(EXIT_SUCCESS)
-        else:
-            sys.exit(EXIT_ERROR)
+        sys.exit(EXIT_ERROR)
 
     def _show_group(self) -> None:
         """Show all packages required by an imported group.
@@ -1167,8 +1162,7 @@ class DB:
         for line in lines:
             if not cls._line_is_comment(line) and cls._DB_PATH_KEY in line:
                 return cls._get_path_from_line(line)
-        else:
-            return cls._DEFAULT_PATH
+        return cls._DEFAULT_PATH
 
     @staticmethod
     def _line_is_comment(line: str) -> bool:
