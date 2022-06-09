@@ -450,12 +450,14 @@ class TestPacdef:
         instance._args.groups = [group_name]
         instance._new_group()
 
-    def test__search_package(self):
+    def test__search_package(self, tmpdir):
+        instance = self._get_instance(tmpdir)
         package = pacdef.Package("abc")
         group = pacdef.Group([package], DEVNULL)
         arguments = pacdef.Arguments(process_args=False)
         arguments.package = pacdef.Package("abc")
-        instance = pacdef.Pacdef(args=arguments, groups=[group])
+        instance._args = arguments
+        instance._groups = [group]
 
         with pytest.raises(SystemExit) as raised:
             instance._search_package()
