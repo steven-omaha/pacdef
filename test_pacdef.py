@@ -16,7 +16,7 @@ PACMAN_EXISTS = PACMAN.exists()
 PARU_EXISTS = pacdef.PARU.exists()
 REASON_NOT_ARCH = "pacman not found. That's not an Arch installation."
 REASON_PARU_MISSING = "paru not found"
-NULL = Path("/dev/null")
+DEVNULL = Path("/dev/null")
 
 
 def test_dir_exists(tmpdir):
@@ -236,7 +236,10 @@ class TestPacdef:
         tmpdir = Path(tmpdir)
         aur_helper = TestAURHelper.get_dummy_aur_helper(tmpdir)
         conf = pacdef.Config(
-            aur_helper=NULL, groups_path=tmpdir, config_file_path=NULL, editor=NULL
+            aur_helper=DEVNULL,
+            groups_path=tmpdir,
+            config_file_path=DEVNULL,
+            editor=DEVNULL,
         )
         args = pacdef.Arguments(process_args=False)
         instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
@@ -446,6 +449,35 @@ class TestPacdef:
         group_name = "b"
         instance._args.groups = [group_name]
         instance._new_group()
+
+    def test__search_package(self):
+        package = pacdef.Package("abc")
+        group = pacdef.Group([package], DEVNULL)
+        arguments = pacdef.Arguments(process_args=False)
+        arguments.package = pacdef.Package("abc")
+        instance = pacdef.Pacdef(args=arguments, groups=[group])
+
+        with pytest.raises(SystemExit) as raised:
+            instance._search_package()
+        assert raised.value.code == 0
+
+        arguments.package = pacdef.Package("def")
+
+        with pytest.raises(SystemExit) as raised:
+            instance._search_package()
+        assert raised.value.code == 1
+
+        arguments.package = pacdef.Package(".*b.*")
+
+        with pytest.raises(SystemExit) as raised:
+            instance._search_package()
+        assert raised.value.code == 0
+
+        arguments.package = pacdef.Package("^abc$")
+
+        with pytest.raises(SystemExit) as raised:
+            instance._search_package()
+        assert raised.value.code == 0
 
 
 class TestArguments:

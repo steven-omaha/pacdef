@@ -12,6 +12,7 @@ import argparse
 import configparser
 import logging
 import os
+import re
 import subprocess
 import sys
 import termios
@@ -111,7 +112,9 @@ class Arguments:
         parser_search = subparsers.add_parser(
             Action.search.value, help="show the group containing a package"
         )
-        parser_search.add_argument("package", help="the package to search for")
+        parser_search.add_argument(
+            "package", help="the package to search for (as string literal, or regex)"
+        )
         parser_show_group = subparsers.add_parser(
             Action.show.value, help="show packages under an imported group"
         )
@@ -556,12 +559,13 @@ class Pacdef:
         config: Config = None,
         aur_helper: AURHelper = None,
         db: DB = None,
+        groups: list[Group] = None,
     ):
         """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()
         self._args = args or Arguments()
         self._aur_helper = aur_helper or AURHelper(self._conf.aur_helper)
-        self._groups: list[Group] = self._read_groups()
+        self._groups: list[Group] = groups or self._read_groups()
         self._db: DB = db or DB()
         self._sanity_check()
 
@@ -681,10 +685,29 @@ class Pacdef:
 
         Only one package may be provided in the args. Exits with `EXIT_ERROR` if the package cannot be found.
         """
+        if self._args.package is None:
+            logging.error("no search string provided")
+            sys.exit(EXIT_ERROR)
+
+        # exact match
         for group in self._groups:
             if self._args.package in group:
                 print(group.name)
                 sys.exit(EXIT_SUCCESS)
+
+        # regex match
+        matches = [
+            (group, package)
+            for group in self._groups
+            for package in group
+            if package.matches_regex(self._args.package)
+        ]
+
+        for group, package in matches:
+            print(f"{group.name}: {package}")
+
+        if matches:
+            sys.exit(EXIT_SUCCESS)
         sys.exit(EXIT_ERROR)
 
     def _show_group(self) -> None:
@@ -1095,7 +1118,7 @@ class Package:
         if "/" in package_string:
             try:
                 repo, name = package_string.split("/")
-            except ValueError as err:  # too many values to unpack
+            except ValueError:  # too many values to unpack
                 logging.error(
                     f"could not split this line into repo and package:\n{package_string}"
                 )
@@ -1104,6 +1127,10 @@ class Package:
             repo = None
             name = package_string
         return name, repo
+
+    def matches_regex(self, regex: Package) -> bool:
+        """Check whether the package's representation matches a regex."""
+        return bool(re.search(repr(regex), repr(self)))
 
 
 class CommandRunner:
