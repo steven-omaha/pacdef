@@ -20,7 +20,7 @@ import tty
 from enum import Enum, auto
 from os import environ
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 # does not exist on github workflow
 try:
@@ -191,10 +191,10 @@ class Config:
     def __init__(
         self,
         *,
-        groups_path: Path = None,
-        aur_helper: Path = None,
-        config_file_path: Path = None,
-        editor: Path = None,
+        groups_path: Optional[Path] = None,
+        aur_helper: Optional[Path] = None,
+        config_file_path: Optional[Path] = None,
+        editor: Optional[Path] = None,
         warn_symlinks: bool = True,
     ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
@@ -555,11 +555,11 @@ class Pacdef:
 
     def __init__(
         self,
-        args: Arguments = None,
-        config: Config = None,
-        aur_helper: AURHelper = None,
-        db: DB = None,
-        groups: list[Group] = None,
+        args: Optional[Arguments] = None,
+        config: Optional[Config] = None,
+        aur_helper: Optional[AURHelper] = None,
+        db: Optional[DB] = None,
+        groups: Optional[list[Group]] = None,
     ):
         """Save the provided arguments as attributes, or use defaults when none are provided."""
         self._conf = config or Config()
@@ -1168,6 +1168,10 @@ class DB:
 
     def get_explicitly_installed_packages(self) -> list[Package]:
         """Get all explicitly installed packages. Equivalent to `pacman -Qqe`."""
+        if pyalpm is None:
+            logging.error("pyalpm not installed")
+            sys.exit(EXIT_ERROR)
+
         instances = [
             Package(pkg.name)
             for pkg in self._db.pkgcache
