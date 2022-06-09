@@ -683,19 +683,13 @@ class Pacdef:
     def _search_package(self):
         """Show imported group which contains `_args.package`.
 
-        Only one package may be provided in the args. Exits with `EXIT_ERROR` if the package cannot be found.
+        The package name may be a regex. Only one package may be provided in the args.
+        Exits with `EXIT_ERROR` if the package cannot be found.
         """
         if self._args.package is None:
             logging.error("no search string provided")
             sys.exit(EXIT_ERROR)
 
-        # exact match
-        for group in self._groups:
-            if self._args.package in group:
-                print(group.name)
-                sys.exit(EXIT_SUCCESS)
-
-        # regex match
         matches = [
             (group, package)
             for group in self._groups
