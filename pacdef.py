@@ -350,7 +350,10 @@ class Config:
         try:
             return value_result_map[value]
         except KeyError:
-            msg = f"invalid value in config: [{section}] has {key}={value}\npossible values: true, false (default: {default})"
+            msg = (
+                f"invalid value in config: [{section}] has {key}={value}\n"
+                f"possible values: true, false (default: {default}) "
+            )
             raise ValueError(msg)
 
     def _get_warn_symlinks(self) -> bool:
@@ -472,6 +475,7 @@ class Group:
         """Get number of packages."""
         return len(self.packages)
 
+    # noinspection PyUnresolvedReferences
     def __eq__(self, other: object):
         """Compare with other groups or strings."""
         match other:
@@ -1094,6 +1098,7 @@ class Package:
         self.repo: str | None
         self.name, self.repo = self._split_into_name_and_repo(package_string)
 
+    # noinspection PyUnresolvedReferences
     def __eq__(self, other: object):
         """Check if equal to other package by comparing the name only."""
         match other:
@@ -1138,6 +1143,7 @@ class Package:
         else:
             repo = None
             name = package_string
+        # noinspection PyUnboundLocalVariable
         return name, repo
 
     def matches_regex(self, regex: Package) -> bool:
@@ -1302,7 +1308,7 @@ class UserInput:
         :param prompt: The prompt to show to the user. Should end with a space.
         :param validator: A function to parse / validate the user input.
         :param default: Default value if no input was received.
-        :param single_character: If True, read only a single character, and return immediately (do not wait for newline).
+        :param single_character: If True, read only a single character, and return immediately (do not wait for newline)
         :return:
         """
         user_input: str | None
