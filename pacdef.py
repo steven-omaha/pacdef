@@ -169,7 +169,9 @@ class Arguments:
 
     @staticmethod
     def _parse_edit_new(args: argparse.Namespace) -> bool:
-        return args.edit
+        if hasattr(args, "edit"):
+            return args.edit
+        return False
 
 
 def _dir_exists(path: Path) -> bool:
