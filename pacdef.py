@@ -66,11 +66,13 @@ class Arguments:
             self.files: list[Path] | None = self._parse_files(args)
             self.groups: list[str] | None = self._parse_groups(args)
             self.package: Package | None = self._parse_package(args)
+            self.edit_new: bool = self._parse_edit_new(args)
         else:
             self.action = None
             self.files = None
             self.groups = None
             self.package = None
+            self.edit_new = False
 
     @staticmethod
     def _parse_package(args: argparse.Namespace) -> Package | None:
@@ -102,6 +104,12 @@ class Arguments:
             Action.new.value, help="create a new group file"
         )
         parser_new.add_argument("group", nargs="+", help="one or more new groups")
+        parser_new.add_argument(
+            "-e",
+            "--edit",
+            action="store_true",
+            help="edit the new group file immediately",
+        )
         parser_remove = subparsers.add_parser(
             Action.remove.value, help="remove previously imported group"
         )
@@ -158,6 +166,10 @@ class Arguments:
         if hasattr(args, "group"):
             return args.group
         return None
+
+    @staticmethod
+    def _parse_edit_new(args: argparse.Namespace) -> bool:
+        return args.edit
 
 
 def _dir_exists(path: Path) -> bool:
@@ -598,13 +610,19 @@ class Pacdef:
         if self._args.groups is None:
             logging.error("Cannot create new group. No name supplied.")
             exit(EXIT_ERROR)
+
         # check if we can create all groups before we actually create them
         for group in self._args.groups:
             if group in self._groups:
                 logging.error(f"Cannot create new group '{group}', it already exists.")
                 exit(EXIT_ERROR)
+
         for group in self._args.groups:
             Group.new_file(group, self._conf.groups_path)
+
+        if self._args.edit_new:
+            self._groups = self._read_groups()
+            self._edit_group_file()
 
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
