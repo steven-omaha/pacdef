@@ -82,10 +82,10 @@ class Pacdef:
         self._db: DB = db or DB()
         self._sanity_check()
 
-    # noinspection PyPep8Naming
-    def _get_action_map(self) -> dict[Action, Callable[[], None]]:
+    @property
+    def _action_map(self) -> dict[Action, Callable[[], None]]:
         """Return a dict matching all actions to their corresponding Pacdef methods."""
-        ACTION_MAP = {
+        return {
             Action.clean: self._remove_unmanaged_packages,
             Action.edit: self._edit_group_file,
             Action.groups: self._list_groups,
@@ -99,7 +99,6 @@ class Pacdef:
             Action.unmanaged: self._show_unmanaged_packages,
             Action.version: _show_version,
         }
-        return ACTION_MAP
 
     def _edit_group_file(self) -> None:
         logging.info("editing group files")
@@ -128,7 +127,7 @@ class Pacdef:
     def run_action_from_arg(self) -> None:
         """Get the function from the provided action arg, execute the function."""
         if self._args.action is not None:
-            self._get_action_map()[self._args.action]()
+            self._action_map[self._args.action]()
 
     def _review(self) -> None:
         reviewer = Reviewer(
