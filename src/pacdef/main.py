@@ -6,18 +6,18 @@ from importlib import metadata
 from os import environ
 from typing import Callable, Optional
 
-from pacdef.action import Action
-from pacdef.args import Arguments
-from pacdef.aur_helper import AURHelper
-from pacdef.cmd import CommandRunner
-from pacdef.config import Config
-from pacdef.constants import EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, NOTHING_TO_DO
-from pacdef.db import DB
-from pacdef.group import Group
-from pacdef.package import Package
-from pacdef.path import file_exists
-from pacdef.review import Reviewer
-from pacdef.user_input import UserInput
+from .action import Action
+from .args import Arguments
+from .aur_helper import AURHelper
+from .cmd import run
+from .config import Config
+from .constants import EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, NOTHING_TO_DO
+from .db import DB
+from .group import Group
+from .package import Package
+from .path import file_exists
+from .review import Reviewer
+from .user_input import UserInput
 
 
 def _setup_logger() -> None:
@@ -105,7 +105,7 @@ class Pacdef:
         logging.info("editing group files")
         groups = self._get_groups_matching_arguments()
         paths = [str(group.path) for group in groups]
-        CommandRunner.run([str(self._conf.editor), *paths], check=True)
+        run([str(self._conf.editor), *paths], check=True)
 
     def _new_group(self) -> None:
         if self._args.groups is None:

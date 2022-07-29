@@ -4,24 +4,25 @@ import logging
 import sys
 from pathlib import Path
 
-from pacdef.cmd import CommandRunner
-from pacdef.config import Config
-from pacdef.constants import EXIT_ERROR
-from pacdef.package import Package
-from pacdef.path import file_exists
+from .cmd import run
+from .config import Config
+from .constants import EXIT_ERROR
+from .package import Package
+from .path import file_exists
+
+
+class _Switches:
+    """CLI switches for AUR helpers that wrap pacman."""
+
+    install = ["--sync", "--refresh", "--needed"]
+    remove = ["--remove", "--recursive"]
+    installed_package_info = ["--query", "--info"]
+    # noinspection SpellCheckingInspection
+    as_dependency = ["--database", "--asdeps"]
 
 
 class AURHelper:
     """Abstraction of AUR helpers that act as pacman wrappers."""
-
-    class _Switches:
-        """CLI switches for AUR helpers that wrap pacman."""
-
-        install = ["--sync", "--refresh", "--needed"]
-        remove = ["--remove", "--recursive"]
-        installed_package_info = ["--query", "--info"]
-        # noinspection SpellCheckingInspection
-        as_dependency = ["--database", "--asdeps"]
 
     def __repr__(self):
         """Representation for debugging purposes."""
@@ -47,7 +48,7 @@ class AURHelper:
         :param command: the command to execute, list of strings.
         """
         try:
-            CommandRunner.call([str(self._path)] + command)
+            run([str(self._path)] + command)
         except FileNotFoundError:
             logging.error(f'Could not start the AUR helper "{self._path}".')
             sys.exit(EXIT_ERROR)
@@ -58,7 +59,7 @@ class AURHelper:
         :param packages: list of packages to be installed.
         """
         packages_str = [str(p) for p in packages]
-        command: list[str] = self._Switches.install + packages_str
+        command: list[str] = _Switches.install + packages_str
         self._execute(command)
 
     def remove(self, packages: list[Package]) -> None:
@@ -67,7 +68,7 @@ class AURHelper:
         :param packages: list of packages to be removed.
         """
         packages_str = [str(p) for p in packages]
-        command: list[str] = self._Switches.remove + packages_str
+        command: list[str] = _Switches.remove + packages_str
         self._execute(command)
 
     @classmethod
@@ -81,10 +82,8 @@ class AURHelper:
 
     def print_info(self, package: Package) -> None:
         """Print info for an installed package."""
-        self._execute(self._Switches.installed_package_info + [str(package)])
+        self._execute(_Switches.installed_package_info + [str(package)])
 
     def as_dependency(self, packages: list[Package]) -> None:
         """Mark packages as "installed as dependency"."""
-        self._execute(
-            self._Switches.as_dependency + [str(package) for package in packages]
-        )
+        self._execute(_Switches.as_dependency + [str(package) for package in packages])

@@ -18,7 +18,7 @@ repository = "https://github.com/steven-omaha/pacdef.git"
 pacdef = "pacdef.main:main"
 
 [tool.pyright]
-include = ["pacdef/"]
+include = ["src"]
 
 reportConstantRedefinition = "warning"
 reportDuplicateImport = "warning"
@@ -50,3 +50,5 @@ reportUnusedVariable = "warning"
 
 [tool.isort]
 line_length = 88
+
+[tool.pytest]

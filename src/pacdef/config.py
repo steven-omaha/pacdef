@@ -8,8 +8,8 @@ from os import environ
 from pathlib import Path
 from typing import Optional
 
-from pacdef.constants import EXIT_ERROR, PARU
-from pacdef.path import dir_exists, file_exists
+from .constants import EXIT_ERROR, PARU
+from .path import dir_exists, file_exists
 
 
 class Config:

@@ -10,8 +10,8 @@ except ModuleNotFoundError:
     logging.warning("pyalpm not found")
     pyalpm = None
 
-from pacdef.constants import COMMENT, EXIT_ERROR
-from pacdef.package import Package
+from .constants import COMMENT, EXIT_ERROR
+from .package import Package
 
 
 class DB:

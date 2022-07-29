@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 
-from pacdef.constants import EXIT_ERROR
+from .constants import EXIT_ERROR
 
 
 class Package:

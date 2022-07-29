@@ -4,11 +4,11 @@ import logging
 import sys
 from enum import Enum, auto
 
-from pacdef.aur_helper import AURHelper
-from pacdef.constants import EXIT_ABORT, EXIT_SUCCESS, NOTHING_TO_DO
-from pacdef.group import Group
-from pacdef.package import Package
-from pacdef.user_input import UserInput
+from .aur_helper import AURHelper
+from .constants import EXIT_ABORT, EXIT_SUCCESS, NOTHING_TO_DO
+from .group import Group
+from .package import Package
+from .user_input import UserInput
 
 
 class ReviewAction(Enum):

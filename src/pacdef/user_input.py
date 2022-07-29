@@ -6,7 +6,7 @@ import termios
 import tty
 from typing import Any, Callable
 
-from pacdef.constants import EXIT_INTERRUPT, EXIT_SUCCESS, INTERRUPT_ASCII_CODE
+from .constants import EXIT_INTERRUPT, EXIT_SUCCESS, INTERRUPT_ASCII_CODE
 
 
 class UserInput:

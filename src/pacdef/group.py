@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from pacdef.constants import COMMENT
-from pacdef.package import Package
+from .constants import COMMENT
+from .package import Package
 
 
 class Group:

@@ -7,10 +7,10 @@ import logging
 import sys
 from pathlib import Path
 
-from pacdef.action import Action
-from pacdef.constants import EXIT_ERROR
-from pacdef.package import Package
-from pacdef.path import file_exists
+from .action import Action
+from .constants import EXIT_ERROR
+from .package import Package
+from .path import file_exists
 
 
 class Arguments:
