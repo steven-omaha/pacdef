@@ -11,7 +11,7 @@ from .package import Package
 from .path import file_exists
 
 
-class _Switches:
+class Switches:
     """CLI switches for AUR helpers that wrap pacman."""
 
     install = ["--sync", "--refresh", "--needed"]
@@ -59,7 +59,7 @@ class AURHelper:
         :param packages: list of packages to be installed.
         """
         packages_str = [str(p) for p in packages]
-        command: list[str] = _Switches.install + packages_str
+        command: list[str] = Switches.install + packages_str
         self._execute(command)
 
     def remove(self, packages: list[Package]) -> None:
@@ -68,7 +68,7 @@ class AURHelper:
         :param packages: list of packages to be removed.
         """
         packages_str = [str(p) for p in packages]
-        command: list[str] = _Switches.remove + packages_str
+        command: list[str] = Switches.remove + packages_str
         self._execute(command)
 
     @classmethod
@@ -82,8 +82,8 @@ class AURHelper:
 
     def print_info(self, package: Package) -> None:
         """Print info for an installed package."""
-        self._execute(_Switches.installed_package_info + [str(package)])
+        self._execute(Switches.installed_package_info + [str(package)])
 
     def as_dependency(self, packages: list[Package]) -> None:
         """Mark packages as "installed as dependency"."""
-        self._execute(_Switches.as_dependency + [str(package) for package in packages])
+        self._execute(Switches.as_dependency + [str(package) for package in packages])
