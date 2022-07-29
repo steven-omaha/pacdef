@@ -26,8 +26,8 @@
   language: script
   args: ["."]
 
-- id: mypy
-  name: mypy
-  entry: /usr/bin/mypy
+- id: pyright
+  name: pyright
+  entry: /usr/bin/pyright
   types: [python]
   language: script
