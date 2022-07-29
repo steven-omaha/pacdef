@@ -5,16 +5,15 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-
-from src.pacdef.args import Arguments
-from src.pacdef.group import Group
-from src.pacdef.package import Package
-from src.pacdef.config import Config
-from src.pacdef.main import Pacdef
-from src.pacdef import user_input
-
 from constants import DEVNULL
 from test_aur_helper import TestAURHelper
+
+from src.pacdef import user_input
+from src.pacdef.args import Arguments
+from src.pacdef.config import Config
+from src.pacdef.group import Group
+from src.pacdef.main import Pacdef
+from src.pacdef.package import Package
 
 
 class TestPacdef:

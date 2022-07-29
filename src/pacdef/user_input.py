@@ -8,7 +8,6 @@ from typing import Any, Callable
 
 from .constants import EXIT_INTERRUPT, EXIT_SUCCESS, INTERRUPT_ASCII_CODE
 
-
 """Handles all user input related features."""
 
 

@@ -7,9 +7,10 @@ try:
 except FileNotFoundError:
     pyalpm = None
 
+from constants import REASON_NOT_ARCH
+
 from src.pacdef.db import DB
 from src.pacdef.package import Package
-from constants import REASON_NOT_ARCH
 
 
 class TestDB:

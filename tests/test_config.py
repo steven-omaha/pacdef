@@ -4,10 +4,9 @@ from os import environ
 from pathlib import Path
 from unittest import mock
 
-from src.pacdef.constants import PARU
-
 from src.pacdef import path
-from src.pacdef.config import get_xdg_config_home, Config
+from src.pacdef.config import Config, get_xdg_config_home
+from src.pacdef.constants import PARU
 
 
 def test_get_xdg_config_home(tmpdir, monkeypatch):
