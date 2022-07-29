@@ -7,8 +7,7 @@ import logging
 import sys
 from pathlib import Path
 
-from .action import Action
-from .constants import EXIT_ERROR
+from .constants import EXIT_ERROR, Action
 from .package import Package
 from .path import file_exists
 

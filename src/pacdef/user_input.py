@@ -8,8 +8,6 @@ from typing import Any, Callable
 
 from .constants import EXIT_INTERRUPT, EXIT_SUCCESS, INTERRUPT_ASCII_CODE
 
-"""Handles all user input related features."""
-
 
 def get_user_confirmation() -> None:
     """Ask the user if he wants to continue. Exits if the answer is not `y` or of length zero.

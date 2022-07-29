@@ -7,12 +7,11 @@ from importlib import metadata
 from os import environ
 from typing import Callable, Optional
 
-from .action import Action
 from .args import Arguments
 from .aur_helper import AURHelper
 from .cmd import run
 from .config import Config
-from .constants import EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, NOTHING_TO_DO
+from .constants import EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, NOTHING_TO_DO, Action
 from .db import DB
 from .group import Group
 from .package import Package
@@ -22,6 +21,7 @@ from .user_input import get_user_confirmation
 
 
 def main():
+    """Run the main program."""
     _setup_logger()
     args = Arguments()
     config = Config()

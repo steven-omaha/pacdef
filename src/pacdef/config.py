@@ -25,7 +25,7 @@ class Config:
         warn_symlinks: bool = True,
     ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
-        config_base_dir = get_xdg_config_home()
+        config_base_dir = _get_xdg_config_home()
         pacdef_path = config_base_dir.joinpath("pacdef")
         config_file_path = config_file_path or pacdef_path.joinpath("pacdef.conf")
 
@@ -172,7 +172,7 @@ def _get_value_from_env(variable: str, warn_missing: bool = False) -> str | None
     return result
 
 
-def get_xdg_config_home() -> Path:
+def _get_xdg_config_home() -> Path:
     try:
         config_base_dir = Path(environ["XDG_CONFIG_HOME"])
     except KeyError:

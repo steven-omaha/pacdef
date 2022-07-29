@@ -1,3 +1,5 @@
+"""Interface for the pacman database."""
+
 from __future__ import annotations
 
 import logging

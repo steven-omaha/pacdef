@@ -5,17 +5,17 @@ from pathlib import Path
 from unittest import mock
 
 from src.pacdef import path
-from src.pacdef.config import Config, get_xdg_config_home
+from src.pacdef.config import Config, _get_xdg_config_home
 from src.pacdef.constants import PARU
 
 
 def test_get_xdg_config_home(tmpdir, monkeypatch):
     monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
-    result = get_xdg_config_home()
+    result = _get_xdg_config_home()
     assert result == Path(f'{environ["HOME"]}/.config')
 
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmpdir))
-    result = get_xdg_config_home()
+    result = _get_xdg_config_home()
     assert result == Path(tmpdir)
 
 
