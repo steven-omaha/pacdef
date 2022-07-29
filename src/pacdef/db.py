@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 try:
-    import pyalpm
+    import pyalpm  # pyright: ignore[reportMissingImports]
 except ModuleNotFoundError:
     logging.warning("pyalpm not found")
     pyalpm = None
