@@ -10,7 +10,7 @@
   entry: /usr/bin/pydocstyle
   types: [python]
   language: script
-  args: ["--convention=pep257", "--add-ignore=D100,D104,D105", "pacdef.py", "test_pacdef.py"]
+  args: ["--convention=pep257", "--add-ignore=D100,D104,D105", "src", "tests"]
 
 - id: isort
   name: isort
