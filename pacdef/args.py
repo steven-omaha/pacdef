@@ -1,3 +1,5 @@
+# pyright: reportUnusedCallResult=none
+
 from __future__ import annotations
 
 import argparse
@@ -7,8 +9,8 @@ from pathlib import Path
 
 from pacdef.action import Action
 from pacdef.constants import EXIT_ERROR
-from pacdef.path import file_exists
 from pacdef.package import Package
+from pacdef.path import file_exists
 
 
 class Arguments:
@@ -37,10 +39,11 @@ class Arguments:
             return None
         return Package(args.package)
 
+    # noinspection PyTypeChecker
     @staticmethod
     def _setup_parser() -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
-            description="a declarative manager of Arch packages"
+            description="declarative package manager for Arch Linux"
         )
         subparsers = parser.add_subparsers(
             dest="action", required=True, metavar="<action>"
@@ -105,7 +108,7 @@ class Arguments:
             if not file_exists(f):
                 logging.error(
                     f"Cannot handle '{f}'. "
-                    f"Check that it exists and if it is a file."
+                    + f"Check that it exists and if it is a file."
                 )
                 sys.exit(EXIT_ERROR)
         return files

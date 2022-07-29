@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 
-from pacdef.constants import EXIT_ERROR  # type: ignore
+from pacdef.constants import EXIT_ERROR
 
 
 class Package:
@@ -22,7 +22,7 @@ class Package:
     # noinspection PyUnresolvedReferences
     def __eq__(self, other: object):
         """Check if equal to other package by comparing the name only."""
-        match other:
+        match other:  # pyright: ignore[reportMatchNotExhaustive]
             case Package():
                 return self.name == other.name
             case str():
@@ -32,7 +32,7 @@ class Package:
     def __hash__(self):
         return hash(self.name)
 
-    def __lt__(self, other):
+    def __lt__(self, other: object):
         if not isinstance(other, Package):
             raise NotImplementedError
         return self.name < other.name

@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 try:
-    import pyalpm  # type: ignore
+    import pyalpm
 except ModuleNotFoundError:
     logging.warning("pyalpm not found")
     pyalpm = None
@@ -36,7 +36,7 @@ class DB:
             sys.exit(EXIT_ERROR)
 
         instances = [
-            Package(pkg.name)
+            Package(pkg.name)  # pyright: ignore[reportUnknownArgumentType]
             for pkg in self._db.pkgcache
             if pkg.reason == pyalpm.PKG_REASON_EXPLICIT
         ]
@@ -44,7 +44,10 @@ class DB:
 
     def get_all_installed_packages(self) -> list[Package]:
         """Get all installed packages. Equivalent to `pacman -Qq`."""
-        return [Package(pkg.name) for pkg in self._db.pkgcache]
+        return [
+            Package(pkg.name)  # pyright: ignore[reportUnknownArgumentType]
+            for pkg in self._db.pkgcache
+        ]
 
     @classmethod
     def _get_db_path(cls) -> Path:

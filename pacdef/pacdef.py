@@ -1,10 +1,3 @@
-#!/usr/bin/python
-"""
-Declarative package manager for Arch Linux.
-
-https://github.com/steven-omaha/pacdef
-"""
-
 from __future__ import annotations
 
 import logging
@@ -84,7 +77,7 @@ class Pacdef:
 
         # check if we can create all groups before we actually create them
         for group in self._args.groups:
-            if group in self._groups:
+            if group in [g.name for g in self._groups]:
                 logging.error(f"Cannot create new group '{group}', it already exists.")
                 exit(EXIT_ERROR)
 

@@ -1,3 +1,5 @@
+# pyright: reportUnknownArgumentType=none, reportUnknownParameterType=none
+
 from __future__ import annotations
 
 import logging
@@ -15,7 +17,7 @@ class CommandRunner:
         """Run a command using subprocess.run."""
         logging.info(f"Executing command with subprocess.run: {command, args, kwargs}")
         try:
-            subprocess.run(command, *args, **kwargs)
+            subprocess.run(command, *args, **kwargs).check_returncode()
         except subprocess.CalledProcessError as e:
             logging.error(e)
             sys.exit(EXIT_ERROR)
@@ -25,7 +27,7 @@ class CommandRunner:
         """Run a command using subprocess.call."""
         logging.info(f"Executing command with subprocess.call: {command, args, kwargs}")
         try:
-            subprocess.call(command, *args, **kwargs)
-        except FileNotFoundError:
-            logging.error(f'Could not execute the program "{command[0]}".')
+            assert subprocess.call(command, *args, **kwargs)
+        except (FileNotFoundError, AssertionError):
+            logging.error(f'Could not successfully execute the program "{command[0]}".')
             sys.exit(EXIT_ERROR)

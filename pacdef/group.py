@@ -29,7 +29,7 @@ class Group:
         """Check if package exists in group."""
         return item in self.packages
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: int):
         """Get the package at index `item`."""
         return self.packages[item]
 
@@ -120,7 +120,9 @@ class Group:
         self.packages.append(package)
         self.packages.sort()
         with open(self.path, "a") as fd:
-            fd.write(f"{package}\n")
+            output = f"{package}\n"
+            bytes_written = fd.write(output)
+            assert len(output) == bytes_written
 
     @classmethod
     def new_file(cls, name: str, path: Path) -> None:

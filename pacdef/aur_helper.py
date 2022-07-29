@@ -7,8 +7,8 @@ from pathlib import Path
 from pacdef.cmd import CommandRunner
 from pacdef.config import Config
 from pacdef.constants import EXIT_ERROR
-from pacdef.path import file_exists
 from pacdef.package import Package
+from pacdef.path import file_exists
 
 
 class AURHelper:

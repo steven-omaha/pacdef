@@ -194,6 +194,8 @@ class Reviewer:
             case _Intention.unknown:
                 logging.info("reply not within allowed selection")
                 self.run_actions()
+            case _:
+                raise ValueError("should not happen")
 
     @property
     def _to_delete(self) -> list[Review]:
@@ -221,15 +223,16 @@ class Reviewer:
             self._print_as_dependency(self._as_dependency)
 
     @staticmethod
-    def _print_to_assign(to_assign):
+    def _print_to_assign(to_assign: list[Review]) -> None:
         print("Will assign packages as follows:")
         for review in to_assign:
             logging.debug(review)
+            assert review.group is not None
             print(f"  {review.package} -> {review.group.name}")
         print()
 
     @staticmethod
-    def _print_to_delete(to_delete):
+    def _print_to_delete(to_delete: list[Review]) -> None:
         print("Will delete the following packages:")
         for review in to_delete:
             logging.debug(review)

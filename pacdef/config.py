@@ -40,7 +40,7 @@ class Config:
         logging.info(f"{self.aur_helper=}")
         self._sanity_check()
 
-    def _create_config_files_and_dirs(self, config_file_path, pacdef_path):
+    def _create_config_files_and_dirs(self, config_file_path: Path, pacdef_path: Path):
         """Create config files and dirs. Will be executed on first-time run of pacdef."""
         if not dir_exists(pacdef_path):
             pacdef_path.mkdir(parents=True)
@@ -80,9 +80,13 @@ class Config:
     def _read_config_file(config_file: Path) -> configparser.ConfigParser:
         config = configparser.ConfigParser()
         try:
-            config.read(config_file)
+            read_ok = config.read(config_file)
         except configparser.ParsingError as e:
             logging.error(f"Could not parse the config: {e}")
+            sys.exit(EXIT_ERROR)
+        if not read_ok:
+            logging.error(f"Could not parse the config. That's all we know.")
+            sys.exit(EXIT_ERROR)
         return config
 
     def _get_value_from_conf(
