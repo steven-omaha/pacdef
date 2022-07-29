@@ -26,4 +26,4 @@ jobs:
           pip install pydocstyle
       - name: Check pep257 conformity
         run: |
-          pydocstyle --convention=pep257 --add-ignore=D105 pacdef.py test_pacdef.py
+          pydocstyle --convention=pep257 --add-ignore=D100,D104,D105 src tests

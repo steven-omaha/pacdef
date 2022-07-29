@@ -26,4 +26,4 @@ jobs:
           pip install bandit
       - name: Check for vulnerabilities with bandit
         run: |
-          bandit --config bandit.yaml pacdef.py
+          bandit --config bandit.yaml -r src

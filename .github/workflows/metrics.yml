@@ -26,5 +26,5 @@ jobs:
           pip install radon
       - name: Calculate metrics
         run: |
-          radon cc -a pacdef.py
-          radon cc -a test_pacdef.py
+          radon cc -as src
+          radon cc -as tests

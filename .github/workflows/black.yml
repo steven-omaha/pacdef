@@ -27,5 +27,5 @@ jobs:
       - name: Check black conformity
         run: |
           black --version
-          black --check pacdef.py test_pacdef.py
+          black --check .
 
