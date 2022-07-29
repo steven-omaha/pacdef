@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pacdef.action import Action
 from pacdef.constants import EXIT_ERROR
-from pacdef.pacdef import _file_exists
+from pacdef.path import file_exists
 from pacdef.package import Package
 
 
@@ -102,7 +102,7 @@ class Arguments:
             return None
         files = [Path(f) for f in args.file]
         for f in files:
-            if not _file_exists(f):
+            if not file_exists(f):
                 logging.error(
                     f"Cannot handle '{f}'. "
                     f"Check that it exists and if it is a file."

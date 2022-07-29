@@ -1,11 +1,11 @@
-from setuptools import setup  # type: ignore
+from setuptools import setup
 
 setup(
     name="pacdef",
     python_requires=">=3.10",
     version="0.8.0",
-    packages=[""],
-    package_dir={"": "pacdef"},
+    packages=["pacdef"],
+    # package_dir={"": "pacdef"},
     url="https://github.com/steven-omaha/pacdef",
     license="GPLv3",
     author="steven-omaha",

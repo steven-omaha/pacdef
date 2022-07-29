@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from pathlib import Path
 from typing import Callable, Optional
 
 from pacdef.action import Action
@@ -21,12 +20,9 @@ from pacdef.constants import EXIT_ERROR, EXIT_SUCCESS, NOTHING_TO_DO, VERSION
 from pacdef.db import DB
 from pacdef.group import Group
 from pacdef.package import Package
+from pacdef.path import file_exists
 from pacdef.review import Reviewer
 from pacdef.user_input import UserInput
-
-
-def _file_exists(path: Path) -> bool:
-    return path.exists() and path.is_file()
 
 
 def _show_version() -> None:
@@ -139,7 +135,7 @@ class Pacdef:
             return
         for path in self._args.files:
             link_target = self._conf.groups_path / path.name
-            if _file_exists(link_target):
+            if file_exists(link_target):
                 logging.warning(f"{path.name} already exists, skipping")
             else:
                 link_target.symlink_to(path.absolute())

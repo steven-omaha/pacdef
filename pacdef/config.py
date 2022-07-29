@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 from pacdef.constants import EXIT_ERROR, PARU
-from pacdef.pacdef import _file_exists
+from pacdef.path import dir_exists, file_exists
 
 
 class Config:
@@ -42,11 +42,11 @@ class Config:
 
     def _create_config_files_and_dirs(self, config_file_path, pacdef_path):
         """Create config files and dirs. Will be executed on first-time run of pacdef."""
-        if not _dir_exists(pacdef_path):
+        if not dir_exists(pacdef_path):
             pacdef_path.mkdir(parents=True)
-        if not _dir_exists(self.groups_path):
+        if not dir_exists(self.groups_path):
             self.groups_path.mkdir()
-        if not _file_exists(config_file_path):
+        if not file_exists(config_file_path):
             config_file_path.touch()
 
     @property
@@ -179,7 +179,3 @@ class Config:
         except ValueError as err:
             logging.error(err)
             exit(EXIT_ERROR)
-
-
-def _dir_exists(path: Path) -> bool:
-    return path.exists() and path.is_dir()

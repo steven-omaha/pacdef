@@ -7,7 +7,7 @@ from pathlib import Path
 from pacdef.cmd import CommandRunner
 from pacdef.config import Config
 from pacdef.constants import EXIT_ERROR
-from pacdef.pacdef import _file_exists
+from pacdef.path import file_exists
 from pacdef.package import Package
 
 
@@ -35,7 +35,7 @@ class AURHelper:
         """
         if not path.is_absolute():
             path = Path("/usr/bin").joinpath(path)
-        if not _file_exists(path):
+        if not file_exists(path):
             logging.error(f"AUR helper {path} not found.")
             sys.exit(EXIT_ERROR)
         self._path = path
