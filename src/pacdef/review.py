@@ -11,7 +11,7 @@ from .package import Package
 from .user_input import get_user_input
 
 
-class ReviewAction(Enum):
+class _ReviewAction(Enum):
     """Possible actions for `pacdef review`."""
 
     assign_to_group = "assign to group"
@@ -24,7 +24,7 @@ class ReviewAction(Enum):
 class Review:
     """Holds results of review for a single package."""
 
-    def __init__(self, action: ReviewAction, package: Package, group: Group | None):
+    def __init__(self, action: _ReviewAction, package: Package, group: Group | None):
         """Initialize Review with results of review."""
         self._action = action
         self._package = package
@@ -35,8 +35,8 @@ class Review:
         return f"Review: {self._action}, {self._package}, {self._group}"
 
     @property
-    def action(self) -> ReviewAction:
-        """Get the ReviewAction of the instance."""
+    def action(self) -> _ReviewAction:
+        """Get the _ReviewAction of the instance."""
         return self._action
 
     @property
@@ -105,21 +105,21 @@ class Reviewer:
             single_character=True,
         )
         group = None
-        if action == ReviewAction.assign_to_group:
+        if action == _ReviewAction.assign_to_group:
             self._print_enumerated_groups()
             # noinspection SpellCheckingInspection
             group = get_user_input("Group or (c)ancel? ", self._parse_input_group)
             if group is None:
                 return self._get_action_from_user_input_for_current_package()
-        elif action == ReviewAction.info:
+        elif action == _ReviewAction.info:
             self._aur_helper.print_info(self._current_package)
             return self._get_action_from_user_input_for_current_package()
         print()
         return Review(action, self._current_package, group)
 
-    def _parse_input_action(self, user_input: str | None) -> ReviewAction:
+    def _parse_input_action(self, user_input: str | None) -> _ReviewAction:
         if user_input is None:
-            raise ValueError("Cannot provide ReviewAction identified by `None`.")
+            raise ValueError("Cannot provide _ReviewAction identified by `None`.")
         if user_input == "q":
             sys.exit(EXIT_SUCCESS)
         try:
@@ -130,13 +130,13 @@ class Reviewer:
 
     # noinspection PyPep8Naming
     @staticmethod
-    def _get_action_map() -> dict[str, ReviewAction]:
+    def _get_action_map() -> dict[str, _ReviewAction]:
         ACTION_MAP = {
-            "g": ReviewAction.assign_to_group,
-            "d": ReviewAction.delete,
-            "s": ReviewAction.skip,
-            "i": ReviewAction.info,
-            "a": ReviewAction.as_dependency,
+            "g": _ReviewAction.assign_to_group,
+            "d": _ReviewAction.delete,
+            "s": _ReviewAction.skip,
+            "i": _ReviewAction.info,
+            "a": _ReviewAction.as_dependency,
         }
         return ACTION_MAP
 
@@ -197,17 +197,17 @@ class Reviewer:
 
     @property
     def _to_delete(self) -> list[Review]:
-        return self._get_reviews_by_action(ReviewAction.delete)
+        return self._get_reviews_by_action(_ReviewAction.delete)
 
     @property
     def _to_assign(self) -> list[Review]:
-        return self._get_reviews_by_action(ReviewAction.assign_to_group)
+        return self._get_reviews_by_action(_ReviewAction.assign_to_group)
 
     @property
     def _as_dependency(self) -> list[Review]:
-        return self._get_reviews_by_action(ReviewAction.as_dependency)
+        return self._get_reviews_by_action(_ReviewAction.as_dependency)
 
-    def _get_reviews_by_action(self, action: ReviewAction) -> list[Review]:
+    def _get_reviews_by_action(self, action: _ReviewAction) -> list[Review]:
         return [review for review in self._actions if review.action == action]
 
     def print_strategy(self) -> None:
