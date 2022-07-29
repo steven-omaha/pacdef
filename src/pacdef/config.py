@@ -25,11 +25,11 @@ class Config:
         warn_symlinks: bool = True,
     ):
         """Instantiate using the provided values. If these are None, use the config file / defaults."""
-        config_base_dir = self._get_xdg_config_home()
+        config_base_dir = get_xdg_config_home()
         pacdef_path = config_base_dir.joinpath("pacdef")
         config_file_path = config_file_path or pacdef_path.joinpath("pacdef.conf")
 
-        self._config = self._read_config_file(config_file_path)
+        self._config = _read_config_file(config_file_path)
         self.groups_path: Path = groups_path or pacdef_path.joinpath("groups")
         logging.info(f"{self.groups_path=}")
         self._create_config_files_and_dirs(config_file_path, pacdef_path)
@@ -67,28 +67,6 @@ class Config:
         """Get value of warn_symlinks from config, default: true."""
         return self._warn_symlinks
 
-    @staticmethod
-    def _get_xdg_config_home() -> Path:
-        try:
-            config_base_dir = Path(environ["XDG_CONFIG_HOME"])
-        except KeyError:
-            config_base_dir = Path.home() / ".config"
-        logging.debug(f"{config_base_dir=}")
-        return config_base_dir
-
-    @staticmethod
-    def _read_config_file(config_file: Path) -> configparser.ConfigParser:
-        config = configparser.ConfigParser()
-        try:
-            read_ok = config.read(config_file)
-        except configparser.ParsingError as e:
-            logging.error(f"Could not parse the config: {e}")
-            sys.exit(EXIT_ERROR)
-        if not read_ok:
-            logging.error(f"Could not parse the config. That's all we know.")
-            sys.exit(EXIT_ERROR)
-        return config
-
     def _get_value_from_conf(
         self, section: str, key: str, *, warn_missing: bool = False
     ) -> str | None:
@@ -123,27 +101,10 @@ class Config:
         :return: value of environment variable or None
         """
         for var in variables:
-            result = cls._get_value_from_env(var, warn_missing)
+            result = _get_value_from_env(var, warn_missing)
             if result is not None:
                 return result
         return None
-
-    @staticmethod
-    def _get_value_from_env(variable: str, warn_missing: bool = False) -> str | None:
-        """Get the value of a single environment variable.
-
-        :param variable: environment variable to read
-        :param warn_missing: print a warning if the variable is not set
-        :return: value of environment variable or None
-        """
-        try:
-            result = os.environ[variable]
-        except KeyError:
-            if warn_missing:
-                logging.warning(f"Environment variable {variable} not set.")
-            return None
-        logging.info(f"{variable} is set to {result}.")
-        return result
 
     def _get_aur_helper(self) -> Path:
         aur_helper = self._get_value_from_conf("misc", "aur_helper", warn_missing=True)
@@ -183,3 +144,38 @@ class Config:
         except ValueError as err:
             logging.error(err)
             exit(EXIT_ERROR)
+
+
+def _read_config_file(config_file: Path) -> configparser.ConfigParser:
+    config = configparser.ConfigParser()
+    try:
+        _ = config.read(config_file)
+    except configparser.ParsingError as e:
+        logging.error(f"Could not parse the config: {e}")
+    return config
+
+
+def _get_value_from_env(variable: str, warn_missing: bool = False) -> str | None:
+    """Get the value of a single environment variable.
+
+    :param variable: environment variable to read
+    :param warn_missing: print a warning if the variable is not set
+    :return: value of environment variable or None
+    """
+    try:
+        result = os.environ[variable]
+    except KeyError:
+        if warn_missing:
+            logging.warning(f"Environment variable {variable} not set.")
+        return None
+    logging.info(f"{variable} is set to {result}.")
+    return result
+
+
+def get_xdg_config_home() -> Path:
+    try:
+        config_base_dir = Path(environ["XDG_CONFIG_HOME"])
+    except KeyError:
+        config_base_dir = Path.home() / ".config"
+    logging.debug(f"{config_base_dir=}")
+    return config_base_dir

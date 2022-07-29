@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pacdef.path import dir_exists, file_exists
+from src.pacdef.path import dir_exists, file_exists
 
 
 def test_dir_exists(tmpdir):

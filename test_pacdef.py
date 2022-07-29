@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import logging
 import subprocess
-from os import environ
 from pathlib import Path
 from unittest import mock
 
@@ -17,75 +16,6 @@ PARU_EXISTS = pacdef.PARU.exists()
 REASON_NOT_ARCH = "pacman not found. That's not an Arch installation."
 REASON_PARU_MISSING = "paru not found"
 DEVNULL = Path("/dev/null")
-
-
-class TestConfig:
-    @staticmethod
-    def test__get_xdg_config_home(tmpdir, monkeypatch):
-        monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
-        result = pacdef.Config._get_xdg_config_home()
-        assert result == Path(f'{environ["HOME"]}/.config')
-
-        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmpdir))
-        result = pacdef.Config._get_xdg_config_home()
-        assert result == Path(tmpdir)
-
-    @staticmethod
-    def test__get_aur_helper(tmpdir):
-        with mock.patch.object(
-            pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
-        ):
-            tmpfile = Path(tmpdir).joinpath("tmp.conf")
-
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper == pacdef.PARU
-
-            with open(tmpfile, "w") as fd:
-                fd.write("some strange content")
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper == pacdef.PARU
-
-            with open(tmpfile, "w") as fd:
-                fd.write("[misc]\nsomething")
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper == pacdef.PARU
-
-            something = "something"
-            with open(tmpfile, "w") as fd:
-                fd.write(f"[misc]\naur_helper={something}")
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper == Path(something)
-
-            with open(tmpfile, "w") as fd:
-                fd.write("[misc]\naur___hELPer=paru")
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper == pacdef.PARU
-
-            with open(tmpfile, "w") as fd:
-                fd.write("[misc]\naur_helper=paru")
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper.name == pacdef.PARU.name
-
-            with open(tmpfile, "w") as fd:
-                fd.write("[misc]\naur_helper=/usr/bin/paru")
-            conf = pacdef.Config(config_file_path=tmpfile)
-            assert conf.aur_helper == pacdef.PARU
-
-    @staticmethod
-    def test___init__(tmpdir, monkeypatch):
-        monkeypatch.setenv("XDG_CONFIG_HOME", str(tmpdir))
-        groups = Path(tmpdir).joinpath("pacdef/groups")
-        conf_file = Path(tmpdir).joinpath("pacdef/pacdef.conf")
-
-        with mock.patch.object(
-            pacdef, "_file_exists", lambda x: x == Path("/usr/bin/paru")
-        ):
-            config = pacdef.Config()
-        aur_helper = Path("/usr/bin/paru")
-
-        assert config.groups_path == groups
-        assert config.aur_helper == aur_helper
-        assert conf_file.is_file()
 
 
 class TestAURHelper:
