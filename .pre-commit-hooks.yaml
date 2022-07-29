@@ -24,7 +24,7 @@
   entry: /usr/bin/python
   types: [python]
   language: script
-  args: ["-m", "pytest"]
+  args: ["-m", "pytest", "src", "tests"]
 
 - id: pyright
   name: pyright
