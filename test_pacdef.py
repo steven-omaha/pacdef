@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import logging
 from pathlib import Path
 from unittest import mock
@@ -292,15 +291,6 @@ class TestPacdef:
         with pytest.raises(SystemExit) as raised:
             instance._search_package()
         assert raised.value.code == 0
-
-
-class TestArguments:
-    def test__parse_files(self, tmpdir):
-        files = [Path(tmpdir) / "group"]
-        args = argparse.Namespace()
-        setattr(args, "file", files[0].name)
-        with pytest.raises(SystemExit):
-            pacdef.Arguments._parse_files(args)
 
 
 class TestGroup:
