@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "pacdef"
+version = "0.8.0"
+description = "declarative package manager for Arch Linux"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "steven-omaha"}]
+dependencies = ["pyalpm"]
+
+[project.urls]
+homepage = "https://github.com/steven-omaha/pacdef"
+repository = "https://github.com/steven-omaha/pacdef.git"
+
+[project.entry-points.console_scripts]
+pacdef = "pacdef.main:main"
+
+[tool.pyright]
+include = ["pacdef/"]
+
+reportImportCycles = "error"
+reportUnusedImport = "warning"
+reportPropertyTypeMismatch = "warning"
+reportUnusedClass = "warning"
+reportUnusedFunction = "warning"
+reportUnusedVariable = "warning"
+reportDuplicateImport = "warning"
+reportUntypedFunctionDecorator = "warning"
+reportPrivateUsage = "warning"
+reportConstantRedefinition = "warning"
+reportUninitializedInstanceVariable = "warning"
+reportUnknownParameterType = "warning"
