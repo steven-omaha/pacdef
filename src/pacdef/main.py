@@ -20,6 +20,16 @@ from .review import Reviewer
 from .user_input import get_user_confirmation
 
 
+def main():
+    _setup_logger()
+    args = Arguments()
+    config = Config()
+    helper = AURHelper.from_config(config)
+    db = DB()
+    pacdef = Pacdef(args=args, config=config, aur_helper=helper, db=db)
+    pacdef.run_action_from_arg()
+
+
 def _setup_logger() -> None:
     """Set up the logger.
 
@@ -36,16 +46,6 @@ def _setup_logger() -> None:
         logging.basicConfig(format="%(levelname)s:%(lineno)d: %(message)s", level=level)
     else:
         logging.basicConfig(format="%(levelname)s: %(message)s", level=level)
-
-
-def main():
-    _setup_logger()
-    args = Arguments()
-    config = Config()
-    helper = AURHelper.from_config(config)
-    db = DB()
-    pacdef = Pacdef(args=args, config=config, aur_helper=helper, db=db)
-    pacdef.run_action_from_arg()
 
 
 if __name__ == "__main__":
