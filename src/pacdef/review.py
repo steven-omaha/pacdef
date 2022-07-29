@@ -225,7 +225,8 @@ class Reviewer:
         print("Will assign packages as follows:")
         for review in to_assign:
             logging.debug(review)
-            assert review.group is not None
+            if review.group is None:
+                raise ValueError("Should not happen.")
             print(f"  {review.package} -> {review.group.name}")
         print()
 

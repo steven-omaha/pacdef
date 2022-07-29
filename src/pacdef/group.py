@@ -122,7 +122,10 @@ class Group:
         with open(self.path, "a") as fd:
             output = f"{package}\n"
             bytes_written = fd.write(output)
-            assert len(output) == bytes_written
+            if not len(output) == bytes_written:
+                logging.warning(
+                    f"It seems we could not write everything. Check the group file {self.path}"
+                )
 
     @classmethod
     def new_file(cls, name: str, path: Path) -> None:
