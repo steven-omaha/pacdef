@@ -19,26 +19,6 @@ REASON_PARU_MISSING = "paru not found"
 DEVNULL = Path("/dev/null")
 
 
-def test_dir_exists(tmpdir):
-    tmpdir = Path(tmpdir)
-    tmpfile = tmpdir.joinpath("tmpfile")
-    tmpfile.touch()
-    assert not pacdef._dir_exists(tmpfile)
-    tmpfile.unlink()
-    assert not pacdef._dir_exists(tmpfile)
-    assert pacdef._dir_exists(tmpdir)
-
-
-def test_file_exists(tmpdir):
-    tmpfile = Path(tmpdir).joinpath("tmpfile")
-    tmpfile.touch()
-    assert pacdef._file_exists(tmpfile)
-    tmpfile.unlink()
-    assert not pacdef._file_exists(tmpfile)
-    tmpfile.mkdir()
-    assert not pacdef._file_exists(tmpfile)
-
-
 class TestConfig:
     @staticmethod
     def test__get_xdg_config_home(tmpdir, monkeypatch):

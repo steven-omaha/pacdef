@@ -51,4 +51,5 @@ reportUnusedVariable = "warning"
 [tool.isort]
 line_length = 88
 
-[tool.pytest]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
