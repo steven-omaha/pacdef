@@ -17,7 +17,7 @@ from .group import Group
 from .package import Package
 from .path import file_exists
 from .review import Reviewer
-from .user_input import UserInput
+from .user_input import get_user_confirmation
 
 
 def _setup_logger() -> None:
@@ -151,7 +151,7 @@ class Pacdef:
         print("Would remove the following packages and their dependencies:")
         for package in unmanaged_packages:
             print(f"  {package}")
-        UserInput.get_user_confirmation()
+        get_user_confirmation()
         self._aur_helper.remove(unmanaged_packages)
 
     def _list_groups(self):
@@ -241,7 +241,7 @@ class Pacdef:
         print("Would install the following packages:")
         for package in to_install:
             print(f"  {package}")
-        UserInput.get_user_confirmation()
+        get_user_confirmation()
         self._aur_helper.install(to_install)
 
     def _show_unmanaged_packages(self) -> None:

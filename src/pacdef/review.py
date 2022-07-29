@@ -8,7 +8,7 @@ from .aur_helper import AURHelper
 from .constants import EXIT_ABORT, EXIT_SUCCESS, NOTHING_TO_DO
 from .group import Group
 from .package import Package
-from .user_input import UserInput
+from .user_input import get_user_input
 
 
 class ReviewAction(Enum):
@@ -99,7 +99,7 @@ class Reviewer:
 
     def _get_action_from_user_input_for_current_package(self) -> Review:
         # noinspection SpellCheckingInspection
-        action = UserInput.get_user_input(
+        action = get_user_input(
             "assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? ",
             self._parse_input_action,
             single_character=True,
@@ -108,9 +108,7 @@ class Reviewer:
         if action == ReviewAction.assign_to_group:
             self._print_enumerated_groups()
             # noinspection SpellCheckingInspection
-            group = UserInput.get_user_input(
-                "Group or (c)ancel? ", self._parse_input_group
-            )
+            group = get_user_input("Group or (c)ancel? ", self._parse_input_group)
             if group is None:
                 return self._get_action_from_user_input_for_current_package()
         elif action == ReviewAction.info:
@@ -177,7 +175,7 @@ class Reviewer:
             print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
 
-        user_input = UserInput.get_user_input(
+        user_input = get_user_input(
             "Confirm? [y, n] ",
             check_wants_to_continue,
             single_character=True,
@@ -270,6 +268,7 @@ class Reviewer:
             self._aur_helper.as_dependency(packages)
 
 
+# noinspection PyArgumentList
 class _Intention(Enum):
     abort = auto()
     confirm = auto()
