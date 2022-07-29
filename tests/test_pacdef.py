@@ -8,7 +8,6 @@ import pytest
 from constants import DEVNULL
 from test_aur_helper import TestAURHelper
 
-from src.pacdef import user_input
 from src.pacdef.args import Arguments
 from src.pacdef.config import Config
 from src.pacdef.group import Group
@@ -87,10 +86,7 @@ class TestPacdef:
             with mock.patch.object(
                 instance, "_get_unmanaged_packages", lambda: packages
             ):
-                with mock.patch.object(
-                    user_input, "get_user_confirmation", lambda: None
-                ):
-                    instance._remove_unmanaged_packages()
+                instance._remove_unmanaged_packages()
 
     def test_list_groups(self, capsys, tmpdir):
         self._test_basic_printing_function(
@@ -169,10 +165,7 @@ class TestPacdef:
             with mock.patch.object(
                 instance, "_calculate_packages_to_install", lambda: packages
             ):
-                with mock.patch.object(
-                    user_input, "get_user_confirmation", lambda: None
-                ):
-                    instance._install_packages_from_groups()
+                instance._install_packages_from_groups()
 
     def test_show_unmanaged_packages(self, capsys, tmpdir):
         self._test_basic_printing_function(

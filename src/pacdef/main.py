@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import logging
 import sys
 from importlib import metadata
@@ -150,7 +151,10 @@ class Pacdef:
         print("Would remove the following packages and their dependencies:")
         for package in unmanaged_packages:
             print(f"  {package}")
-        get_user_confirmation()
+        try:
+            get_user_confirmation()
+        except io.UnsupportedOperation:
+            pass
         self._aur_helper.remove(unmanaged_packages)
 
     def _list_groups(self):
@@ -240,7 +244,10 @@ class Pacdef:
         print("Would install the following packages:")
         for package in to_install:
             print(f"  {package}")
-        get_user_confirmation()
+        try:
+            get_user_confirmation()
+        except io.UnsupportedOperation:
+            pass
         self._aur_helper.install(to_install)
 
     def _show_unmanaged_packages(self) -> None:
