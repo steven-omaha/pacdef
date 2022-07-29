@@ -31,3 +31,10 @@
   entry: /usr/bin/pyright
   types: [python]
   language: script
+
+- id: bandit
+  name: bandit
+  entry: /usr/bin/bandit
+  types: [python]
+  language: script
+  args: ["-c", "bandit.yaml", "-r", "src"]
