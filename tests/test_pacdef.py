@@ -6,8 +6,15 @@ from unittest import mock
 
 import pytest
 
-import pacdef
+from src.pacdef.args import Arguments
+from src.pacdef.group import Group
+from src.pacdef.package import Package
+from src.pacdef.config import Config
+from src.pacdef.main import Pacdef
+from src.pacdef import user_input
+
 from constants import DEVNULL
+from test_aur_helper import TestAURHelper
 
 
 class TestPacdef:
@@ -43,17 +50,17 @@ class TestPacdef:
         assert len(err) == 0
 
     @staticmethod
-    def _get_instance(tmpdir: Path | str) -> pacdef.Pacdef:
+    def _get_instance(tmpdir: Path | str) -> Pacdef:
         tmpdir = Path(tmpdir)
         aur_helper = TestAURHelper.get_dummy_aur_helper(tmpdir)
-        conf = pacdef.Config(
+        conf = Config(
             aur_helper=DEVNULL,
             groups_path=tmpdir,
             config_file_path=DEVNULL,
             editor=DEVNULL,
         )
-        args = pacdef.Arguments(process_args=False)
-        instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
+        args = Arguments(process_args=False)
+        instance = Pacdef(args=args, aur_helper=aur_helper, config=conf)
         return instance
 
     def test_remove_unmanaged_packages_none(self, tmpdir):
@@ -82,7 +89,7 @@ class TestPacdef:
                 instance, "_get_unmanaged_packages", lambda: packages
             ):
                 with mock.patch.object(
-                    pacdef.UserInput, "get_user_confirmation", lambda: None
+                    user_input, "get_user_confirmation", lambda: None
                 ):
                     instance._remove_unmanaged_packages()
 
@@ -111,12 +118,12 @@ class TestPacdef:
             count_after = len(list(groupdir.iterdir()))
             assert count_after == count_before
 
-        def get_instance(new_group_files: list[Path], tmpdir) -> pacdef.Pacdef:
-            conf = pacdef.Config(groups_path=groupdir)
+        def get_instance(new_group_files: list[Path], tmpdir) -> Pacdef:
+            conf = Config(groups_path=groupdir)
             aur_helper = TestAURHelper.get_dummy_aur_helper(tmpdir)
-            args = pacdef.Arguments(process_args=False)
+            args = Arguments(process_args=False)
             args.files = new_group_files
-            instance = pacdef.Pacdef(args=args, aur_helper=aur_helper, config=conf)
+            instance = Pacdef(args=args, aur_helper=aur_helper, config=conf)
             return instance
 
         tmpdir = Path(tmpdir)
@@ -164,7 +171,7 @@ class TestPacdef:
                 instance, "_calculate_packages_to_install", lambda: packages
             ):
                 with mock.patch.object(
-                    pacdef.UserInput, "get_user_confirmation", lambda: None
+                    user_input, "get_user_confirmation", lambda: None
                 ):
                     instance._install_packages_from_groups()
 
@@ -198,9 +205,9 @@ class TestPacdef:
         self, pacdef_packages, installed_packages, expected_result, tmpdir
     ):
         instance = self._get_instance(tmpdir)
-        pp = [pacdef.Package(item) for item in pacdef_packages]
-        ip = [pacdef.Package(item) for item in installed_packages]
-        er = [pacdef.Package(item) for item in expected_result]
+        pp = [Package(item) for item in pacdef_packages]
+        ip = [Package(item) for item in installed_packages]
+        er = [Package(item) for item in expected_result]
         with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
                 instance._db,
@@ -235,9 +242,9 @@ class TestPacdef:
         self, pacdef_packages, installed_packages, expected_result, tmpdir
     ):
         instance = self._get_instance(tmpdir)
-        pp = [pacdef.Package(item) for item in pacdef_packages]
-        ip = [pacdef.Package(item) for item in installed_packages]
-        er = [pacdef.Package(item) for item in expected_result]
+        pp = [Package(item) for item in pacdef_packages]
+        ip = [Package(item) for item in installed_packages]
+        er = [Package(item) for item in expected_result]
         with mock.patch.object(instance, "_get_managed_packages", lambda: pp):
             with mock.patch.object(
                 instance._db,
@@ -263,10 +270,10 @@ class TestPacdef:
 
     def test__search_package(self, tmpdir):
         instance = self._get_instance(tmpdir)
-        package = pacdef.Package("abc")
-        group = pacdef.Group([package], DEVNULL)
-        arguments = pacdef.Arguments(process_args=False)
-        arguments.package = pacdef.Package("abc")
+        package = Package("abc")
+        group = Group([package], DEVNULL)
+        arguments = Arguments(process_args=False)
+        arguments.package = Package("abc")
         instance._args = arguments
         instance._groups = [group]
 
@@ -274,19 +281,19 @@ class TestPacdef:
             instance._search_package()
         assert raised.value.code == 0
 
-        arguments.package = pacdef.Package("def")
+        arguments.package = Package("def")
 
         with pytest.raises(SystemExit) as raised:
             instance._search_package()
         assert raised.value.code == 1
 
-        arguments.package = pacdef.Package(".*b.*")
+        arguments.package = Package(".*b.*")
 
         with pytest.raises(SystemExit) as raised:
             instance._search_package()
         assert raised.value.code == 0
 
-        arguments.package = pacdef.Package("^abc$")
+        arguments.package = Package("^abc$")
 
         with pytest.raises(SystemExit) as raised:
             instance._search_package()
