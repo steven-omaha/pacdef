@@ -8,8 +8,8 @@
 - id: pydocstyle
   name: pydocstyle
   entry: /usr/bin/pydocstyle
-  types: [python]
   language: script
+  files: src/pacdef/*.py
   args: ["--convention=pep257", "--add-ignore=D100,D104,D105", "src", "tests"]
 
 - id: isort
@@ -35,6 +35,6 @@
 - id: bandit
   name: bandit
   entry: /usr/bin/bandit
-  types: [python]
+  files: src/pacdef/*.py
   language: script
   args: ["-c", "bandit.yaml", "-r", "src"]
