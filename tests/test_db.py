@@ -4,7 +4,7 @@ import pytest
 
 try:
     import pyalpm
-except FileNotFoundError:
+except ModuleNotFoundError:
     pyalpm = None
 
 from constants import REASON_NOT_ARCH
