@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import logging
 import sys
-from importlib import metadata
+from importlib.metadata import version
 from os import environ
 from typing import Callable, Optional
 
@@ -61,7 +61,7 @@ def _show_version() -> None:
 
     The value of `VERSION` is set during compile time by the PKGBUILD using `build()`.
     """
-    print(f"pacdef, version: {metadata.version('pacdef')}")
+    print(f"pacdef, version: {version('pacdef')}")
 
 
 class Pacdef:
