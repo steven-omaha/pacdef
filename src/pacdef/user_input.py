@@ -56,7 +56,7 @@ def get_user_input(
         if single_character:
             user_input = _read_character()
         else:
-            user_input = _read_line()
+            user_input = input()
         user_input = user_input or default
         logging.info(f"{user_input=}")
         try:
@@ -67,11 +67,6 @@ def get_user_input(
         except KeyboardInterrupt:
             sys.exit(EXIT_INTERRUPT)
     return result
-
-
-def _read_line() -> str:
-    user_input = input()
-    return user_input
 
 
 def _read_character() -> str:
