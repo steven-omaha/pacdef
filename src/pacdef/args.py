@@ -42,7 +42,7 @@ class Arguments:
     @staticmethod
     def _setup_parser() -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser(
-            description="declarative package manager for Arch Linux"
+            prog="pacdef", description="declarative package manager for Arch Linux"
         )
         subparsers = parser.add_subparsers(
             dest="action", required=True, metavar="<action>"
