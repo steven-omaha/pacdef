@@ -37,4 +37,4 @@
   entry: /usr/bin/bandit
   files: src/pacdef/*.py
   language: script
-  args: ["-c", "bandit.yaml", "-r", "src"]
+  args: ["-c", "pyproject.toml", "-r", "src"]

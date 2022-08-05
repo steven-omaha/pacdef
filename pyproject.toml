@@ -53,3 +53,6 @@ line_length = 88
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.bandit]
+skips = ["B404", "B603"]
