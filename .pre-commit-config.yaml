@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: ./
-    rev: 9c41c2bf4766d90f793bc821509af75a617d1e41
+    rev: 8e5744c948fc9b0dcf2680301c9acbe9ab394104
     hooks:
     -  id: black
     -  id: pydocstyle
