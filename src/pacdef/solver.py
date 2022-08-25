@@ -48,19 +48,20 @@ def calc_packages_to_install(
 def get_groups_matching_arguments(
     args: Arguments, groups: list[Group]
 ) -> Optional[list[Group]]:
+    """Find those groups from the list of known groups whose name matches the provided arguments."""
     found_groups = []
     if args.groups is None:
         raise ValueError("no group supplied")
     for name in args.groups:
         try:
-            found_groups.append(find_group_by_name(name, groups))
+            found_groups.append(_find_group_by_name(name, groups))
         except FileNotFoundError as err:
             logging.error(err)
             return None
     return found_groups
 
 
-def find_group_by_name(name: str, groups: list[Group]) -> Group:
+def _find_group_by_name(name: str, groups: list[Group]) -> Group:
     logging.info(f"Searching for group '{name}'")
     for group in groups:
         if group == name:
