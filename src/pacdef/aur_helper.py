@@ -31,7 +31,7 @@ class AURHelper:
     def __init__(self, path: Path):
         """Initialize AURHelper.
 
-        If the AUR helper is not found, and error is raised.
+        If the AUR helper is not found, an error is raised.
         :param path: path to the AUR helper to use (example: `/usr/bin/paru`).
         """
         if not path.is_absolute():
