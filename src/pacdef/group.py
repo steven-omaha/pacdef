@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import logging
+import sys
 from pathlib import Path
 
-from .constants import COMMENT
+from .constants import COMMENT, EXIT_ERROR
 from .package import Package
 
 
@@ -131,3 +132,23 @@ class Group:
     def new_file(cls, name: str, path: Path) -> None:
         """Create new group file in `path` with `name`."""
         (path / name).touch()
+
+    @classmethod
+    def read_groups_from_dir(cls, groups_path: Path) -> list[Group]:
+        """Read all imported groups (= list of files in the pacdef group directory).
+
+        :return: list of imported groups
+        """
+        paths = [group for group in groups_path.iterdir()]
+        paths.sort()
+        groups = []
+        for path in paths:
+            # noinspection PyBroadException
+            try:
+                groups.append(Group.from_file(path))
+            except Exception as e:
+                logging.error(f"Could not parse group file {path}.")
+                logging.error(e)
+                print(sys.exit(EXIT_ERROR))
+        logging.debug(f"groups: {[group.name for group in groups]}")
+        return groups

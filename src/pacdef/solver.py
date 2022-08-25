@@ -1,5 +1,8 @@
 import logging
+from typing import Optional
 
+from .args import Arguments
+from .group import Group
 from .package import Package
 
 
@@ -40,3 +43,40 @@ def calc_packages_to_install(
     logging.debug(f"{pacdef_only=}")
 
     return pacdef_only
+
+
+def get_groups_matching_arguments(
+    args: Arguments, groups: list[Group]
+) -> Optional[list[Group]]:
+    found_groups = []
+    if args.groups is None:
+        raise ValueError("no group supplied")
+    for name in args.groups:
+        try:
+            found_groups.append(find_group_by_name(name, groups))
+        except FileNotFoundError as err:
+            logging.error(err)
+            return None
+    return found_groups
+
+
+def find_group_by_name(name: str, groups: list[Group]) -> Group:
+    logging.info(f"Searching for group '{name}'")
+    for group in groups:
+        if group == name:
+            logging.info(f"found group under {group.path}")
+            return group
+    raise FileNotFoundError(f"Did not find the group '{name}'.")
+
+
+def get_managed_packages(groups: list[Group]) -> list[Package]:
+    """Get all packaged that are known to pacdef (i.e. are located in imported group files).
+
+    :return: list of packages
+    """
+    packages = []
+    for group in groups:
+        packages.extend(group.packages)
+    if len(packages) == 0:
+        logging.warning("pacdef does not know any packages.")
+    return packages

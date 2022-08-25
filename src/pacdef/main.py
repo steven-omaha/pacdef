@@ -14,10 +14,14 @@ from .config import Config
 from .constants import EXIT_ERROR, EXIT_INTERRUPT, EXIT_SUCCESS, NOTHING_TO_DO, Action
 from .db import DB
 from .group import Group
-from .package import Package
 from .path import file_exists
 from .review import Reviewer
-from .solver import calc_packages_to_install, calc_unmanaged_packages
+from .solver import (
+    calc_packages_to_install,
+    calc_unmanaged_packages,
+    get_groups_matching_arguments,
+    get_managed_packages,
+)
 from .user_input import get_user_confirmation
 
 
@@ -80,7 +84,9 @@ class Pacdef:
         self._conf = config or Config()
         self._args = args or Arguments()
         self._aur_helper = aur_helper or AURHelper(self._conf.aur_helper)
-        self._groups: list[Group] = groups or self._read_groups()
+        self._groups: list[Group] = groups or Group.read_groups_from_dir(
+            self._conf.groups_path
+        )
         self._db: DB = db or DB()
         self._sanity_check()
 
@@ -104,7 +110,10 @@ class Pacdef:
 
     def _edit_group_file(self) -> None:
         logging.info("editing group files")
-        groups = self._get_groups_matching_arguments()
+        groups = get_groups_matching_arguments(self._args, self._groups)
+        if groups is None:
+            logging.error("Could not find a suitable group")
+            sys.exit(EXIT_ERROR)
         paths = [str(group.path) for group in groups]
         run([str(self._conf.editor), *paths], check=True)
 
@@ -123,7 +132,7 @@ class Pacdef:
             Group.new_file(group, self._conf.groups_path)
 
         if self._args.edit_new:
-            self._groups = self._read_groups()
+            self._groups = Group.read_groups_from_dir(self._conf.groups_path)
             self._edit_group_file()
 
     def run_action_from_arg(self) -> None:
@@ -133,7 +142,8 @@ class Pacdef:
 
     def _review(self) -> None:
         unmanaged = calc_unmanaged_packages(
-            self._get_managed_packages(), self._db.get_explicitly_installed_packages()
+            get_managed_packages(self._groups),
+            self._db.get_explicitly_installed_packages(),
         )
 
         reviewer = Reviewer(self._groups, unmanaged, self._aur_helper)
@@ -149,7 +159,8 @@ class Pacdef:
         the AUR helper.
         """
         unmanaged_packages = calc_unmanaged_packages(
-            self._get_managed_packages(), self._db.get_explicitly_installed_packages()
+            get_managed_packages(self._groups),
+            self._db.get_explicitly_installed_packages(),
         )
         if len(unmanaged_packages) == 0:
             print(NOTHING_TO_DO)
@@ -165,9 +176,9 @@ class Pacdef:
 
     def _list_groups(self):
         """Print names of the imported groups to STDOUT."""
-        groups = self._get_group_names()
-        for group in groups:
-            print(group)
+        groups_names = [group.name for group in self._groups]
+        for name in groups_names:
+            print(name)
 
     def _import_groups(self) -> None:
         if self._args.files is None:
@@ -184,29 +195,12 @@ class Pacdef:
 
         More than one group can be provided. This method is atomic: If not all groups are found, none are removed.
         """
-        found_groups = self._get_groups_matching_arguments()
+        found_groups = get_groups_matching_arguments(self._args, self._groups)
+        if found_groups is None:
+            logging.error("Could not find a suitable group")
+            sys.exit(EXIT_ERROR)
         for group in found_groups:
             group.remove()
-
-    def _get_groups_matching_arguments(self) -> list[Group]:
-        found_groups = []
-        if self._args.groups is None:
-            raise ValueError("no group supplied")
-        for name in self._args.groups:
-            try:
-                found_groups.append(self._find_group_by_name(name))
-            except FileNotFoundError as err:
-                logging.error(err)
-                exit(EXIT_ERROR)
-        return found_groups
-
-    def _find_group_by_name(self, name: str) -> Group:
-        logging.info(f"Searching for group '{name}'")
-        for group in self._groups:
-            if group == name:
-                logging.info(f"found group under {group.path}")
-                return group
-        raise FileNotFoundError(f"Did not find the group '{name}'.")
 
     def _search_package(self):
         """Show imported group which contains `_args.package`.
@@ -237,14 +231,17 @@ class Pacdef:
 
         More than one group may be provided, which prints the contents of all groups in order.
         """
-        found_groups = self._get_groups_matching_arguments()
+        found_groups = get_groups_matching_arguments(self._args, self._groups)
+        if found_groups is None:
+            logging.error("Could not find a suitable group")
+            sys.exit(EXIT_ERROR)
         for group in found_groups:
             print(group.content)
 
     def _install_packages_from_groups(self) -> None:
         """Install all packages from the imported package groups."""
         to_install = calc_packages_to_install(
-            self._get_managed_packages(), self._db.get_all_installed_packages()
+            get_managed_packages(self._groups), self._db.get_all_installed_packages()
         )
 
         if len(to_install) == 0:
@@ -262,49 +259,11 @@ class Pacdef:
     def _show_unmanaged_packages(self) -> None:
         """Print unmanaged packages to STDOUT."""
         unmanaged_packages = calc_unmanaged_packages(
-            self._get_managed_packages(), self._db.get_explicitly_installed_packages()
+            get_managed_packages(self._groups),
+            self._db.get_explicitly_installed_packages(),
         )
         for package in unmanaged_packages:
             print(package)
-
-    def _get_managed_packages(self) -> list[Package]:
-        """Get all packaged that are known to pacdef (i.e. are located in imported group files).
-
-        :return: list of packages
-        """
-        packages = []
-        for group in self._groups:
-            packages.extend(group.packages)
-        if len(packages) == 0:
-            logging.warning("pacdef does not know any packages.")
-        return packages
-
-    def _get_group_names(self) -> list[str]:
-        """Get list of the names of all imported groups (= list of filenames in the pacdef group directory).
-
-        :return: list of imported group names
-        """
-        groups = [group.name for group in self._groups]
-        return groups
-
-    def _read_groups(self) -> list[Group]:
-        """Read all imported groups (= list of files in the pacdef group directory).
-
-        :return: list of imported groups
-        """
-        paths = [group for group in self._conf.groups_path.iterdir()]
-        paths.sort()
-        groups = []
-        for path in paths:
-            # noinspection PyBroadException
-            try:
-                groups.append(Group.from_file(path))
-            except Exception as e:
-                logging.error(f"Could not parse group file {path}.")
-                logging.error(e)
-                print(sys.exit(EXIT_ERROR))
-        logging.debug(f"groups: {[group.name for group in groups]}")
-        return groups
 
     def _sanity_check(self) -> None:
         if self._conf.warn_symlinks:
