@@ -90,11 +90,12 @@ class Reviewer:
         logging.info("all packages processed")
 
     def _print_unmanaged_packages(self) -> None:
-        if self._unmanaged_packages:
-            print("Unmanaged packages:")
-            for package in self._unmanaged_packages:
-                print(f"  {package}")
-            print()
+        if not self._unmanaged_packages:
+            return
+        print("Unmanaged packages:")
+        for package in self._unmanaged_packages:
+            print(f"  {package}")
+        print()
 
     @property
     def _current_package(self) -> Package:
@@ -148,6 +149,7 @@ class Reviewer:
 
     def _print_enumerated_groups(self):
         width = len(str(len(self._groups)))
+
         for i, group in enumerate(self._groups):
             print(f"{str(i).rjust(width)}: {group.name}")
 
