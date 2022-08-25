@@ -17,6 +17,7 @@ from .group import Group
 from .package import Package
 from .path import file_exists
 from .review import Reviewer
+from .solver import calc_packages_to_install, calc_unmanaged_packages
 from .user_input import get_user_confirmation
 
 
@@ -131,9 +132,12 @@ class Pacdef:
             self._action_map[self._args.action]()
 
     def _review(self) -> None:
-        reviewer = Reviewer(
-            self._groups, self._get_unmanaged_packages(), self._aur_helper
+        unmanaged = calc_unmanaged_packages(
+            self._get_managed_packages(), self._db.get_explicitly_installed_packages()
         )
+
+        reviewer = Reviewer(self._groups, unmanaged, self._aur_helper)
+
         reviewer.ask_user_for_actions()
         reviewer.print_strategy()
         reviewer.run_actions()
@@ -144,7 +148,9 @@ class Pacdef:
         Fetches unmanaged packages, then asks the user to confirm removing the packages. Then removes them using
         the AUR helper.
         """
-        unmanaged_packages = self._get_unmanaged_packages()
+        unmanaged_packages = calc_unmanaged_packages(
+            self._get_managed_packages(), self._db.get_explicitly_installed_packages()
+        )
         if len(unmanaged_packages) == 0:
             print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
@@ -237,7 +243,10 @@ class Pacdef:
 
     def _install_packages_from_groups(self) -> None:
         """Install all packages from the imported package groups."""
-        to_install = self._calculate_packages_to_install()
+        to_install = calc_packages_to_install(
+            self._get_managed_packages(), self._db.get_all_installed_packages()
+        )
+
         if len(to_install) == 0:
             print(NOTHING_TO_DO)
             sys.exit(EXIT_SUCCESS)
@@ -252,39 +261,11 @@ class Pacdef:
 
     def _show_unmanaged_packages(self) -> None:
         """Print unmanaged packages to STDOUT."""
-        unmanaged_packages = self._get_unmanaged_packages()
+        unmanaged_packages = calc_unmanaged_packages(
+            self._get_managed_packages(), self._db.get_explicitly_installed_packages()
+        )
         for package in unmanaged_packages:
             print(package)
-
-    def _calculate_packages_to_install(self) -> list[Package]:
-        """Determine which packages must be installed to satisfy the dependencies in the group files.
-
-        :return: list of packages that will be installed
-        """
-        managed_packages = set(self._get_managed_packages())
-        logging.debug(f"{managed_packages=}")
-        installed_packages = set(self._db.get_all_installed_packages())
-        logging.debug(f"{installed_packages=}")
-        pacdef_only = list(managed_packages - installed_packages)
-        pacdef_only.sort()
-        logging.debug(f"{pacdef_only=}")
-        return pacdef_only
-
-    def _get_unmanaged_packages(self) -> list[Package]:
-        """Get explicitly installed packages which are not in the imported pacdef groups.
-
-        :return: list of unmanaged packages
-        """
-        managed_packages = set(self._get_managed_packages())
-        logging.debug(f"{managed_packages=}")
-        explicitly_installed_packages = set(
-            self._db.get_explicitly_installed_packages()
-        )
-        logging.debug(f"{explicitly_installed_packages=}")
-        unmanaged_packages = list(explicitly_installed_packages - managed_packages)
-        unmanaged_packages.sort()
-        logging.debug(f"{unmanaged_packages=}")
-        return unmanaged_packages
 
     def _get_managed_packages(self) -> list[Package]:
         """Get all packaged that are known to pacdef (i.e. are located in imported group files).
