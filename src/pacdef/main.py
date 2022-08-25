@@ -146,11 +146,7 @@ class Pacdef:
             self._db.get_explicitly_installed_packages(),
         )
 
-        reviewer = Reviewer(self._groups, unmanaged, self._aur_helper)
-
-        reviewer.ask_user_for_actions()
-        reviewer.print_strategy()
-        reviewer.run_actions()
+        Reviewer(self._groups, unmanaged, self._aur_helper).main()
 
     def _remove_unmanaged_packages(self) -> None:
         """Remove packages not managed by pacdef.

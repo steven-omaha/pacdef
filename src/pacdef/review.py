@@ -73,7 +73,13 @@ class Reviewer:
         logging.debug([f"{package}" for package in unmanaged_packages])
         logging.debug(f"{aur_helper=}")
 
-    def ask_user_for_actions(self) -> None:
+    def main(self):
+        """Run the main routine. Should be called after initialization."""
+        self._ask_user_for_actions()
+        self._print_strategy()
+        self._run_actions()
+
+    def _ask_user_for_actions(self) -> None:
         """Populate self._actions with Reviews."""
         self._print_unmanaged_packages()
         while self._current_package_index < len(self._unmanaged_packages):
@@ -158,7 +164,7 @@ class Reviewer:
             logging.info("no input")
             raise ValueError(e)
 
-    def run_actions(self) -> None:
+    def _run_actions(self) -> None:
         """Run actions from self._actions."""
 
         def check_wants_to_continue(from_user: str | None) -> _Intention:
@@ -191,7 +197,7 @@ class Reviewer:
                 sys.exit(EXIT_ABORT)
             case _Intention.unknown:
                 logging.info("reply not within allowed selection")
-                self.run_actions()
+                self._run_actions()
             case _:
                 raise ValueError("should not happen")
 
@@ -210,7 +216,7 @@ class Reviewer:
     def _get_reviews_by_action(self, action: _ReviewAction) -> list[Review]:
         return [review for review in self._actions if review.action == action]
 
-    def print_strategy(self) -> None:
+    def _print_strategy(self) -> None:
         """Print the actions that will be executed, based on the reviews that have been executed."""
         logging.debug(f"{self._actions=}")
         if self._to_delete:
