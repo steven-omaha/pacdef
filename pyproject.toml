@@ -19,6 +19,7 @@ pacdef = "pacdef.main:main"
 
 [tool.pyright]
 include = ["src"]
+ignore = ["tests"]
 
 reportConstantRedefinition = "warning"
 reportDuplicateImport = "warning"
