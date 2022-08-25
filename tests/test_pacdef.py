@@ -6,8 +6,13 @@ import logging
 from pathlib import Path
 from unittest import mock
 
+try:
+    import pyalpm
+except ModuleNotFoundError:
+    pyalpm = None
+
 import pytest
-from constants import DEVNULL
+from constants import DEVNULL, REASON_NOT_ARCH
 from test_aur_helper import TestAURHelper
 
 import src.pacdef.main as main
@@ -70,6 +75,7 @@ class TestPacdef:
             with pytest.raises(SystemExit):
                 instance._remove_unmanaged_packages()
 
+    @pytest.mark.skipif(pyalpm is None, reason=REASON_NOT_ARCH)
     @pytest.mark.parametrize(
         "packages",
         [
@@ -145,12 +151,14 @@ class TestPacdef:
 
         test_already_imported()
 
+    @pytest.mark.skipif(pyalpm is None, reason=REASON_NOT_ARCH)
     def test_install_packages_from_groups_none(self, tmpdir):
         instance = self._get_instance(tmpdir)
         with mock.patch.object(main, "calc_packages_to_install", lambda x, y: []):
             with pytest.raises(SystemExit):
                 instance._install_packages_from_groups()
 
+    @pytest.mark.skipif(pyalpm is None, reason=REASON_NOT_ARCH)
     @pytest.mark.parametrize(
         "packages",
         [
