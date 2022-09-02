@@ -1,48 +1,24 @@
+use pacdef::db::get_all_installed_packages;
+use pacdef::group::GROUPS_DIR;
 use std::io::BufRead;
 use std::io::Write;
 use std::os::unix::process::CommandExt;
+use std::path::Path;
+use std::path::PathBuf;
 use std::process::exit;
 use std::{collections::HashSet, process::Command};
 
-use alpm::Alpm;
-use args::get_arg_parser;
-use group::Group;
-use package::Package;
-
-mod args;
-pub(crate) mod group;
-pub(crate) mod package;
+use clap::ArgMatches;
+use pacdef::args;
+use pacdef::db::get_explicitly_installed_packages;
+use pacdef::Group;
+use pacdef::Package;
 
 fn main() {
-    let args = get_arg_parser();
-    let matches = args.get_matches();
-    match matches.subcommand() {
-        Some(("sync", _)) => install_pacdef_packages(),
-        s => panic!("{:#?}", s),
-    }
-}
-
-fn install_pacdef_packages() {
+    let args = args::get_matched_arguments();
     let groups = Group::load_from_dir();
-    let packages_hs = groups
-        .into_iter()
-        .flat_map(|g| g.packages)
-        .collect::<HashSet<_>>();
-
-    let local_packages = convert_to_pacdef_packages(get_alpm_packages());
-    let mut diff: Vec<_> = packages_hs.difference(&local_packages).collect();
-    diff.sort_unstable();
-    if diff.is_empty() {
-        exit(0);
-    }
-    println!("Would install the following packages:");
-    for p in &diff {
-        println!("  {p}");
-    }
-    println!();
-    get_user_confirmation();
-
-    install_packages(diff);
+    let pacdef = Pacdef::new(args, groups);
+    pacdef.run_action_from_arg();
 }
 
 fn get_user_confirmation() {
@@ -54,20 +30,16 @@ fn get_user_confirmation() {
     }
 }
 
-fn get_alpm_packages() -> HashSet<String> {
-    let db = Alpm::new("/", "/var/lib/pacman").unwrap();
-    db.localdb()
-        .pkgs()
-        .iter()
-        .map(|p| p.name().to_string())
-        .collect()
+fn run_edit_command(files: &[&Path]) {
+    let mut cmd = Command::new("nvim");
+    for f in files {
+        cmd.arg(f.to_string_lossy().to_string());
+    }
+    dbg!(&cmd);
+    cmd.exec();
 }
 
-fn convert_to_pacdef_packages(packages: HashSet<String>) -> HashSet<Package> {
-    packages.into_iter().map(Package::from).collect()
-}
-
-fn install_packages(diff: Vec<&Package>) {
+fn run_install_command(diff: Vec<Package>) {
     let mut cmd = Command::new("paru");
     cmd.arg("-S");
     for p in diff {
@@ -75,4 +47,114 @@ fn install_packages(diff: Vec<&Package>) {
     }
     dbg!(&cmd);
     cmd.exec();
+}
+
+struct Pacdef {
+    args: ArgMatches,
+    groups: Option<HashSet<Group>>,
+    // action: Box<dyn Fn(Self)>,
+}
+
+impl Pacdef {
+    fn new(args: ArgMatches, groups: HashSet<Group>) -> Self {
+        Self {
+            args,
+            groups: Some(groups),
+            // action: Box::new(Self::install_packages),
+        }
+    }
+
+    fn take_packages_as_set(&mut self) -> HashSet<Package> {
+        self.groups
+            .take()
+            .unwrap()
+            .into_iter()
+            .flat_map(|g| g.packages)
+            .collect()
+    }
+
+    fn get_packages_to_install(&mut self) -> Vec<Package> {
+        let managed = self.take_packages_as_set();
+        let local_packages = get_all_installed_packages();
+        let mut diff: Vec<_> = managed
+            .into_iter()
+            .filter(|p| !local_packages.contains(p))
+            .collect();
+        diff.sort_unstable();
+        diff
+    }
+
+    fn install_packages(mut self) {
+        let diff = self.get_packages_to_install();
+        if diff.is_empty() {
+            println!("nothing to do");
+            exit(0);
+        }
+        println!("Would install the following packages:");
+        for p in &diff {
+            println!("  {p}");
+        }
+        println!();
+        get_user_confirmation();
+
+        run_install_command(diff);
+    }
+
+    fn run_action_from_arg(self) {
+        match self.args.subcommand() {
+            // Some((args::EDIT, groups)) => println!("{groups:#?}"),
+            Some((args::EDIT, groups)) => self.edit_group_files(groups),
+            Some((args::GROUPS, _)) => self.show_groups(),
+            Some((args::SYNC, _)) => self.install_packages(),
+            Some((args::UNMANAGED, _)) => self.show_unmanaged_packages(),
+            Some((args::VERSION, _)) => self.show_version(),
+            _ => todo!(),
+        }
+    }
+
+    fn edit_group_files(&self, groups: &ArgMatches) {
+        let files: Vec<_> = groups
+            .get_many::<String>("group")
+            .unwrap()
+            .map(|file| {
+                let mut buf = PathBuf::from(GROUPS_DIR);
+                buf.push(file);
+                buf
+            })
+            .collect();
+        for f in files {
+            println!("{f:#?}");
+        }
+    }
+
+    fn show_version(self) {
+        println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"))
+    }
+
+    fn show_unmanaged_packages(mut self) {
+        for p in &self.get_unmanaged_packages() {
+            println!("{p}");
+        }
+    }
+
+    /// Returns a `Vec` of alphabetically sorted unmanaged packages.
+    fn get_unmanaged_packages(&mut self) -> Vec<Package> {
+        let managed = self.take_packages_as_set();
+        let explicitly_installed = get_explicitly_installed_packages();
+        let mut result: Vec<_> = explicitly_installed
+            .into_iter()
+            .filter(|p| !managed.contains(p))
+            .collect();
+        result.sort_unstable();
+        result
+    }
+
+    fn show_groups(mut self) {
+        let groups = self.groups.take().unwrap();
+        let mut vec: Vec<_> = groups.iter().collect();
+        vec.sort_unstable();
+        for g in vec {
+            println!("{}", g.name);
+        }
+    }
 }

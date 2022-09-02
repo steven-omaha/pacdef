@@ -7,8 +7,8 @@ use std::io::BufReader;
 use std::io::Lines;
 
 #[derive(Debug, Eq, PartialOrd, Ord)]
-pub(crate) struct Package {
-    pub(crate) name: String,
+pub struct Package {
+    pub name: String,
     repo: Option<String>,
 }
 

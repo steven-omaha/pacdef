@@ -5,16 +5,16 @@ use std::hash::Hash;
 use std::io::BufRead;
 use std::{io::BufReader, path::PathBuf};
 
-const GROUPS_DIR: &str = "/home/ratajc72/.config/pacdef/groups";
+pub const GROUPS_DIR: &str = "/home/ratajc72/.config/pacdef/groups";
 
 #[derive(Debug)]
-pub(crate) struct Group {
-    pub(crate) name: String,
-    pub(crate) packages: HashSet<Package>,
+pub struct Group {
+    pub name: String,
+    pub packages: HashSet<Package>,
 }
 
 impl Group {
-    pub(crate) fn load_from_dir() -> HashSet<Self> {
+    pub fn load_from_dir() -> HashSet<Self> {
         let mut result = HashSet::new();
         let path = PathBuf::from(GROUPS_DIR);
         for entry in path.read_dir().unwrap() {
@@ -28,8 +28,6 @@ impl Group {
                 name: name.into_string().unwrap(),
                 packages,
             });
-
-            // let content = file.rea
         }
         result
     }

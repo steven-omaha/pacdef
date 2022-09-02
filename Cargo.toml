@@ -8,3 +8,14 @@ edition = "2021"
 [dependencies]
 alpm = "2.2.1"
 clap = "3.2.20"
+
+[profile.release]
+debug = true
+
+[dev-dependencies]
+criterion = "0.3.6"
+
+[[bench]]
+harness = false
+name = "bench"
+
