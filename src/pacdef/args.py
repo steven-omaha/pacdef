@@ -21,14 +21,14 @@ class Arguments:
             parser = self._setup_parser()
             args = parser.parse_args()
             self.action: Action | None = self._parse_action(args)
-            self.files: list[Path] | None = self._parse_files(args)
-            self.groups: list[str] | None = self._parse_groups(args)
+            self.files: list[Path] = self._parse_files(args)
+            self.groups: list[str] = self._parse_groups(args)
             self.package: Package | None = self._parse_package(args)
             self.edit_new: bool = self._parse_edit_new(args)
         else:
             self.action = None
-            self.files = None
-            self.groups = None
+            self.files = []
+            self.groups = []
             self.package = None
             self.edit_new = False
 
@@ -99,9 +99,9 @@ class Arguments:
         return parser
 
     @staticmethod
-    def _parse_files(args: argparse.Namespace) -> list[Path] | None:
+    def _parse_files(args: argparse.Namespace) -> list[Path]:
         if not hasattr(args, "file"):
-            return None
+            return []
         files = [Path(f) for f in args.file]
         for f in files:
             if not file_exists(f):
@@ -121,10 +121,10 @@ class Arguments:
         sys.exit(EXIT_ERROR)
 
     @staticmethod
-    def _parse_groups(args: argparse.Namespace) -> list[str] | None:
+    def _parse_groups(args: argparse.Namespace) -> list[str]:
         if hasattr(args, "group"):
             return args.group
-        return None
+        return []
 
     @staticmethod
     def _parse_edit_new(args: argparse.Namespace) -> bool:

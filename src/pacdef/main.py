@@ -114,10 +114,6 @@ class Pacdef:
         run([str(self._conf.editor), *paths], check=True)
 
     def _new_group(self) -> None:
-        if self._args.groups is None:
-            logging.error("Cannot create new group. No name supplied.")
-            exit(EXIT_ERROR)
-
         # check if we can create all groups before we actually create them
         group_names = {g.name for g in self._groups}
         for group in self._args.groups:
@@ -174,8 +170,6 @@ class Pacdef:
             print(name)
 
     def _import_groups(self) -> None:
-        if self._args.files is None:
-            return
         for path in self._args.files:
             link_target = self._conf.groups_path / path.name
             if file_exists(link_target):
