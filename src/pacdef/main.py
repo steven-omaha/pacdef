@@ -119,7 +119,7 @@ class Pacdef:
             exit(EXIT_ERROR)
 
         # check if we can create all groups before we actually create them
-        group_names = [g.name for g in self._groups]
+        group_names = {g.name for g in self._groups}
         for group in self._args.groups:
             if group in group_names:
                 logging.error(f"Cannot create new group '{group}', it already exists.")
