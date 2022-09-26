@@ -26,6 +26,16 @@ from .user_input import get_user_confirmation
 
 
 def main():
+    try:
+        _main_inner()
+    except KeyboardInterrupt:
+        sys.exit(EXIT_INTERRUPT)
+    except FileExistsError as e:
+        logging.error(e)
+        sys.exit(EXIT_ERROR)
+
+
+def _main_inner():
     """Run the main program."""
     _setup_logger()
     args = Arguments()
@@ -52,13 +62,6 @@ def _setup_logger() -> None:
         logging.basicConfig(format="%(levelname)s:%(lineno)d: %(message)s", level=level)
     else:
         logging.basicConfig(format="%(levelname)s: %(message)s", level=level)
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit(EXIT_INTERRUPT)
 
 
 def _show_version() -> None:
@@ -118,8 +121,9 @@ class Pacdef:
         group_names = {g.name for g in self._groups}
         for group in self._args.groups:
             if group in group_names:
-                logging.error(f"Cannot create new group '{group}', it already exists.")
-                exit(EXIT_ERROR)
+                raise FileExistsError(
+                    f"Cannot create new group '{group}', it already exists."
+                )
 
         for group in self._args.groups:
             Group.new_file(group, self._conf.groups_path)
@@ -257,3 +261,7 @@ class Pacdef:
             for group in self._groups:
                 if not group.path.is_symlink():
                     logging.warning(f"group '{group.name}' is not a symlink")
+
+
+if __name__ == "__main__":
+    main()

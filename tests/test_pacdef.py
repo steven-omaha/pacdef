@@ -195,7 +195,7 @@ class TestPacdef:
         preexisting_group.touch()
         instance = self._get_instance(tmpdir)
         instance._args.groups = [group_name]
-        with pytest.raises(SystemExit):
+        with pytest.raises(FileExistsError):
             instance._new_group()
 
         group_name = "b"
