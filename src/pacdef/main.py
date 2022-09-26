@@ -26,6 +26,7 @@ from .user_input import get_user_confirmation
 
 
 def main():
+    """Run the main program."""
     try:
         _main_inner()
     except KeyboardInterrupt:
@@ -36,7 +37,6 @@ def main():
 
 
 def _main_inner():
-    """Run the main program."""
     _setup_logger()
     args = Arguments()
     config = Config()
