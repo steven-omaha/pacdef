@@ -62,11 +62,7 @@ if __name__ == "__main__":
 
 
 def _show_version() -> None:
-    """Print version information to STDOUT.
-
-    The value of `VERSION` is set during compile time by the PKGBUILD using `build()`.
-    """
-    print(f"pacdef, version: {version('pacdef')}")
+    print("pacdef, version:", version("pacdef"))
 
 
 class Pacdef:
