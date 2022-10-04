@@ -66,7 +66,7 @@ class Group:
         """
         cls._sanity_check(path)
         text = path.read_text()
-        lines = text.split("\n")[:-1]  # last line is empty
+        lines = text.split("\n")
         packages = []
         for line in lines:
             package = cls._get_package_from_line(line)
@@ -86,7 +86,7 @@ class Group:
         """
         before_comment = line.split(COMMENT)[0]
         package_name = before_comment.strip()
-        if len(package_name) >= 0:
+        if len(package_name) > 0:
             return Package(package_name)
         return None
 

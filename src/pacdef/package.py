@@ -18,6 +18,8 @@ class Package:
         self.name: str
         self.repo: str | None
         self.name, self.repo = self._split_into_name_and_repo(package_string)
+        if len(self.name) == 0:
+            raise ValueError("invalid package name, is empty")
 
     # noinspection PyUnresolvedReferences
     def __eq__(self, other: object):
