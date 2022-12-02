@@ -1,10 +1,9 @@
-use std::io::BufRead;
-use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{collections::HashSet, process::Command};
 
+use anyhow::Result;
 use clap::ArgMatches;
 
 use pacdef::args;
@@ -13,20 +12,12 @@ use pacdef::group::GROUPS_DIR;
 use pacdef::Group;
 use pacdef::Package;
 
-fn main() {
+fn main() -> Result<()> {
     let args = args::get_matched_arguments();
     let groups = Group::load_from_dir();
     let pacdef = Pacdef::new(args, groups);
     pacdef.run_action_from_arg();
-}
-
-fn get_user_confirmation() {
-    print!("Continue? [Y/n] ");
-    std::io::stdout().flush().unwrap();
-    let reply = std::io::stdin().lock().lines().next().unwrap().unwrap();
-    if !(reply.is_empty() || reply.to_lowercase().contains('y')) {
-        exit(0)
-    }
+    Ok(())
 }
 
 fn run_edit_command(files: &[&Path]) {
@@ -94,7 +85,7 @@ impl Pacdef {
             println!("  {p}");
         }
         println!();
-        get_user_confirmation();
+        pacdef::ui::get_user_confirmation();
 
         run_install_command(diff);
     }
