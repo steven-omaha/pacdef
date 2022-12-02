@@ -1,5 +1,5 @@
-pub const EDIT: &str = "edit";
-pub const GROUPS: &str = "groups";
-pub const SYNC: &str = "sync";
-pub const UNMANAGED: &str = "unmanaged";
-pub const VERSION: &str = "version";
+pub(crate) const EDIT: &str = "edit";
+pub(crate) const GROUPS: &str = "groups";
+pub(crate) const SYNC: &str = "sync";
+pub(crate) const UNMANAGED: &str = "unmanaged";
+pub(crate) const VERSION: &str = "version";
