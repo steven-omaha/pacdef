@@ -3,6 +3,8 @@ use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader};
 
+use anyhow::{anyhow, Context, Result};
+
 use crate::Package;
 
 #[derive(Debug)]
@@ -12,22 +14,22 @@ pub struct Group {
 }
 
 impl Group {
-    pub fn load_from_dir() -> HashSet<Self> {
+    pub fn load_from_dir() -> Result<HashSet<Self>> {
         let mut result = HashSet::new();
-        let path = crate::path::get_pacdef_group_dir().unwrap();
-        for entry in path.read_dir().unwrap() {
-            let file = entry.unwrap();
+        let path = crate::path::get_pacdef_group_dir().context("getting pacdef group dir")?;
+        for entry in path.read_dir().context("reading group dir")? {
+            let file = entry.context("getting a file")?;
             let name = file.file_name();
-            let f = File::open(file.path()).unwrap();
+            let f = File::open(file.path()).context("reading the file")?;
             let reader = BufReader::new(f);
 
             let packages = Package::from_lines(reader.lines());
             result.insert(Group {
-                name: name.into_string().unwrap(),
+                name: name.into_string().map_err(|e| anyhow!(e))?,
                 packages,
             });
         }
-        result
+        Ok(result)
     }
 }
 
