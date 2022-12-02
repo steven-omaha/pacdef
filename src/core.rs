@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::process::exit;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
@@ -61,13 +61,13 @@ impl Pacdef {
         run_install_command(diff);
     }
 
-    pub fn run_action_from_arg(self) {
+    pub fn run_action_from_arg(self) -> Result<()> {
         match self.args.subcommand() {
-            Some((action::EDIT, groups)) => self.edit_group_files(groups).unwrap(),
-            Some((action::GROUPS, _)) => self.show_groups(),
-            Some((action::SYNC, _)) => self.install_packages(),
-            Some((action::UNMANAGED, _)) => self.show_unmanaged_packages(),
-            Some((action::VERSION, _)) => self.show_version(),
+            Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
+            Some((action::GROUPS, _)) => Ok(self.show_groups()),
+            Some((action::SYNC, _)) => Ok(self.install_packages()),
+            Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
+            Some((action::VERSION, _)) => Ok(self.show_version()),
             _ => todo!(),
         }
     }
@@ -75,17 +75,20 @@ impl Pacdef {
     pub(crate) fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
         let files: Vec<_> = groups
             .get_many::<String>("group")
-            .unwrap()
+            .context("getting group from args")?
             .map(|file| {
                 let mut buf = crate::path::get_pacdef_group_dir().unwrap();
                 buf.push(file);
                 buf
             })
             .collect();
-        if run_edit_command(&files)?.success() {
+        if run_edit_command(&files)
+            .context("running editor")?
+            .success()
+        {
             Ok(())
         } else {
-            bail!("command exited with error")
+            bail!("editor exited with error")
         }
     }
 
