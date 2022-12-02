@@ -5,6 +5,7 @@ mod core;
 pub mod db;
 mod group;
 mod package;
+mod path;
 mod ui;
 
 pub use crate::core::Pacdef;

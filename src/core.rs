@@ -1,12 +1,11 @@
 use std::collections::HashSet;
-use std::path::PathBuf;
 use std::process::exit;
 
 use crate::action;
 use crate::cmd::run_install_command;
 use crate::db::{get_all_installed_packages, get_explicitly_installed_packages};
-use crate::group::{Group, GROUPS_DIR};
-use crate::package::Package;
+use crate::Group;
+use crate::Package;
 
 use clap::ArgMatches;
 
@@ -78,7 +77,7 @@ impl Pacdef {
             .get_many::<String>("group")
             .unwrap()
             .map(|file| {
-                let mut buf = PathBuf::from(GROUPS_DIR);
+                let mut buf = crate::path::get_pacdef_group_dir().unwrap();
                 buf.push(file);
                 buf
             })

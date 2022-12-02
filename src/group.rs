@@ -2,11 +2,8 @@ use std::collections::HashSet;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
 
 use crate::Package;
-
-pub const GROUPS_DIR: &str = "/home/ratajc72/.config/pacdef/groups";
 
 #[derive(Debug)]
 pub struct Group {
@@ -17,7 +14,7 @@ pub struct Group {
 impl Group {
     pub fn load_from_dir() -> HashSet<Self> {
         let mut result = HashSet::new();
-        let path = PathBuf::from(GROUPS_DIR);
+        let path = crate::path::get_pacdef_group_dir().unwrap();
         for entry in path.read_dir().unwrap() {
             let file = entry.unwrap();
             let name = file.file_name();
