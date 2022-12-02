@@ -1,8 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Write};
-use std::fs::File;
 use std::hash::Hash;
-use std::io::{BufReader, Lines};
 
 #[derive(Debug, Eq, PartialOrd, Ord)]
 pub struct Package {
@@ -20,7 +18,9 @@ impl From<String> for Package {
 }
 
 impl Package {
-    pub(crate) fn from_lines(lines: Lines<BufReader<File>>) -> HashSet<Self> {
+    pub(crate) fn from_lines(
+        lines: impl Iterator<Item = Result<String, std::io::Error>>,
+    ) -> HashSet<Self> {
         lines
             .into_iter()
             .map(|l| Package::from(l.unwrap()))
