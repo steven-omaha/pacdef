@@ -1,8 +1,5 @@
+use std::io::{BufRead, Write};
 use std::process::exit;
-
-use std::io::Write::std::io;
-
-use std;
 
 pub(crate) fn get_user_confirmation() {
     print!("Continue? [Y/n] ");

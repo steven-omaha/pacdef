@@ -1,4 +1,6 @@
 pub mod args;
+mod cmd;
+pub mod core;
 pub mod db;
 pub mod group;
 pub mod package;
