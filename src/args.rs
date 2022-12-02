@@ -1,10 +1,6 @@
 use clap::{Arg, Command};
 
-pub const EDIT: &str = "edit";
-pub const GROUPS: &str = "groups";
-pub const SYNC: &str = "sync";
-pub const UNMANAGED: &str = "unmanaged";
-pub const VERSION: &str = "version";
+use crate::action::*;
 
 fn get_arg_parser() -> Command<'static> {
     let result = Command::new("pacdef")
@@ -28,6 +24,6 @@ fn get_arg_parser() -> Command<'static> {
     result
 }
 
-pub fn get_matched_arguments() -> clap::ArgMatches {
+pub fn get_args() -> clap::ArgMatches {
     get_arg_parser().get_matches()
 }

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 use std::process::exit;
 
-use crate::args;
+use crate::action;
 use crate::cmd::run_install_command;
 use crate::db::{get_all_installed_packages, get_explicitly_installed_packages};
 use crate::group::{Group, GROUPS_DIR};
@@ -64,11 +64,11 @@ impl Pacdef {
     pub fn run_action_from_arg(self) {
         match self.args.subcommand() {
             // Some((args::EDIT, groups)) => println!("{groups:#?}"),
-            Some((args::EDIT, groups)) => self.edit_group_files(groups),
-            Some((args::GROUPS, _)) => self.show_groups(),
-            Some((args::SYNC, _)) => self.install_packages(),
-            Some((args::UNMANAGED, _)) => self.show_unmanaged_packages(),
-            Some((args::VERSION, _)) => self.show_version(),
+            Some((action::EDIT, groups)) => self.edit_group_files(groups),
+            Some((action::GROUPS, _)) => self.show_groups(),
+            Some((action::SYNC, _)) => self.install_packages(),
+            Some((action::UNMANAGED, _)) => self.show_unmanaged_packages(),
+            Some((action::VERSION, _)) => self.show_version(),
             _ => todo!(),
         }
     }
