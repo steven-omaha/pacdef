@@ -3,6 +3,7 @@ pub mod args;
 mod cmd;
 mod core;
 pub mod db;
+mod env;
 mod group;
 mod package;
 mod path;

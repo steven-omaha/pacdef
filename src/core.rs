@@ -1,13 +1,14 @@
 use std::collections::HashSet;
 use std::process::exit;
 
+use anyhow::{bail, Result};
+use clap::ArgMatches;
+
 use crate::action;
 use crate::cmd::{run_edit_command, run_install_command};
 use crate::db::{get_all_installed_packages, get_explicitly_installed_packages};
 use crate::Group;
 use crate::Package;
-
-use clap::ArgMatches;
 
 pub struct Pacdef {
     pub(crate) args: ArgMatches,
@@ -62,7 +63,7 @@ impl Pacdef {
 
     pub fn run_action_from_arg(self) {
         match self.args.subcommand() {
-            Some((action::EDIT, groups)) => self.edit_group_files(groups),
+            Some((action::EDIT, groups)) => self.edit_group_files(groups).unwrap(),
             Some((action::GROUPS, _)) => self.show_groups(),
             Some((action::SYNC, _)) => self.install_packages(),
             Some((action::UNMANAGED, _)) => self.show_unmanaged_packages(),
@@ -71,7 +72,7 @@ impl Pacdef {
         }
     }
 
-    pub(crate) fn edit_group_files(&self, groups: &ArgMatches) {
+    pub(crate) fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
         let files: Vec<_> = groups
             .get_many::<String>("group")
             .unwrap()
@@ -81,7 +82,11 @@ impl Pacdef {
                 buf
             })
             .collect();
-        run_edit_command(&files)
+        if run_edit_command(&files)?.success() {
+            Ok(())
+        } else {
+            bail!("command exited with error")
+        }
     }
 
     pub(crate) fn show_version(self) {
