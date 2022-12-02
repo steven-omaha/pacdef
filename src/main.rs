@@ -1,16 +1,15 @@
-use pacdef::db::get_all_installed_packages;
-use pacdef::group::GROUPS_DIR;
 use std::io::BufRead;
 use std::io::Write;
 use std::os::unix::process::CommandExt;
-use std::path::Path;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{collections::HashSet, process::Command};
 
 use clap::ArgMatches;
+
 use pacdef::args;
-use pacdef::db::get_explicitly_installed_packages;
+use pacdef::db::{get_all_installed_packages, get_explicitly_installed_packages};
+use pacdef::group::GROUPS_DIR;
 use pacdef::Group;
 use pacdef::Package;
 

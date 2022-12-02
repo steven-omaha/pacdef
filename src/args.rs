@@ -1,5 +1,4 @@
-use clap::Arg;
-use clap::Command;
+use clap::{Arg, Command};
 
 pub const EDIT: &str = "edit";
 pub const GROUPS: &str = "groups";

@@ -1,7 +1,9 @@
-use crate::Package;
+use std::collections::HashSet;
+
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
-use std::collections::HashSet;
+
+use crate::Package;
 
 pub fn get_all_installed_packages() -> HashSet<Package> {
     convert_to_pacdef_packages(get_all_installed_packages_alpm())

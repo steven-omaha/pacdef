@@ -1,9 +1,10 @@
-use crate::package::Package;
 use std::collections::HashSet;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::BufRead;
 use std::{io::BufReader, path::PathBuf};
+
+use crate::package::Package;
 
 pub const GROUPS_DIR: &str = "/home/ratajc72/.config/pacdef/groups";
 

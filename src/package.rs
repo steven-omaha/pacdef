@@ -1,10 +1,8 @@
 use std::collections::HashSet;
-use std::fmt::Display;
-use std::fmt::Write;
+use std::fmt::{Display, Write};
 use std::fs::File;
 use std::hash::Hash;
-use std::io::BufReader;
-use std::io::Lines;
+use std::io::{BufReader, Lines};
 
 #[derive(Debug, Eq, PartialOrd, Ord)]
 pub struct Package {
