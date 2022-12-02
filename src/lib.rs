@@ -1,10 +1,12 @@
 pub mod args;
 mod cmd;
-pub mod core;
-pub mod db;
-pub mod group;
-pub mod package;
-pub mod ui;
+mod core;
+mod db;
+mod group;
+mod package;
+mod ui;
 
+pub use crate::core::Pacdef;
+pub use args::get_matched_arguments;
 pub use group::Group;
 pub use package::Package;
