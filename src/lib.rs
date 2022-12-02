@@ -1,7 +1,7 @@
 pub mod args;
 mod cmd;
 mod core;
-mod db;
+pub mod db;
 mod group;
 mod package;
 mod ui;
