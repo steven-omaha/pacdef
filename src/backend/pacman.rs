@@ -9,16 +9,24 @@ use crate::Package;
 pub struct Pacman;
 
 impl Backend for Pacman {
-    const BINARY: Binary = "paru";
-    const SWITCHES_INSTALL: Switches = &["-S"];
-    const SWITCHES_REMOVE: Switches = &["-Rsn"];
-
     fn get_all_installed_packages() -> HashSet<Package> {
         convert_to_pacdef_packages(get_all_installed_packages_from_alpm())
     }
 
     fn get_explicitly_installed_packages() -> HashSet<Package> {
         convert_to_pacdef_packages(get_explicitly_installed_packages_from_alpm())
+    }
+
+    fn get_binary() -> Binary {
+        "paru"
+    }
+
+    fn get_switches_install() -> Switches {
+        &["-S"]
+    }
+
+    fn get_switches_remove() -> Switches {
+        &["-Rsn"]
     }
 }
 

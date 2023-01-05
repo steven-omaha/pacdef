@@ -6,10 +6,6 @@ use crate::Package;
 pub struct Rust;
 
 impl Backend for Rust {
-    const BINARY: Binary = "cargo";
-    const SWITCHES_INSTALL: Switches = &["install"];
-    const SWITCHES_REMOVE: Switches = &["uninstall"];
-
     fn get_all_installed_packages() -> HashSet<Package> {
         extract_packages_names(&run_cargo_install_list())
             .map(Package::from)
@@ -18,6 +14,18 @@ impl Backend for Rust {
 
     fn get_explicitly_installed_packages() -> HashSet<Package> {
         Self::get_all_installed_packages()
+    }
+
+    fn get_binary() -> Binary {
+        "cargo"
+    }
+
+    fn get_switches_install() -> Switches {
+        &["install"]
+    }
+
+    fn get_switches_remove() -> Switches {
+        &["uninstall"]
     }
 }
 
