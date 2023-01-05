@@ -3,14 +3,8 @@ use std::collections::HashSet;
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 
+use super::Backend;
 use crate::Package;
-
-pub trait Backend {
-    /// Get all packages that are installed in the system.
-    fn get_all_installed_packages() -> HashSet<Package>;
-    /// Get all packages that were installed in the system explicitly.
-    fn get_explicitly_installed_packages() -> HashSet<Package>;
-}
 
 pub struct Pacman;
 
