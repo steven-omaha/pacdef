@@ -6,7 +6,7 @@ use clap::ArgMatches;
 
 use crate::action;
 use crate::backend::{Backend, Pacman};
-use crate::cmd::{run_edit_command, run_install_command, run_remove_command};
+use crate::cmd::run_edit_command;
 use crate::ui::get_user_confirmation;
 use crate::Group;
 use crate::Package;
@@ -56,10 +56,9 @@ impl Pacdef {
         for p in &diff {
             println!("  {p}");
         }
-        println!();
         crate::ui::get_user_confirmation();
 
-        run_install_command(diff);
+        Pacman::install_packages(diff);
     }
 
     #[allow(clippy::unit_arg)]
@@ -138,6 +137,6 @@ impl Pacdef {
             println!("  {p}");
         }
         get_user_confirmation();
-        run_remove_command(unmanaged);
+        Pacman::remove_packages(unmanaged);
     }
 }
