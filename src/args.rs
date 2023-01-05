@@ -8,6 +8,7 @@ fn get_arg_parser() -> Command<'static> {
         .version("1.0.0-alpha")
         .subcommand_required(true)
         .arg_required_else_help(true)
+        .subcommand(Command::new(CLEAN).about("remove unmanaged packages"))
         .subcommand(
             Command::new(EDIT)
                 .about("edit one or more existing group files")

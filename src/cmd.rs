@@ -23,3 +23,12 @@ pub fn run_install_command(diff: Vec<Package>) {
     }
     cmd.exec();
 }
+
+pub fn run_remove_command(unmanaged: Vec<Package>) {
+    let mut cmd = Command::new("paru");
+    cmd.arg("-Rsn");
+    for p in unmanaged {
+        cmd.arg(format!("{p}"));
+    }
+    cmd.exec();
+}

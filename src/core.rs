@@ -5,8 +5,9 @@ use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
-use crate::cmd::{run_edit_command, run_install_command};
+use crate::cmd::{run_edit_command, run_install_command, run_remove_command};
 use crate::db::{get_all_installed_packages, get_explicitly_installed_packages};
+use crate::ui::get_user_confirmation;
 use crate::Group;
 use crate::Package;
 
@@ -61,8 +62,10 @@ impl Pacdef {
         run_install_command(diff);
     }
 
+    #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
         match self.args.subcommand() {
+            Some((action::CLEAN, _)) => Ok(self.clean_packages()),
             Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
@@ -121,5 +124,20 @@ impl Pacdef {
         for g in vec {
             println!("{}", g.name);
         }
+    }
+
+    fn clean_packages(mut self) {
+        let unmanaged = self.get_unmanaged_packages();
+        if unmanaged.is_empty() {
+            println!("nothing to do");
+            return;
+        }
+
+        println!("Would remove the following packages and their dependencies:");
+        for p in &unmanaged {
+            println!("  {p}");
+        }
+        get_user_confirmation();
+        run_remove_command(unmanaged);
     }
 }

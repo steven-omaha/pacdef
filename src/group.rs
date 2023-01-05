@@ -25,7 +25,9 @@ impl Group {
 
             let packages = Package::from_lines(reader.lines());
             result.insert(Group {
-                name: name.into_string().map_err(|e| anyhow!(e))?,
+                name: name
+                    .into_string()
+                    .map_err(|e| anyhow!("could not get group name, {e:?}"))?,
                 packages,
             });
         }
