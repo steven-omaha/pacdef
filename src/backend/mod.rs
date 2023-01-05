@@ -1,4 +1,5 @@
 mod pacman;
+mod rust;
 
 use std::collections::HashSet;
 use std::os::unix::process::CommandExt;
@@ -7,16 +8,18 @@ use std::process::Command;
 use crate::Package;
 
 pub use pacman::Pacman;
+type Switches = &'static [&'static str];
+type Binary = &'static str;
 
 pub trait Backend {
     /// The binary that should be called to run the associated package manager.
-    const BINARY: &'static str;
+    const BINARY: Binary;
 
     /// The switches that signals the `BINARY` that the packages should be installed.
-    const SWITCH_INSTALL: &'static str;
+    const SWITCHES_INSTALL: Switches;
 
     /// The switches that signals the `BINARY` that the packages should be removed.
-    const SWITCH_REMOVE: &'static str;
+    const SWITCHES_REMOVE: Switches;
 
     /// Get all packages that are installed in the system.
     fn get_all_installed_packages() -> HashSet<Package>;
@@ -27,7 +30,7 @@ pub trait Backend {
     /// Install the specified packages.
     fn install_packages(packages: Vec<Package>) {
         let mut cmd = Command::new(Self::BINARY);
-        cmd.arg(Self::SWITCH_INSTALL);
+        cmd.args(Self::SWITCHES_INSTALL);
         for p in packages {
             cmd.arg(format!("{p}"));
         }
@@ -37,7 +40,7 @@ pub trait Backend {
     /// Remove the specified packages.
     fn remove_packages(packages: Vec<Package>) {
         let mut cmd = Command::new(Self::BINARY);
-        cmd.arg(Self::SWITCH_REMOVE);
+        cmd.args(Self::SWITCHES_REMOVE);
         for p in packages {
             cmd.arg(format!("{p}"));
         }

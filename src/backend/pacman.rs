@@ -3,15 +3,15 @@ use std::collections::HashSet;
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 
-use super::Backend;
+use super::{Backend, Binary, Switches};
 use crate::Package;
 
 pub struct Pacman;
 
 impl Backend for Pacman {
-    const BINARY: &'static str = "paru";
-    const SWITCH_INSTALL: &'static str = "-S";
-    const SWITCH_REMOVE: &'static str = "-Rsn";
+    const BINARY: Binary = "paru";
+    const SWITCHES_INSTALL: Switches = &["-S"];
+    const SWITCHES_REMOVE: Switches = &["-Rsn"];
 
     fn get_all_installed_packages() -> HashSet<Package> {
         convert_to_pacdef_packages(get_all_installed_packages_from_alpm())
