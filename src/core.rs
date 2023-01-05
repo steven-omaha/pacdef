@@ -5,8 +5,8 @@ use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
+use crate::backend::{Backend, Pacman};
 use crate::cmd::{run_edit_command, run_install_command, run_remove_command};
-use crate::db::{get_all_installed_packages, get_explicitly_installed_packages};
 use crate::ui::get_user_confirmation;
 use crate::Group;
 use crate::Package;
@@ -37,7 +37,7 @@ impl Pacdef {
 
     pub(crate) fn get_packages_to_install(&mut self) -> Vec<Package> {
         let managed = self.take_packages_as_set();
-        let local_packages = get_all_installed_packages();
+        let local_packages = Pacman::get_all_installed_packages();
         let mut diff: Vec<_> = managed
             .into_iter()
             .filter(|p| !local_packages.contains(p))
@@ -108,7 +108,7 @@ impl Pacdef {
     /// Returns a `Vec` of alphabetically sorted unmanaged packages.
     pub(crate) fn get_unmanaged_packages(&mut self) -> Vec<Package> {
         let managed = self.take_packages_as_set();
-        let explicitly_installed = get_explicitly_installed_packages();
+        let explicitly_installed = Pacman::get_explicitly_installed_packages();
         let mut result: Vec<_> = explicitly_installed
             .into_iter()
             .filter(|p| !managed.contains(p))

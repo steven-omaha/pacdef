@@ -5,14 +5,23 @@ use alpm::PackageReason::Explicit;
 
 use crate::Package;
 
-/// Get all packages that are installed in the system.
-pub fn get_all_installed_packages() -> HashSet<Package> {
-    convert_to_pacdef_packages(get_all_installed_packages_from_alpm())
+pub trait Backend {
+    /// Get all packages that are installed in the system.
+    fn get_all_installed_packages() -> HashSet<Package>;
+    /// Get all packages that were installed in the system explicitly.
+    fn get_explicitly_installed_packages() -> HashSet<Package>;
 }
 
-/// Get all packages that were installed in the system explicitly.
-pub fn get_explicitly_installed_packages() -> HashSet<Package> {
-    convert_to_pacdef_packages(get_explicitly_installed_packages_from_alpm())
+pub struct Pacman;
+
+impl Backend for Pacman {
+    fn get_all_installed_packages() -> HashSet<Package> {
+        convert_to_pacdef_packages(get_all_installed_packages_from_alpm())
+    }
+
+    fn get_explicitly_installed_packages() -> HashSet<Package> {
+        convert_to_pacdef_packages(get_explicitly_installed_packages_from_alpm())
+    }
 }
 
 fn get_all_installed_packages_from_alpm() -> HashSet<String> {
