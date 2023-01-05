@@ -8,7 +8,8 @@ edition = "2021"
 [dependencies]
 alpm = "*"
 anyhow = "*"
-clap = "*"
+# clap 4 until (at least) 4.0.32 have scrapped actual color support. we stay on 3.x until that's fixed.
+clap = "3.*"
 
 [profile.release]
 debug = true
