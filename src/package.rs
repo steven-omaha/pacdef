@@ -8,13 +8,26 @@ pub struct Package {
     repo: Option<String>,
 }
 
-impl From<String> for Package {
-    fn from(mut s: String) -> Self {
-        s.remove_comment();
-        s.remove_whitespace();
-        let (name, repo) = Self::split_into_name_and_repo(s);
+impl From<&str> for Package {
+    fn from(s: &str) -> Self {
+        let trimmed = remove_all_but_package_name(s);
+
+        let (name, repo) = Self::split_into_name_and_repo(trimmed);
         Self { name, repo }
     }
+}
+
+impl From<String> for Package {
+    fn from(value: String) -> Self {
+        Package::from(value.as_ref())
+    }
+}
+
+fn remove_all_but_package_name(s: &str) -> &str {
+    s.split('#') // remove comment
+        .next()
+        .expect("line contains something")
+        .trim() // remove whitespace
 }
 
 impl Package {
@@ -27,15 +40,11 @@ impl Package {
             .collect()
     }
 
-    fn split_into_name_and_repo(mut s: String) -> (String, Option<String>) {
-        match s.find('/') {
-            None => (s, None),
-            Some(pos) => {
-                let mut name = s.split_off(pos);
-                name = name.split_off(1);
-                (name, Some(s))
-            }
-        }
+    fn split_into_name_and_repo(s: &str) -> (String, Option<String>) {
+        let mut iter = s.split('/').rev();
+        let name = iter.next().unwrap().to_string();
+        let repo = iter.next().map(|s| s.to_string());
+        (name, repo)
     }
 }
 
@@ -55,27 +64,6 @@ impl PartialEq for Package {
 impl Hash for Package {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
-    }
-}
-
-trait Whitespace {
-    fn remove_comment(&mut self) {}
-    fn remove_whitespace(&mut self) {}
-}
-
-impl Whitespace for String {
-    fn remove_comment(&mut self) {
-        match self.find('#') {
-            None => (),
-            Some(idx) => self.truncate(idx),
-        }
-    }
-
-    fn remove_whitespace(&mut self) {
-        match self.find(char::is_whitespace) {
-            None => (),
-            Some(idx) => self.truncate(idx),
-        }
     }
 }
 
@@ -99,12 +87,12 @@ mod tests {
     #[test]
     fn split_into_name_and_repo() {
         let x = "repo/name".to_string();
-        let (name, repo) = Package::split_into_name_and_repo(x);
+        let (name, repo) = Package::split_into_name_and_repo(&x);
         assert_eq!(name, "name");
         assert_eq!(repo, Some("repo".to_string()));
 
         let x = "something".to_string();
-        let (name, repo) = super::Package::split_into_name_and_repo(x);
+        let (name, repo) = super::Package::split_into_name_and_repo(&x);
         assert_eq!(name, "something");
         assert_eq!(repo, None);
     }

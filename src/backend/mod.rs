@@ -9,11 +9,19 @@ use crate::Package;
 
 pub use pacman::Pacman;
 type Switches = &'static [&'static str];
-type Binary = &'static str;
+type Text = &'static str;
+
+pub enum Backends {
+    Pacman,
+    Rust,
+}
 
 pub trait Backend {
+    /// The name that introduces the section in the group file
+    const SECTION: Text;
+
     /// The binary that should be called to run the associated package manager.
-    const BINARY: Binary;
+    const BINARY: Text;
 
     /// The switches that signals the `BINARY` that the packages should be installed.
     const SWITCHES_INSTALL: Switches;
@@ -46,4 +54,18 @@ pub trait Backend {
         }
         cmd.exec();
     }
+
+    /// extract packages from its own section as read from group files
+    fn extract_packages_from_group_file_content(content: &str) -> HashSet<Package> {
+        content
+            .lines()
+            .skip_while(|line| !line.starts_with(&format!("[{}]", Self::SECTION)))
+            .skip(1)
+            .filter(|line| !line.starts_with('['))
+            .fuse()
+            .map(Package::from)
+            .collect()
+    }
+
+    fn add_packages(&mut self, packages: HashSet<Package>);
 }

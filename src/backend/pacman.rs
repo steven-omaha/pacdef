@@ -3,13 +3,14 @@ use std::collections::HashSet;
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 
-use super::{Backend, Binary, Switches};
+use super::{Backend, Switches, Text};
 use crate::Package;
 
-pub struct Pacman;
+pub struct Pacman(HashSet<Package>);
 
 impl Backend for Pacman {
-    const BINARY: Binary = "paru";
+    const BINARY: Text = "paru";
+    const SECTION: Text = "pacman";
     const SWITCHES_INSTALL: Switches = &["-S"];
     const SWITCHES_REMOVE: Switches = &["-Rsn"];
 
@@ -19,6 +20,12 @@ impl Backend for Pacman {
 
     fn get_explicitly_installed_packages() -> HashSet<Package> {
         convert_to_pacdef_packages(get_explicitly_installed_packages_from_alpm())
+    }
+
+    fn add_packages(&mut self, packages: HashSet<Package>) {
+        for p in packages {
+            self.0.insert(p);
+        }
     }
 }
 
@@ -43,4 +50,16 @@ fn get_explicitly_installed_packages_from_alpm() -> HashSet<String> {
 
 fn convert_to_pacdef_packages(packages: HashSet<String>) -> HashSet<Package> {
     packages.into_iter().map(Package::from).collect()
+}
+
+impl Pacman {
+    pub fn new() -> Self {
+        Self(HashSet::new())
+    }
+}
+
+impl Default for Pacman {
+    fn default() -> Self {
+        Self::new()
+    }
 }

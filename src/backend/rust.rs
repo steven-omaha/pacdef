@@ -1,12 +1,13 @@
 use std::{collections::HashSet, process::Command};
 
-use super::{Backend, Binary, Switches};
+use super::{Backend, Switches, Text};
 use crate::Package;
 
-pub struct Rust;
+pub struct Rust(HashSet<Package>);
 
 impl Backend for Rust {
-    const BINARY: Binary = "cargo";
+    const BINARY: Text = "cargo";
+    const SECTION: Text = "rust";
     const SWITCHES_INSTALL: Switches = &["install"];
     const SWITCHES_REMOVE: Switches = &["uninstall"];
 
@@ -18,6 +19,12 @@ impl Backend for Rust {
 
     fn get_explicitly_installed_packages() -> HashSet<Package> {
         Self::get_all_installed_packages()
+    }
+
+    fn add_packages(&mut self, packages: HashSet<Package>) {
+        for p in packages {
+            self.0.insert(p);
+        }
     }
 }
 
@@ -35,6 +42,18 @@ fn extract_packages_names(output: &str) -> impl Iterator<Item = String> + '_ {
         .lines()
         .filter(|line| !line.starts_with(char::is_whitespace))
         .map(|line| line.split_whitespace().next().unwrap().to_owned())
+}
+
+impl Rust {
+    pub fn new() -> Self {
+        Self(HashSet::new())
+    }
+}
+
+impl Default for Rust {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
