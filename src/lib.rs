@@ -7,6 +7,7 @@ mod env;
 mod group;
 mod package;
 mod path;
+mod section;
 mod ui;
 
 pub use crate::core::Pacdef;
