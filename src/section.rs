@@ -14,7 +14,14 @@ impl Section {
     }
 
     pub fn from_lines<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Self {
-        let name = iter.find(|line| line.starts_with('[')).unwrap().to_string();
+        let name = iter
+            .find(|line| line.starts_with('['))
+            .unwrap()
+            .trim()
+            .trim_start_matches('[')
+            .trim_end_matches(']')
+            .to_string();
+
         let packages = iter
             .take_while(|line| !line.starts_with('['))
             .filter(|line| !line.contains(char::is_alphabetic))
