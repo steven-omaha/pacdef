@@ -5,7 +5,7 @@ use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
-use crate::backend::{Backend, Pacman};
+use crate::backend::{Backend, Backends, Pacman};
 use crate::cmd::run_edit_command;
 use crate::ui::get_user_confirmation;
 use crate::Group;
@@ -13,62 +13,51 @@ use crate::Package;
 
 pub struct Pacdef {
     pub(crate) args: ArgMatches,
-    pub(crate) groups: Option<HashSet<Group>>,
-    // action: Box<dyn Fn(Self)>,
+    pub(crate) groups: HashSet<Group>,
 }
 
 impl Pacdef {
     pub fn new(args: ArgMatches, groups: HashSet<Group>) -> Self {
-        Self {
-            args,
-            groups: Some(groups),
-            // action: Box::new(Self::install_packages),
-        }
+        Self { args, groups }
     }
 
-    pub(crate) fn take_packages_as_set(&mut self) -> HashSet<Package> {
-        self.groups
-            .take()
-            .unwrap()
-            .into_iter()
-            .flat_map(|g| g.packages)
-            .collect()
-    }
+    // pub(crate) fn get_packages_to_install(&mut self) -> Vec<Package> {
+    //     let managed = self.take_packages_as_set();
+    //     let local_packages = Pacman::get_all_installed_packages();
+    //     let mut diff: Vec<_> = managed
+    //         .into_iter()
+    //         .filter(|p| !local_packages.contains(p))
+    //         .collect();
+    //     diff.sort_unstable();
+    //     diff
+    // }
 
-    pub(crate) fn get_packages_to_install(&mut self) -> Vec<Package> {
-        let managed = self.take_packages_as_set();
-        let local_packages = Pacman::get_all_installed_packages();
-        let mut diff: Vec<_> = managed
-            .into_iter()
-            .filter(|p| !local_packages.contains(p))
-            .collect();
-        diff.sort_unstable();
-        diff
-    }
-
-    pub(crate) fn install_packages(mut self) {
-        let diff = self.get_packages_to_install();
-        if diff.is_empty() {
-            println!("nothing to do");
-            exit(0);
+    pub(crate) fn install_packages(&self) {
+        for b in Backends::iter() {
+            println!("{}", b.get_binary());
         }
-        println!("Would install the following packages:");
-        for p in &diff {
-            println!("  {p}");
-        }
-        crate::ui::get_user_confirmation();
+        // let diff = self.get_packages_to_install();
+        // if diff.is_empty() {
+        //     println!("nothing to do");
+        //     exit(0);
+        // }
+        // println!("Would install the following packages:");
+        // for p in &diff {
+        //     println!("  {p}");
+        // }
+        // crate::ui::get_user_confirmation();
 
-        Pacman::install_packages(diff);
+        // Pacman::install_packages(diff);
     }
 
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
         match self.args.subcommand() {
-            Some((action::CLEAN, _)) => Ok(self.clean_packages()),
+            // Some((action::CLEAN, _)) => Ok(self.clean_packages()),
             Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
-            Some((action::GROUPS, _)) => Ok(self.show_groups()),
+            // Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
-            Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
+            // Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
             _ => todo!(),
         }
@@ -98,45 +87,45 @@ impl Pacdef {
         println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"))
     }
 
-    pub(crate) fn show_unmanaged_packages(mut self) {
-        for p in &self.get_unmanaged_packages() {
-            println!("{p}");
-        }
-    }
+    // pub(crate) fn show_unmanaged_packages(mut self) {
+    //     for p in &self.get_unmanaged_packages() {
+    //         println!("{p}");
+    // }
+    // }
 
-    /// Returns a `Vec` of alphabetically sorted unmanaged packages.
-    pub(crate) fn get_unmanaged_packages(&mut self) -> Vec<Package> {
-        let managed = self.take_packages_as_set();
-        let explicitly_installed = Pacman::get_explicitly_installed_packages();
-        let mut result: Vec<_> = explicitly_installed
-            .into_iter()
-            .filter(|p| !managed.contains(p))
-            .collect();
-        result.sort_unstable();
-        result
-    }
+    // /// Returns a `Vec` of alphabetically sorted unmanaged packages.
+    // pub(crate) fn get_unmanaged_packages(&mut self) -> Vec<Package> {
+    //     let managed = self.take_packages_as_set();
+    //     let explicitly_installed = Pacman::get_explicitly_installed_packages();
+    //     let mut result: Vec<_> = explicitly_installed
+    //         .into_iter()
+    //         .filter(|p| !managed.contains(p))
+    //         .collect();
+    //     result.sort_unstable();
+    //     result
+    // }
 
-    pub(crate) fn show_groups(mut self) {
-        let groups = self.groups.take().unwrap();
-        let mut vec: Vec<_> = groups.iter().collect();
-        vec.sort_unstable();
-        for g in vec {
-            println!("{}", g.name);
-        }
-    }
+    // pub(crate) fn show_groups(mut self) {
+    //     let groups = self.groups.take().unwrap();
+    //     let mut vec: Vec<_> = groups.iter().collect();
+    //     vec.sort_unstable();
+    //     for g in vec {
+    //         println!("{}", g.name);
+    //     }
+    // }
 
-    fn clean_packages(mut self) {
-        let unmanaged = self.get_unmanaged_packages();
-        if unmanaged.is_empty() {
-            println!("nothing to do");
-            return;
-        }
+    // fn clean_packages(mut self) {
+    //     let unmanaged = self.get_unmanaged_packages();
+    //     if unmanaged.is_empty() {
+    //         println!("nothing to do");
+    //         return;
+    //     }
 
-        println!("Would remove the following packages and their dependencies:");
-        for p in &unmanaged {
-            println!("  {p}");
-        }
-        get_user_confirmation();
-        Pacman::remove_packages(unmanaged);
-    }
+    //     println!("Would remove the following packages and their dependencies:");
+    //     for p in &unmanaged {
+    //         println!("  {p}");
+    //     }
+    //     get_user_confirmation();
+    //     Pacman::remove_packages(unmanaged);
+    // }
 }

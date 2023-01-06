@@ -3,27 +3,45 @@ use std::{collections::HashSet, process::Command};
 use super::{Backend, Switches, Text};
 use crate::Package;
 
-pub struct Rust(HashSet<Package>);
+pub struct Rust {
+    pub packages: HashSet<Package>,
+}
+
+const BINARY: Text = "cargo";
+const SECTION: Text = "rust";
+const SWITCHES_INSTALL: Switches = &["install"];
+const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 impl Backend for Rust {
-    const BINARY: Text = "cargo";
-    const SECTION: Text = "rust";
-    const SWITCHES_INSTALL: Switches = &["install"];
-    const SWITCHES_REMOVE: Switches = &["uninstall"];
+    fn get_binary(&self) -> Text {
+        BINARY
+    }
 
-    fn get_all_installed_packages() -> HashSet<Package> {
+    fn get_section(&self) -> Text {
+        SECTION
+    }
+
+    fn get_switches_install(&self) -> Switches {
+        SWITCHES_INSTALL
+    }
+
+    fn get_switches_remove(&self) -> Switches {
+        SWITCHES_REMOVE
+    }
+
+    fn get_all_installed_packages(&self) -> HashSet<Package> {
         extract_packages_names(&run_cargo_install_list())
             .map(Package::from)
             .collect()
     }
 
-    fn get_explicitly_installed_packages() -> HashSet<Package> {
-        Self::get_all_installed_packages()
+    fn get_explicitly_installed_packages(&self) -> HashSet<Package> {
+        self.get_all_installed_packages()
     }
 
     fn add_packages(&mut self, packages: HashSet<Package>) {
         for p in packages {
-            self.0.insert(p);
+            self.packages.insert(p);
         }
     }
 }
@@ -46,7 +64,9 @@ fn extract_packages_names(output: &str) -> impl Iterator<Item = String> + '_ {
 
 impl Rust {
     pub fn new() -> Self {
-        Self(HashSet::new())
+        Self {
+            packages: HashSet::new(),
+        }
     }
 }
 
