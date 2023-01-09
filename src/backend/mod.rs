@@ -10,8 +10,8 @@ use crate::Package;
 
 pub use pacman::Pacman;
 pub use rust::Rust;
-pub type Switches = &'static [&'static str];
-pub type Text = &'static str;
+pub(in crate::backend) type Switches = &'static [&'static str];
+pub(in crate::backend) type Text = &'static str;
 
 #[derive(Debug)]
 pub enum Backends {
@@ -22,6 +22,17 @@ pub enum Backends {
 impl Backends {
     pub fn iter() -> BackendIter {
         BackendIter(Some(Self::Pacman))
+    }
+
+    pub fn get(&self) -> Box<dyn Backend> {
+        match self {
+            Self::Pacman => Box::new(Pacman {
+                packages: HashSet::new(),
+            }),
+            Self::Rust => Box::new(Rust {
+                packages: HashSet::new(),
+            }),
+        }
     }
 }
 
@@ -41,19 +52,6 @@ impl Iterator for BackendIter {
                 Some(Box::new(Rust::new()))
             }
             None => None,
-        }
-    }
-}
-
-impl Backends {
-    pub fn get(&self) -> Box<dyn Backend> {
-        match self {
-            Self::Pacman => Box::new(Pacman {
-                packages: HashSet::new(),
-            }),
-            Self::Rust => Box::new(Rust {
-                packages: HashSet::new(),
-            }),
         }
     }
 }
