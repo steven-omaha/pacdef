@@ -1,3 +1,4 @@
+mod macros;
 mod pacman;
 mod rust;
 

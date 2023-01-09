@@ -1,7 +1,7 @@
 use std::{collections::HashSet, process::Command};
 
 use super::{Backend, Switches, Text};
-use crate::Package;
+use crate::{impl_backend_constants, Package};
 
 pub struct Rust {
     pub packages: HashSet<Package>,
@@ -13,21 +13,7 @@ const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 impl Backend for Rust {
-    fn get_binary(&self) -> Text {
-        BINARY
-    }
-
-    fn get_section(&self) -> Text {
-        SECTION
-    }
-
-    fn get_switches_install(&self) -> Switches {
-        SWITCHES_INSTALL
-    }
-
-    fn get_switches_remove(&self) -> Switches {
-        SWITCHES_REMOVE
-    }
+    impl_backend_constants!(Rust);
 
     fn get_all_installed_packages(&self) -> HashSet<Package> {
         extract_packages_names(&run_cargo_install_list())

@@ -4,7 +4,7 @@ use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 
 use super::{Backend, Switches, Text};
-use crate::Package;
+use crate::{impl_backend_constants, Package};
 
 pub struct Pacman {
     pub packages: HashSet<Package>,
@@ -16,21 +16,7 @@ const SWITCHES_INSTALL: Switches = &["-S"];
 const SWITCHES_REMOVE: Switches = &["-Rsn"];
 
 impl Backend for Pacman {
-    fn get_binary(&self) -> Text {
-        BINARY
-    }
-
-    fn get_section(&self) -> Text {
-        SECTION
-    }
-
-    fn get_switches_install(&self) -> Switches {
-        SWITCHES_INSTALL
-    }
-
-    fn get_switches_remove(&self) -> Switches {
-        SWITCHES_REMOVE
-    }
+    impl_backend_constants!(Pacman);
 
     fn get_all_installed_packages(&self) -> HashSet<Package> {
         convert_to_pacdef_packages(get_all_installed_packages_from_alpm())
