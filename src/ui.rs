@@ -1,11 +1,8 @@
 use std::io::{BufRead, Write};
-use std::process::exit;
 
-pub(crate) fn get_user_confirmation() {
+pub(crate) fn get_user_confirmation() -> bool {
     print!("Continue? [Y/n] ");
     std::io::stdout().flush().unwrap();
     let reply = std::io::stdin().lock().lines().next().unwrap().unwrap();
-    if !(reply.is_empty() || reply.to_lowercase().contains('y')) {
-        exit(0)
-    }
+    !(reply.is_empty() || reply.to_lowercase().contains('y'))
 }

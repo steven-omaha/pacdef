@@ -16,5 +16,9 @@ macro_rules! impl_backend_constants {
         fn get_switches_remove(&self) -> Switches {
             SWITCHES_REMOVE
         }
+
+        fn get_managed_packages(&self) -> &HashSet<Package> {
+            &self.packages
+        }
     };
 }

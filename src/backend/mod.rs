@@ -13,8 +13,8 @@ pub use rust::Rust;
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
-#[derive(Debug)]
-pub enum Backends {
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub(crate) enum Backends {
     Pacman,
     Rust,
 }
@@ -24,7 +24,7 @@ impl Backends {
         BackendIter(Some(Self::Pacman))
     }
 
-    pub fn get(&self) -> Box<dyn Backend> {
+    fn get(&self) -> Box<dyn Backend> {
         match self {
             Self::Pacman => Box::new(Pacman {
                 packages: HashSet::new(),
@@ -36,7 +36,7 @@ impl Backends {
     }
 }
 
-pub struct BackendIter(Option<Backends>);
+pub(crate) struct BackendIter(Option<Backends>);
 
 impl Iterator for BackendIter {
     type Item = Box<dyn Backend>;
@@ -56,11 +56,12 @@ impl Iterator for BackendIter {
     }
 }
 
-pub trait Backend {
+pub(crate) trait Backend {
     fn get_binary(&self) -> Text;
     fn get_section(&self) -> Text;
     fn get_switches_install(&self) -> Switches;
     fn get_switches_remove(&self) -> Switches;
+    fn get_managed_packages(&self) -> &HashSet<Package>;
 
     /// Get all packages that are installed in the system.
     fn get_all_installed_packages(&self) -> HashSet<Package>;
@@ -69,7 +70,11 @@ pub trait Backend {
     fn get_explicitly_installed_packages(&self) -> HashSet<Package>;
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: Vec<Package>) {
+    fn install_packages(&self, packages: &[Package]) {
+        if packages.is_empty() {
+            return;
+        }
+
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
         for p in packages {
@@ -100,5 +105,24 @@ pub trait Backend {
             .collect()
     }
 
+    fn get_missing_packages_sorted(&self) -> Vec<Package> {
+        let installed = self.get_all_installed_packages();
+        let managed = self.get_managed_packages();
+        let mut diff: Vec<_> = managed.difference(&installed).cloned().collect();
+        diff.sort_unstable();
+        diff
+    }
+
     fn add_packages(&mut self, packages: HashSet<Package>);
+
+    fn get_unmanaged_packages_sorted(&self) -> Vec<Package> {
+        let installed = self.get_explicitly_installed_packages();
+        let required = self.get_managed_packages();
+        let mut diff: Vec<_> = dbg!(installed)
+            .difference(dbg!(required))
+            .cloned()
+            .collect();
+        diff.sort_unstable();
+        diff
+    }
 }

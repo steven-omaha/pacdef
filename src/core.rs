@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::process::exit;
 
 use anyhow::{bail, Context, Result};
@@ -21,33 +21,35 @@ impl Pacdef {
         Self { args, groups }
     }
 
-    // pub(crate) fn get_packages_to_install(&mut self) -> Vec<Package> {
-    //     let managed = self.take_packages_as_set();
-    //     let local_packages = Pacman::get_all_installed_packages();
-    //     let mut diff: Vec<_> = managed
-    //         .into_iter()
-    //         .filter(|p| !local_packages.contains(p))
-    //         .collect();
-    //     diff.sort_unstable();
-    //     diff
-    // }
-
     pub(crate) fn install_packages(&self) {
-        for b in Backends::iter() {
-            println!("{}", b.get_binary());
-        }
-        // let diff = self.get_packages_to_install();
-        // if diff.is_empty() {
-        //     println!("nothing to do");
-        //     exit(0);
-        // }
-        // println!("Would install the following packages:");
-        // for p in &diff {
-        //     println!("  {p}");
-        // }
-        // crate::ui::get_user_confirmation();
+        let mut to_install = ToInstallPerBackend::new();
 
-        // Pacman::install_packages(diff);
+        for b in Backends::iter() {
+            print!("{}: ", b.get_binary());
+
+            let diff = b.get_missing_packages_sorted();
+            if diff.is_empty() {
+                println!("nothing to do");
+                continue;
+            }
+
+            println!("  Would install the following packages:");
+            for p in &diff {
+                println!("  {p}");
+            }
+            to_install.push((b, diff));
+            println!();
+        }
+
+        if to_install.nothing_to_do_for_all_backends() {
+            return;
+        }
+
+        if !get_user_confirmation() {
+            return;
+        };
+
+        to_install.install_missing_packages()
     }
 
     #[allow(clippy::unit_arg)]
@@ -57,7 +59,7 @@ impl Pacdef {
             Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
             // Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
-            // Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
+            Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
             _ => todo!(),
         }
@@ -87,11 +89,19 @@ impl Pacdef {
         println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"))
     }
 
-    // pub(crate) fn show_unmanaged_packages(mut self) {
-    //     for p in &self.get_unmanaged_packages() {
-    //         println!("{p}");
-    // }
-    // }
+    pub(crate) fn show_unmanaged_packages(self) {
+        for b in Backends::iter() {
+            let unmanaged = b.get_unmanaged_packages_sorted();
+            if unmanaged.is_empty() {
+                continue;
+            }
+
+            println!("{}", b.get_section());
+            for p in unmanaged {
+                println!("  {p}");
+            }
+        }
+    }
 
     // /// Returns a `Vec` of alphabetically sorted unmanaged packages.
     // pub(crate) fn get_unmanaged_packages(&mut self) -> Vec<Package> {
@@ -128,4 +138,30 @@ impl Pacdef {
     //     get_user_confirmation();
     //     Pacman::remove_packages(unmanaged);
     // }
+}
+
+struct ToInstallPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
+
+impl ToInstallPerBackend {
+    fn new() -> Self {
+        Self(vec![])
+    }
+
+    fn push(&mut self, item: (Box<dyn Backend>, Vec<Package>)) {
+        self.0.push(item);
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
+        self.0.iter()
+    }
+
+    fn nothing_to_do_for_all_backends(&self) -> bool {
+        self.0.iter().all(|(_, diff)| diff.is_empty())
+    }
+
+    fn install_missing_packages(&self) {
+        self.0
+            .iter()
+            .for_each(|(backend, diff)| backend.install_packages(diff));
+    }
 }

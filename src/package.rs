@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fmt::{Display, Write};
 use std::hash::Hash;
 
-#[derive(Debug, Eq, PartialOrd, Ord)]
+#[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
     pub name: String,
     repo: Option<String>,

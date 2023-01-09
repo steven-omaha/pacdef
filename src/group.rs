@@ -22,9 +22,9 @@ impl Group {
         let path = crate::path::get_pacdef_group_dir().context("getting pacdef group dir")?;
         for entry in path.read_dir().context("reading group dir")? {
             let file = entry.context("getting a file")?;
-            let name = file.file_name();
+            let path = file.path();
 
-            let group = Group::try_from(name)?;
+            let group = Group::try_from(dbg!(path))?;
             result.insert(group);
         }
 
