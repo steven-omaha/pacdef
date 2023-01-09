@@ -4,7 +4,7 @@ use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 
 use super::{Backend, Switches, Text};
-use crate::{impl_backend_constants, Package};
+use crate::{impl_backend_constants, Group, Package};
 
 pub struct Pacman {
     pub packages: HashSet<Package>,

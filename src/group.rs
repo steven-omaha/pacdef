@@ -24,7 +24,7 @@ impl Group {
             let file = entry.context("getting a file")?;
             let path = file.path();
 
-            let group = Group::try_from(dbg!(path))?;
+            let group = Group::try_from(path)?;
             result.insert(group);
         }
 

@@ -1,7 +1,7 @@
 use std::{collections::HashSet, process::Command};
 
 use super::{Backend, Switches, Text};
-use crate::{impl_backend_constants, Package};
+use crate::{impl_backend_constants, Group, Package};
 
 pub struct Rust {
     pub packages: HashSet<Package>,

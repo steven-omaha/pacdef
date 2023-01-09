@@ -20,5 +20,18 @@ macro_rules! impl_backend_constants {
         fn get_managed_packages(&self) -> &HashSet<Package> {
             &self.packages
         }
+
+        fn load(&mut self, groups: &HashSet<Group>) {
+            let own_section_name = self.get_section();
+
+            groups
+                .iter()
+                .flat_map(|g| &g.sections)
+                .filter(|section| section.name == own_section_name)
+                .flat_map(|section| &section.packages)
+                .for_each(|package| {
+                    self.packages.insert(package.clone());
+                })
+        }
     };
 }

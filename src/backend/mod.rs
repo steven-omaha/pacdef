@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-use crate::Package;
+use crate::{Group, Package};
 
 pub use pacman::Pacman;
 pub use rust::Rust;
@@ -36,6 +36,7 @@ impl Backends {
     }
 }
 
+#[derive(Debug)]
 pub(crate) struct BackendIter(Option<Backends>);
 
 impl Iterator for BackendIter {
@@ -62,6 +63,7 @@ pub(crate) trait Backend {
     fn get_switches_install(&self) -> Switches;
     fn get_switches_remove(&self) -> Switches;
     fn get_managed_packages(&self) -> &HashSet<Package>;
+    fn load(&mut self, groups: &HashSet<Group>);
 
     /// Get all packages that are installed in the system.
     fn get_all_installed_packages(&self) -> HashSet<Package>;
@@ -118,10 +120,7 @@ pub(crate) trait Backend {
     fn get_unmanaged_packages_sorted(&self) -> Vec<Package> {
         let installed = self.get_explicitly_installed_packages();
         let required = self.get_managed_packages();
-        let mut diff: Vec<_> = dbg!(installed)
-            .difference(dbg!(required))
-            .cloned()
-            .collect();
+        let mut diff: Vec<_> = installed.difference(required).cloned().collect();
         diff.sort_unstable();
         diff
     }

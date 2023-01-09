@@ -24,8 +24,14 @@ impl Pacdef {
     pub(crate) fn install_packages(&self) {
         let mut to_install = ToInstallPerBackend::new();
 
-        for b in Backends::iter() {
+        for mut b in Backends::iter() {
             print!("{}: ", b.get_binary());
+
+            // dbg!(&self.groups);
+
+            b.load(&self.groups);
+
+            // dbg!(b.get_managed_packages());
 
             let diff = b.get_missing_packages_sorted();
             if diff.is_empty() {
@@ -33,7 +39,7 @@ impl Pacdef {
                 continue;
             }
 
-            println!("  Would install the following packages:");
+            println!("would install the following packages");
             for p in &diff {
                 println!("  {p}");
             }

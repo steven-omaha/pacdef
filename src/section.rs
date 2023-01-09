@@ -13,7 +13,7 @@ impl Section {
         Self { name, packages }
     }
 
-    pub fn from_lines<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Self {
+    pub fn from_lines<'a>(iter: &mut (impl Iterator<Item = &'a str> + std::fmt::Debug)) -> Self {
         let name = iter
             .find(|line| line.starts_with('['))
             .unwrap()
@@ -24,8 +24,8 @@ impl Section {
 
         let packages = iter
             .take_while(|line| !line.starts_with('['))
-            .filter(|line| !line.contains(char::is_alphabetic))
-            .map(Package::from)
+            .map(Package::try_from)
+            .filter_map(|p| p.ok())
             .collect();
 
         Self::new(name, packages)
