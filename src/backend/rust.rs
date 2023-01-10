@@ -8,8 +8,8 @@ use serde_json::Value;
 use super::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
 
-pub struct Rust {
-    pub packages: HashSet<Package>,
+pub(crate) struct Rust {
+    pub(crate) packages: HashSet<Package>,
 }
 
 const BINARY: Text = "cargo";
@@ -52,21 +52,15 @@ fn extract_packages(json: Value) -> Result<HashSet<Package>> {
 }
 
 impl Rust {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             packages: HashSet::new(),
         }
     }
 }
 
-impl Default for Rust {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 fn get_crates_file() -> Result<PathBuf> {
-    let mut result = crate::path::get_home_dir()?;
+    let mut result = crate::path::get_home_dir().context("getting home dir")?;
     result.push(".cargo");
     result.push(".crates2.json");
     Ok(result)

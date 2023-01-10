@@ -13,8 +13,8 @@ use crate::{Group, Package};
 
 pub(crate) use todo_per_backend::ToDoPerBackend;
 
-pub use pacman::Pacman;
-pub use rust::Rust;
+pub(crate) use pacman::Pacman;
+pub(crate) use rust::Rust;
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
