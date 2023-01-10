@@ -26,27 +26,42 @@ pub(crate) enum Backends {
 
 impl Backends {
     pub fn iter() -> BackendIter {
-        BackendIter(Some(Self::Pacman))
+        BackendIter {
+            next: Some(Backends::Pacman),
+        }
+    }
+
+    fn next(&self) -> Option<Self> {
+        match self {
+            Self::Pacman => Some(Self::Rust),
+            Self::Rust => None,
+        }
+    }
+
+    fn get_backend(&self) -> Box<dyn Backend> {
+        match self {
+            Self::Pacman => Box::new(Pacman::new()),
+            Self::Rust => Box::new(Rust::new()),
+        }
     }
 }
 
 #[derive(Debug)]
-pub(crate) struct BackendIter(Option<Backends>);
+pub(crate) struct BackendIter {
+    next: Option<Backends>,
+}
 
 impl Iterator for BackendIter {
     type Item = Box<dyn Backend>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.0 {
-            Some(Backends::Pacman) => {
-                self.0 = Some(Backends::Rust);
-                Some(Box::new(Pacman::new()))
-            }
-            Some(Backends::Rust) => {
-                self.0 = None;
-                Some(Box::new(Rust::new()))
-            }
+        match &self.next {
             None => None,
+            Some(b) => {
+                let result = b.get_backend();
+                self.next = b.next();
+                Some(result)
+            }
         }
     }
 }
