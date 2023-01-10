@@ -7,7 +7,7 @@ use crate::env::get_editor;
 
 pub fn run_edit_command(files: &[PathBuf]) -> Result<ExitStatus> {
     let mut cmd = Command::new(get_editor()?);
-    cmd.current_dir(&files[0]);
+    cmd.current_dir(files[0].parent().unwrap());
     for f in files {
         cmd.arg(f.to_string_lossy().to_string());
     }
