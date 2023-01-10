@@ -12,7 +12,7 @@ clap = "3.*"
 [profile.release]
 lto = "fat"
 codegen-units = 1
-strip = true
+debug = true
 
 [dev-dependencies]
 criterion = "*"

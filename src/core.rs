@@ -1,11 +1,10 @@
-use std::collections::{HashMap, HashSet};
-use std::process::exit;
+use std::collections::HashSet;
 
 use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
-use crate::backend::{Backend, Backends, Pacman};
+use crate::backend::{Backend, Backends};
 use crate::cmd::run_edit_command;
 use crate::ui::get_user_confirmation;
 use crate::Group;
@@ -22,16 +21,12 @@ impl Pacdef {
     }
 
     pub(crate) fn install_packages(&self) {
-        let mut to_install = ToInstallPerBackend::new();
+        let mut to_install = ToDoPerBackend::new();
 
         for mut b in Backends::iter() {
             print!("{}: ", b.get_binary());
 
-            // dbg!(&self.groups);
-
             b.load(&self.groups);
-
-            // dbg!(b.get_managed_packages());
 
             let diff = b.get_missing_packages_sorted();
             if diff.is_empty() {
@@ -96,7 +91,9 @@ impl Pacdef {
     }
 
     pub(crate) fn show_unmanaged_packages(self) {
-        for b in Backends::iter() {
+        for mut b in Backends::iter() {
+            b.load(&self.groups);
+
             let unmanaged = b.get_unmanaged_packages_sorted();
             if unmanaged.is_empty() {
                 continue;
@@ -146,9 +143,9 @@ impl Pacdef {
     // }
 }
 
-struct ToInstallPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
+struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
 
-impl ToInstallPerBackend {
+impl ToDoPerBackend {
     fn new() -> Self {
         Self(vec![])
     }
@@ -157,9 +154,9 @@ impl ToInstallPerBackend {
         self.0.push(item);
     }
 
-    fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
-        self.0.iter()
-    }
+    // fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
+    //     self.0.iter()
+    // }
 
     fn nothing_to_do_for_all_backends(&self) -> bool {
         self.0.iter().all(|(_, diff)| diff.is_empty())
