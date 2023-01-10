@@ -33,5 +33,11 @@ macro_rules! impl_backend_constants {
                     self.packages.insert(package.clone());
                 })
         }
+
+        fn add_packages(&mut self, packages: HashSet<Package>) {
+            for p in packages {
+                self.packages.insert(p);
+            }
+        }
     };
 }

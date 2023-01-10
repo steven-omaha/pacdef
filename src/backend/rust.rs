@@ -24,12 +24,6 @@ impl Backend for Rust {
     fn get_explicitly_installed_packages(&self) -> HashSet<Package> {
         self.get_all_installed_packages()
     }
-
-    fn add_packages(&mut self, packages: HashSet<Package>) {
-        for p in packages {
-            self.packages.insert(p);
-        }
-    }
 }
 
 fn run_cargo_install_list() -> String {

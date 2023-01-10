@@ -25,12 +25,6 @@ impl Backend for Pacman {
     fn get_explicitly_installed_packages(&self) -> HashSet<Package> {
         convert_to_pacdef_packages(get_explicitly_installed_packages_from_alpm())
     }
-
-    fn add_packages(&mut self, packages: HashSet<Package>) {
-        for p in packages {
-            self.packages.insert(p);
-        }
-    }
 }
 
 fn get_all_installed_packages_from_alpm() -> HashSet<String> {
