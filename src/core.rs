@@ -4,8 +4,9 @@ use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
-use crate::backend::{Backends, ToDoPerBackend};
+use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
+use crate::env::get_single_var;
 use crate::ui::get_user_confirmation;
 use crate::Group;
 
@@ -32,7 +33,9 @@ impl Pacdef {
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
             Some((_, _)) => todo!(),
-            None => unreachable!(),
+            None => {
+                unreachable!("argument parser requires some subcommand to return an `ArgMatches`")
+            }
         }
     }
 
@@ -44,7 +47,7 @@ impl Pacdef {
 
             match backend.get_missing_packages_sorted() {
                 Ok(diff) => to_install.push((backend, diff)),
-                Err(e) => println!("WARNING: skipping backend '{}': {e}", backend.get_section()),
+                Err(error) => show_error(error, backend),
             };
         }
 
@@ -123,7 +126,7 @@ impl Pacdef {
 
             match backend.get_unmanaged_packages_sorted() {
                 Ok(unmanaged) => result.push((backend, unmanaged)),
-                Err(e) => println!("WARNING: skipping backend '{}': {e}", backend.get_section()),
+                Err(error) => show_error(error, backend),
             };
         }
         result
@@ -163,5 +166,17 @@ impl Pacdef {
         for (backend, packages) in to_remove.into_iter() {
             backend.remove_packages(packages);
         }
+    }
+}
+
+fn show_error(error: anyhow::Error, backend: Box<dyn Backend>) {
+    let section = backend.get_section();
+    match get_single_var("RUST_BACKTRACE") {
+        Some(s) => {
+            if s == "1" || s == "full" {
+                println!("WARNING: skipping backend '{section}': {error:?}\n");
+            }
+        }
+        None => println!("WARNING: skipping backend '{section}': {error}"),
     }
 }

@@ -9,3 +9,7 @@ pub(crate) fn get_editor() -> Result<String> {
 fn check_vars_in_order(vars: &[&str]) -> Option<String> {
     vars.iter().flat_map(|v| var(v).ok()).next()
 }
+
+pub(crate) fn get_single_var(variable: &str) -> Option<String> {
+    var(variable).ok()
+}
