@@ -58,7 +58,7 @@ impl Pacdef {
         match self.args.subcommand() {
             // Some((action::CLEAN, _)) => Ok(self.clean_packages()),
             Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
-            // Some((action::GROUPS, _)) => Ok(self.show_groups()),
+            Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
@@ -128,14 +128,13 @@ impl Pacdef {
     //     result
     // }
 
-    // pub(crate) fn show_groups(mut self) {
-    //     let groups = self.groups.take().unwrap();
-    //     let mut vec: Vec<_> = groups.iter().collect();
-    //     vec.sort_unstable();
-    //     for g in vec {
-    //         println!("{}", g.name);
-    //     }
-    // }
+    fn show_groups(self) {
+        let mut vec: Vec<_> = self.groups.iter().collect();
+        vec.sort_unstable();
+        for g in vec {
+            println!("{}", g.name);
+        }
+    }
 
     // fn clean_packages(mut self) {
     //     let unmanaged = self.get_unmanaged_packages();
