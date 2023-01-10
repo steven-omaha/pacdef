@@ -16,6 +16,12 @@ fn get_arg_parser() -> Command<'static> {
                 .arg(Arg::new("group").multiple_values(true)),
         )
         .subcommand(Command::new(GROUPS).about("show names of imported groups"))
+        .subcommand(
+            Command::new(SHOW)
+                .about("show packages under an imported group")
+                .arg_required_else_help(true)
+                .arg(Arg::new("group").multiple_values(true)),
+        )
         .subcommand(Command::new(SYNC).about("install packages from all imported groups"))
         .subcommand(
             Command::new(UNMANAGED)

@@ -29,6 +29,7 @@ impl Pacdef {
                 self.edit_group_files(groups).context("editing group files")
             }
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
+            Some((action::SHOW, _)) => Ok(self.show_packages_under_group()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
@@ -165,6 +166,14 @@ impl Pacdef {
 
         for (backend, packages) in to_remove.into_iter() {
             backend.remove_packages(packages);
+        }
+    }
+
+    fn show_packages_under_group(&self) {
+        let groups = self.args.get_many::<String>("group").unwrap();
+        for arg_group in groups {
+            let group = self.groups.iter().find(|g| g.name == *arg_group).unwrap();
+            println!("{group}");
         }
     }
 }
