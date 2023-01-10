@@ -1,5 +1,6 @@
 use std::io::{BufRead, Write};
 
+#[must_use]
 pub(crate) fn get_user_confirmation() -> bool {
     print!("Continue? [Y/n] ");
     std::io::stdout().flush().unwrap();

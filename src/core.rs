@@ -56,13 +56,14 @@ impl Pacdef {
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
         match self.args.subcommand() {
-            // Some((action::CLEAN, _)) => Ok(self.clean_packages()),
+            Some((action::CLEAN, _)) => Ok(self.clean_packages()),
             Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
-            _ => todo!(),
+            Some((_, _)) => todo!(),
+            None => unreachable!(),
         }
     }
 
@@ -116,18 +117,6 @@ impl Pacdef {
         result
     }
 
-    // /// Returns a `Vec` of alphabetically sorted unmanaged packages.
-    // pub(crate) fn get_unmanaged_packages(&mut self) -> Vec<Package> {
-    //     let managed = self.take_packages_as_set();
-    //     let explicitly_installed = Pacman::get_explicitly_installed_packages();
-    //     let mut result: Vec<_> = explicitly_installed
-    //         .into_iter()
-    //         .filter(|p| !managed.contains(p))
-    //         .collect();
-    //     result.sort_unstable();
-    //     result
-    // }
-
     fn show_groups(self) {
         let mut vec: Vec<_> = self.groups.iter().collect();
         vec.sort_unstable();
@@ -136,20 +125,33 @@ impl Pacdef {
         }
     }
 
-    // fn clean_packages(mut self) {
-    //     let unmanaged = self.get_unmanaged_packages();
-    //     if unmanaged.is_empty() {
-    //         println!("nothing to do");
-    //         return;
-    //     }
+    fn clean_packages(self) {
+        let to_remove = self.get_unmanaged_packages();
+        if to_remove.is_empty() {
+            println!("nothing to do");
+            return;
+        }
 
-    //     println!("Would remove the following packages and their dependencies:");
-    //     for p in &unmanaged {
-    //         println!("  {p}");
-    //     }
-    //     get_user_confirmation();
-    //     Pacman::remove_packages(unmanaged);
-    // }
+        println!("Would remove the following packages and their dependencies:");
+        for (backend, packages) in to_remove.iter() {
+            if packages.is_empty() {
+                continue;
+            }
+
+            println!("  {}", backend.get_section());
+            for package in packages {
+                println!("    {}", package);
+            }
+        }
+
+        if !get_user_confirmation() {
+            return;
+        };
+
+        for (backend, packages) in to_remove.into_iter() {
+            backend.remove_packages(packages);
+        }
+    }
 }
 
 struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
@@ -161,6 +163,10 @@ impl ToDoPerBackend {
 
     fn push(&mut self, item: (Box<dyn Backend>, Vec<Package>)) {
         self.0.push(item);
+    }
+
+    fn into_iter(self) -> impl Iterator<Item = (Box<dyn Backend>, Vec<Package>)> {
+        self.0.into_iter()
     }
 
     fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
@@ -175,5 +181,9 @@ impl ToDoPerBackend {
         self.0
             .iter()
             .for_each(|(backend, diff)| backend.install_packages(diff));
+    }
+
+    fn is_empty(&self) -> bool {
+        self.0.iter().all(|(_, packages)| packages.is_empty())
     }
 }
