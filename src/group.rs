@@ -9,8 +9,8 @@ use crate::section::Section;
 
 #[derive(Debug)]
 pub struct Group {
-    pub name: String,
-    pub sections: HashSet<Section>,
+    pub(crate) name: String,
+    pub(crate) sections: HashSet<Section>,
 }
 
 impl Group {

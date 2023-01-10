@@ -23,17 +23,6 @@ impl Backends {
     pub fn iter() -> BackendIter {
         BackendIter(Some(Self::Pacman))
     }
-
-    fn get(&self) -> Box<dyn Backend> {
-        match self {
-            Self::Pacman => Box::new(Pacman {
-                packages: HashSet::new(),
-            }),
-            Self::Rust => Box::new(Rust {
-                packages: HashSet::new(),
-            }),
-        }
-    }
 }
 
 #[derive(Debug)]

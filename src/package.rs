@@ -1,10 +1,9 @@
-use std::collections::HashSet;
 use std::fmt::{Display, Write};
 use std::hash::Hash;
 
 #[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
-    pub name: String,
+    pub(crate) name: String,
     repo: Option<String>,
 }
 
@@ -16,15 +15,6 @@ fn remove_all_but_package_name(s: &str) -> &str {
 }
 
 impl Package {
-    pub(crate) fn from_lines(
-        lines: impl Iterator<Item = Result<String, std::io::Error>>,
-    ) -> HashSet<Self> {
-        lines
-            .into_iter()
-            .filter_map(|l| Package::try_from(l.unwrap()))
-            .collect()
-    }
-
     fn split_into_name_and_repo(s: &str) -> (String, Option<String>) {
         let mut iter = s.split('/').rev();
         let name = iter.next().unwrap().to_string();
