@@ -57,7 +57,9 @@ impl Pacdef {
     pub fn run_action_from_arg(self) -> Result<()> {
         match self.args.subcommand() {
             Some((action::CLEAN, _)) => Ok(self.clean_packages()),
-            Some((action::EDIT, groups)) => self.edit_group_files(groups).context("editing"),
+            Some((action::EDIT, groups)) => {
+                self.edit_group_files(groups).context("editing group files")
+            }
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
@@ -77,6 +79,13 @@ impl Pacdef {
                 buf
             })
             .collect();
+
+        for file in &files {
+            if !file.exists() {
+                bail!("group file {} not found", file.to_string_lossy());
+            }
+        }
+
         if run_edit_command(&files)
             .context("running editor")?
             .success()
