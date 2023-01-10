@@ -15,6 +15,7 @@ pub struct Pacdef {
 }
 
 impl Pacdef {
+    #[must_use]
     pub fn new(args: ArgMatches, groups: HashSet<Group>) -> Self {
         Self { args, groups }
     }
@@ -62,7 +63,7 @@ impl Pacdef {
             return;
         };
 
-        to_install.install_missing_packages()
+        to_install.install_missing_packages();
     }
 
     fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
@@ -95,7 +96,7 @@ impl Pacdef {
     }
 
     fn show_version(self) {
-        println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"))
+        println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"));
     }
 
     fn show_unmanaged_packages(self) {
@@ -147,7 +148,7 @@ impl Pacdef {
 
             println!("  {}", backend.get_section());
             for package in packages {
-                println!("    {}", package);
+                println!("    {package}");
             }
         }
 

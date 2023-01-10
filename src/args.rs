@@ -25,6 +25,7 @@ fn get_arg_parser() -> Command<'static> {
     result
 }
 
-pub fn get_args() -> clap::ArgMatches {
+#[must_use]
+pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
 }

@@ -23,7 +23,7 @@ impl Group {
             let path = file.path();
 
             let group =
-                Group::try_from(&path).with_context(|| format!("reading group file {:?}", path))?;
+                Group::try_from(&path).with_context(|| format!("reading group file {path:?}"))?;
             result.insert(group);
         }
 
