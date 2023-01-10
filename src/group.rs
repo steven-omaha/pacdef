@@ -68,8 +68,12 @@ impl Group {
         P: AsRef<Path>,
     {
         let path = p.as_ref();
-        let content = read_to_string(path).unwrap();
-        let name = path.file_name().unwrap().to_string_lossy().to_string();
+        let content = read_to_string(path).context("reading file content")?;
+        let name = path
+            .file_name()
+            .context("getting file name")?
+            .to_string_lossy()
+            .to_string();
 
         let mut lines = content.lines().peekable();
         let mut sections = HashSet::new();

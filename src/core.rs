@@ -1,14 +1,13 @@
 use std::collections::HashSet;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
-use crate::backend::{Backend, Backends};
+use crate::backend::{Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::ui::get_user_confirmation;
 use crate::Group;
-use crate::Package;
 
 pub struct Pacdef {
     args: ArgMatches,
@@ -18,39 +17,6 @@ pub struct Pacdef {
 impl Pacdef {
     pub fn new(args: ArgMatches, groups: HashSet<Group>) -> Self {
         Self { args, groups }
-    }
-
-    fn install_packages(&self) {
-        let mut to_install = ToDoPerBackend::new();
-
-        for mut b in Backends::iter() {
-            print!("{}: ", b.get_binary());
-
-            b.load(&self.groups);
-
-            let diff = b.get_missing_packages_sorted();
-            if diff.is_empty() {
-                println!("nothing to do");
-                continue;
-            }
-
-            println!("would install the following packages");
-            for p in &diff {
-                println!("  {p}");
-            }
-            to_install.push((b, diff));
-            println!();
-        }
-
-        if to_install.nothing_to_do_for_all_backends() {
-            return;
-        }
-
-        if !get_user_confirmation() {
-            return;
-        };
-
-        to_install.install_missing_packages()
     }
 
     #[allow(clippy::unit_arg)]
@@ -69,31 +35,63 @@ impl Pacdef {
         }
     }
 
+    fn get_missing_packages(&self) -> ToDoPerBackend {
+        let mut to_install = ToDoPerBackend::new();
+
+        for mut b in Backends::iter() {
+            b.load(&self.groups);
+
+            let diff = b.get_missing_packages_sorted();
+            to_install.push((b, diff));
+        }
+
+        to_install
+    }
+
+    fn install_packages(&self) {
+        let to_install = self.get_missing_packages();
+
+        if to_install.nothing_to_do_for_all_backends() {
+            println!("nothing to do");
+            return;
+        }
+
+        to_install.show();
+
+        if !get_user_confirmation() {
+            return;
+        };
+
+        to_install.install_missing_packages()
+    }
+
     fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
+        let group_dir = crate::path::get_pacdef_group_dir()?;
+
         let files: Vec<_> = groups
             .get_many::<String>("group")
             .context("getting group from args")?
             .map(|file| {
-                let mut buf = crate::path::get_pacdef_group_dir().unwrap();
+                let mut buf = group_dir.clone();
                 buf.push(file);
                 buf
             })
             .collect();
 
         for file in &files {
-            if !file.exists() {
-                bail!("group file {} not found", file.to_string_lossy());
-            }
+            ensure!(
+                file.exists(),
+                "group file {} not found",
+                file.to_string_lossy()
+            );
         }
 
-        if run_edit_command(&files)
+        let success = run_edit_command(&files)
             .context("running editor")?
-            .success()
-        {
-            Ok(())
-        } else {
-            bail!("editor exited with error")
-        }
+            .success();
+
+        ensure!(success, "editor exited with error");
+        Ok(())
     }
 
     fn show_version(self) {
@@ -160,39 +158,5 @@ impl Pacdef {
         for (backend, packages) in to_remove.into_iter() {
             backend.remove_packages(packages);
         }
-    }
-}
-
-struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
-
-impl ToDoPerBackend {
-    fn new() -> Self {
-        Self(vec![])
-    }
-
-    fn push(&mut self, item: (Box<dyn Backend>, Vec<Package>)) {
-        self.0.push(item);
-    }
-
-    fn into_iter(self) -> impl Iterator<Item = (Box<dyn Backend>, Vec<Package>)> {
-        self.0.into_iter()
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
-        self.0.iter()
-    }
-
-    fn nothing_to_do_for_all_backends(&self) -> bool {
-        self.0.iter().all(|(_, diff)| diff.is_empty())
-    }
-
-    fn install_missing_packages(&self) {
-        self.0
-            .iter()
-            .for_each(|(backend, diff)| backend.install_packages(diff));
-    }
-
-    fn is_empty(&self) -> bool {
-        self.0.iter().all(|(_, packages)| packages.is_empty())
     }
 }
