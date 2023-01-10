@@ -103,7 +103,7 @@ pub(crate) trait Backend {
             .skip(1)
             .filter(|line| !line.starts_with('['))
             .fuse()
-            .map(Package::from)
+            .filter_map(Package::try_from)
             .collect()
     }
 

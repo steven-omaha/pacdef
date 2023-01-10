@@ -8,21 +8,6 @@ pub struct Package {
     repo: Option<String>,
 }
 
-impl From<&str> for Package {
-    fn from(s: &str) -> Self {
-        let trimmed = remove_all_but_package_name(s);
-
-        let (name, repo) = Self::split_into_name_and_repo(trimmed);
-        Self { name, repo }
-    }
-}
-
-impl From<String> for Package {
-    fn from(value: String) -> Self {
-        Package::from(value.as_ref())
-    }
-}
-
 fn remove_all_but_package_name(s: &str) -> &str {
     s.split('#') // remove comment
         .next()
@@ -36,7 +21,7 @@ impl Package {
     ) -> HashSet<Self> {
         lines
             .into_iter()
-            .map(|l| Package::from(l.unwrap()))
+            .filter_map(|l| Package::try_from(l.unwrap()))
             .collect()
     }
 
@@ -45,6 +30,19 @@ impl Package {
         let name = iter.next().unwrap().to_string();
         let repo = iter.next().map(|s| s.to_string());
         (name, repo)
+    }
+
+    pub(crate) fn try_from<S>(s: S) -> Option<Self>
+    where
+        S: AsRef<str>,
+    {
+        let trimmed = remove_all_but_package_name(s.as_ref());
+        if trimmed.is_empty() {
+            return None;
+        }
+
+        let (name, repo) = Self::split_into_name_and_repo(trimmed);
+        Some(Self { name, repo })
     }
 }
 
@@ -100,7 +98,7 @@ mod tests {
     #[test]
     fn from() {
         let x = "myrepo/somepackage  #  ".to_string();
-        let p = Package::from(x);
+        let p = Package::try_from(x).unwrap();
         assert_eq!(p.name, "somepackage");
         assert_eq!(p.repo, Some("myrepo".to_string()));
     }

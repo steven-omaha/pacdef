@@ -17,7 +17,7 @@ impl Backend for Rust {
 
     fn get_all_installed_packages(&self) -> HashSet<Package> {
         extract_packages_names(&run_cargo_install_list())
-            .map(Package::from)
+            .filter_map(Package::try_from)
             .collect()
     }
 

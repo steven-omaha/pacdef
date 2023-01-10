@@ -47,7 +47,7 @@ fn get_explicitly_installed_packages_from_alpm() -> HashSet<String> {
 }
 
 fn convert_to_pacdef_packages(packages: HashSet<String>) -> HashSet<Package> {
-    packages.into_iter().map(Package::from).collect()
+    packages.into_iter().filter_map(Package::try_from).collect()
 }
 
 impl Pacman {

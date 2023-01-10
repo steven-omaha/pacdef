@@ -1,4 +1,6 @@
-use std::{collections::HashSet, hash::Hash};
+use std::{collections::HashSet, hash::Hash, iter::Peekable};
+
+use anyhow::{Context, Result};
 
 use crate::Package;
 
@@ -13,22 +15,25 @@ impl Section {
         Self { name, packages }
     }
 
-    pub fn from_lines<'a>(iter: &mut (impl Iterator<Item = &'a str> + std::fmt::Debug)) -> Self {
+    pub(crate) fn try_from_lines<'a>(
+        iter: &mut Peekable<(impl Iterator<Item = &'a str> + std::fmt::Debug)>,
+    ) -> Result<Self> {
         let name = iter
             .find(|line| line.starts_with('['))
-            .unwrap()
+            .context("finding beginning of next section")?
             .trim()
             .trim_start_matches('[')
             .trim_end_matches(']')
             .to_string();
 
-        let packages = iter
-            .take_while(|line| !line.starts_with('['))
-            .map(Package::try_from)
-            .filter_map(|p| p.ok())
-            .collect();
-
-        Self::new(name, packages)
+        let mut packages = HashSet::new();
+        // `while let` is unstable, unfortunately
+        while iter.peek().is_some() && !iter.peek().unwrap().starts_with('[') {
+            if let Some(package) = Package::try_from(iter.next().unwrap()) {
+                packages.insert(package);
+            }
+        }
+        Ok(Self::new(name, packages))
     }
 }
 

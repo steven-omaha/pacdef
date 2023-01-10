@@ -1,13 +1,11 @@
 use std::collections::HashSet;
-use std::fs::{read_to_string, File};
+use std::fs::read_to_string;
 use std::hash::Hash;
-use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 
 use crate::section::Section;
-use crate::Package;
 
 #[derive(Debug)]
 pub struct Group {
@@ -21,10 +19,11 @@ impl Group {
 
         let path = crate::path::get_pacdef_group_dir().context("getting pacdef group dir")?;
         for entry in path.read_dir().context("reading group dir")? {
-            let file = entry.context("getting a file")?;
+            let file = entry.context("getting group file")?;
             let path = file.path();
 
-            let group = Group::try_from(path)?;
+            let group =
+                Group::try_from(&path).with_context(|| format!("reading group file {:?}", path))?;
             result.insert(group);
         }
 
@@ -63,11 +62,11 @@ impl Eq for Group {
     fn assert_receiver_is_total_eq(&self) {}
 }
 
-impl<P> From<P> for Group
-where
-    P: AsRef<Path>,
-{
-    fn from(p: P) -> Self {
+impl Group {
+    fn try_from<P>(p: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
         let path = p.as_ref();
         let content = read_to_string(path).unwrap();
         let name = path.file_name().unwrap().to_string_lossy().to_string();
@@ -76,10 +75,11 @@ where
         let mut sections = HashSet::new();
 
         while lines.peek().is_some() {
-            let section = Section::from_lines(&mut lines);
-            sections.insert(section);
+            if let Ok(section) = Section::try_from_lines(&mut lines).context("reading section") {
+                sections.insert(section);
+            }
         }
 
-        Self { name, sections }
+        Ok(Self { name, sections })
     }
 }
