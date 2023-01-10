@@ -39,11 +39,13 @@ impl Pacdef {
     fn get_missing_packages(&self) -> ToDoPerBackend {
         let mut to_install = ToDoPerBackend::new();
 
-        for mut b in Backends::iter() {
-            b.load(&self.groups);
+        for mut backend in Backends::iter() {
+            backend.load(&self.groups);
 
-            let diff = b.get_missing_packages_sorted();
-            to_install.push((b, diff));
+            match backend.get_missing_packages_sorted() {
+                Ok(diff) => to_install.push((backend, diff)),
+                Err(e) => println!("WARNING: skipping backend '{}': {e}", backend.get_section()),
+            };
         }
 
         to_install
@@ -119,8 +121,10 @@ impl Pacdef {
         for mut backend in Backends::iter() {
             backend.load(&self.groups);
 
-            let unmanaged = backend.get_unmanaged_packages_sorted();
-            result.push((backend, unmanaged));
+            match backend.get_unmanaged_packages_sorted() {
+                Ok(unmanaged) => result.push((backend, unmanaged)),
+                Err(e) => println!("WARNING: skipping backend '{}': {e}", backend.get_section()),
+            };
         }
         result
     }

@@ -7,6 +7,8 @@ use std::collections::HashSet;
 use std::os::unix::process::CommandExt;
 use std::process::Command;
 
+use anyhow::{Context, Result};
+
 use crate::{Group, Package};
 
 pub(crate) use todo_per_backend::ToDoPerBackend;
@@ -58,10 +60,10 @@ pub(crate) trait Backend {
     fn load(&mut self, groups: &HashSet<Group>);
 
     /// Get all packages that are installed in the system.
-    fn get_all_installed_packages(&self) -> HashSet<Package>;
+    fn get_all_installed_packages(&self) -> Result<HashSet<Package>>;
 
     /// Get all packages that were installed in the system explicitly.
-    fn get_explicitly_installed_packages(&self) -> HashSet<Package>;
+    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>>;
 
     /// Install the specified packages.
     fn install_packages(&self, packages: &[Package]) {
@@ -99,21 +101,25 @@ pub(crate) trait Backend {
             .collect()
     }
 
-    fn get_missing_packages_sorted(&self) -> Vec<Package> {
-        let installed = self.get_all_installed_packages();
+    fn get_missing_packages_sorted(&self) -> Result<Vec<Package>> {
+        let installed = self
+            .get_all_installed_packages()
+            .context("could not get installed packages")?;
         let managed = self.get_managed_packages();
         let mut diff: Vec<_> = managed.difference(&installed).cloned().collect();
         diff.sort_unstable();
-        diff
+        Ok(diff)
     }
 
     fn add_packages(&mut self, packages: HashSet<Package>);
 
-    fn get_unmanaged_packages_sorted(&self) -> Vec<Package> {
-        let installed = self.get_explicitly_installed_packages();
+    fn get_unmanaged_packages_sorted(&self) -> Result<Vec<Package>> {
+        let installed = self
+            .get_explicitly_installed_packages()
+            .context("could not get explicitly installed packages")?;
         let required = self.get_managed_packages();
         let mut diff: Vec<_> = installed.difference(required).cloned().collect();
         diff.sort_unstable();
-        diff
+        Ok(diff)
     }
 }

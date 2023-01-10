@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
+use anyhow::Result;
 
 use super::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
@@ -18,12 +19,16 @@ const SWITCHES_REMOVE: Switches = &["-Rsn"];
 impl Backend for Pacman {
     impl_backend_constants!();
 
-    fn get_all_installed_packages(&self) -> HashSet<Package> {
-        convert_to_pacdef_packages(get_all_installed_packages_from_alpm())
+    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
+        Ok(convert_to_pacdef_packages(
+            get_all_installed_packages_from_alpm(),
+        ))
     }
 
-    fn get_explicitly_installed_packages(&self) -> HashSet<Package> {
-        convert_to_pacdef_packages(get_explicitly_installed_packages_from_alpm())
+    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
+        Ok(convert_to_pacdef_packages(
+            get_explicitly_installed_packages_from_alpm(),
+        ))
     }
 }
 
