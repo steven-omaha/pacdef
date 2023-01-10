@@ -90,20 +90,30 @@ impl Pacdef {
         println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"))
     }
 
-    pub(crate) fn show_unmanaged_packages(self) {
-        for mut b in Backends::iter() {
-            b.load(&self.groups);
+    fn show_unmanaged_packages(self) {
+        let unmanaged_per_backend = &self.get_unmanaged_packages();
 
-            let unmanaged = b.get_unmanaged_packages_sorted();
-            if unmanaged.is_empty() {
+        for (backend, packages) in unmanaged_per_backend.iter() {
+            if packages.is_empty() {
                 continue;
             }
-
-            println!("{}", b.get_section());
-            for p in unmanaged {
-                println!("  {p}");
+            println!("{}", backend.get_section());
+            for package in packages {
+                println!("  {package}");
             }
         }
+    }
+
+    fn get_unmanaged_packages(self) -> ToDoPerBackend {
+        let mut result = ToDoPerBackend::new();
+
+        for mut backend in Backends::iter() {
+            backend.load(&self.groups);
+
+            let unmanaged = backend.get_unmanaged_packages_sorted();
+            result.push((backend, unmanaged));
+        }
+        result
     }
 
     // /// Returns a `Vec` of alphabetically sorted unmanaged packages.
@@ -154,9 +164,9 @@ impl ToDoPerBackend {
         self.0.push(item);
     }
 
-    // fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
-    //     self.0.iter()
-    // }
+    fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
+        self.0.iter()
+    }
 
     fn nothing_to_do_for_all_backends(&self) -> bool {
         self.0.iter().all(|(_, diff)| diff.is_empty())
