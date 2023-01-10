@@ -11,8 +11,8 @@ use crate::Group;
 use crate::Package;
 
 pub struct Pacdef {
-    pub(crate) args: ArgMatches,
-    pub(crate) groups: HashSet<Group>,
+    args: ArgMatches,
+    groups: HashSet<Group>,
 }
 
 impl Pacdef {
@@ -20,7 +20,7 @@ impl Pacdef {
         Self { args, groups }
     }
 
-    pub(crate) fn install_packages(&self) {
+    fn install_packages(&self) {
         let mut to_install = ToDoPerBackend::new();
 
         for mut b in Backends::iter() {
@@ -69,7 +69,7 @@ impl Pacdef {
         }
     }
 
-    pub(crate) fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
+    fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
         let files: Vec<_> = groups
             .get_many::<String>("group")
             .context("getting group from args")?
@@ -96,7 +96,7 @@ impl Pacdef {
         }
     }
 
-    pub(crate) fn show_version(self) {
+    fn show_version(self) {
         println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"))
     }
 
