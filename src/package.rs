@@ -14,6 +14,16 @@ fn remove_all_but_package_name(s: &str) -> &str {
         .trim() // remove whitespace
 }
 
+impl From<String> for Package {
+    fn from(value: String) -> Self {
+        let trimmed = remove_all_but_package_name(&value);
+        debug_assert!(!trimmed.is_empty(), "empty package names are not allowed");
+
+        let (name, repo) = Self::split_into_name_and_repo(trimmed);
+        Self { name, repo }
+    }
+}
+
 impl Package {
     fn split_into_name_and_repo(s: &str) -> (String, Option<String>) {
         let mut iter = s.split('/').rev();
