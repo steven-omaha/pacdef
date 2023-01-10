@@ -24,6 +24,6 @@ fn get_xdg_config_home() -> Result<PathBuf> {
     }
 }
 
-fn get_home_dir() -> Result<PathBuf> {
+pub(crate) fn get_home_dir() -> Result<PathBuf> {
     Ok(env::var("HOME").context("getting $HOME variable")?.into())
 }

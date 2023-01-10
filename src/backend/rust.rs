@@ -1,4 +1,9 @@
-use std::{collections::HashSet, process::Command};
+use std::collections::HashSet;
+use std::fs::read_to_string;
+use std::path::PathBuf;
+
+use anyhow::Result;
+use serde_json::Value;
 
 use super::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
@@ -16,9 +21,10 @@ impl Backend for Rust {
     impl_backend_constants!();
 
     fn get_all_installed_packages(&self) -> HashSet<Package> {
-        extract_packages_names(&run_cargo_install_list())
-            .filter_map(Package::try_from)
-            .collect()
+        let file = get_crates_file().unwrap();
+        let content = read_to_string(file).unwrap();
+        let json: Value = serde_json::from_str(&content).unwrap();
+        extract_packages(json)
     }
 
     fn get_explicitly_installed_packages(&self) -> HashSet<Package> {
@@ -26,20 +32,16 @@ impl Backend for Rust {
     }
 }
 
-fn run_cargo_install_list() -> String {
-    let stdout = Command::new("cargo")
-        .args(["install", "--list"])
-        .output()
+fn extract_packages(json: Value) -> HashSet<Package> {
+    json.get("installs")
         .unwrap()
-        .stdout;
-    String::from_utf8(stdout).unwrap()
-}
-
-fn extract_packages_names(output: &str) -> impl Iterator<Item = String> + '_ {
-    output
-        .lines()
-        .filter(|line| !line.starts_with(char::is_whitespace))
-        .map(|line| line.split_whitespace().next().unwrap().to_owned())
+        .as_object()
+        .unwrap()
+        .into_iter()
+        .map(|(name, _)| name)
+        .map(|name| name.split_whitespace().next().unwrap())
+        .filter_map(Package::try_from)
+        .collect()
 }
 
 impl Rust {
@@ -56,40 +58,9 @@ impl Default for Rust {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::extract_packages_names;
-
-    #[test]
-    fn test_extract_packages() {
-        const OUTPUT: &str = "cargo-audit v0.17.4:
-    cargo-audit
-cargo-cache v0.8.3:
-    cargo-cache
-cargo-criterion v1.1.0:
-    cargo-criterion
-cargo-update v11.1.1:
-    cargo-install-update
-    cargo-install-update-config
-flamegraph v0.6.2:
-    cargo-flamegraph
-    flamegraph
-topgrade v10.1.2 (/home/ratajc72/tmp/topgrade):
-    topgrade
-wthrr v0.6.1:
-    wthrr";
-        let extracted: Vec<String> = extract_packages_names(OUTPUT).collect();
-        assert_eq!(
-            &extracted,
-            &[
-                "cargo-audit",
-                "cargo-cache",
-                "cargo-criterion",
-                "cargo-update",
-                "flamegraph",
-                "topgrade",
-                "wthrr"
-            ]
-        );
-    }
+fn get_crates_file() -> Result<PathBuf> {
+    let mut result = crate::path::get_home_dir()?;
+    result.push(".cargo");
+    result.push(".crates2.json");
+    Ok(result)
 }
