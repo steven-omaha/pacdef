@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! impl_backend_constants {
-    ($name:ident) => {
+    () => {
         fn get_binary(&self) -> Text {
             BINARY
         }

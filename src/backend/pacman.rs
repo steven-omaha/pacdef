@@ -16,7 +16,7 @@ const SWITCHES_INSTALL: Switches = &["-S"];
 const SWITCHES_REMOVE: Switches = &["-Rsn"];
 
 impl Backend for Pacman {
-    impl_backend_constants!(Pacman);
+    impl_backend_constants!();
 
     fn get_all_installed_packages(&self) -> HashSet<Package> {
         convert_to_pacdef_packages(get_all_installed_packages_from_alpm())

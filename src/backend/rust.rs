@@ -13,7 +13,7 @@ const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 impl Backend for Rust {
-    impl_backend_constants!(Rust);
+    impl_backend_constants!();
 
     fn get_all_installed_packages(&self) -> HashSet<Package> {
         extract_packages_names(&run_cargo_install_list())
