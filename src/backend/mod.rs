@@ -11,10 +11,10 @@ use anyhow::{Context, Result};
 
 use crate::{Group, Package};
 
-pub(crate) use todo_per_backend::ToDoPerBackend;
-
 pub(crate) use pacman::Pacman;
 pub(crate) use rust::Rust;
+pub(crate) use todo_per_backend::ToDoPerBackend;
+
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
