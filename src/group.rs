@@ -1,7 +1,7 @@
-use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::hash::Hash;
 use std::path::Path;
+use std::{collections::HashSet, fmt::Display};
 
 use anyhow::{Context, Result};
 
@@ -85,5 +85,17 @@ impl Group {
         }
 
         Ok(Self { name, sections })
+    }
+}
+
+impl Display for Group {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut sections: Vec<_> = self.sections.iter().collect();
+        sections.sort_unstable();
+
+        for section in sections {
+            section.fmt(f)?;
+        }
+        Ok(())
     }
 }

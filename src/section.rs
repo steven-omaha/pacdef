@@ -1,4 +1,9 @@
-use std::{collections::HashSet, hash::Hash, iter::Peekable};
+use std::{
+    collections::HashSet,
+    fmt::{Display, Write},
+    hash::Hash,
+    iter::Peekable,
+};
 
 use anyhow::{Context, Result};
 
@@ -46,5 +51,37 @@ impl Hash for Section {
 impl PartialEq for Section {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
+    }
+}
+
+impl PartialOrd for Section {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.name.partial_cmp(&other.name)
+    }
+}
+
+impl Ord for Section {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        todo!()
+    }
+}
+
+impl Display for Section {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("[{}]\n", &self.name))?;
+
+        let mut packages: Vec<_> = self.packages.iter().collect();
+        packages.sort_unstable();
+
+        let mut iter = packages.iter().peekable();
+
+        while let Some(package) = iter.next() {
+            package.fmt(f)?;
+            if iter.peek().is_some() {
+                f.write_char('\n')?;
+            }
+        }
+
+        Ok(())
     }
 }

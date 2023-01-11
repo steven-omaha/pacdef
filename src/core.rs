@@ -29,7 +29,9 @@ impl Pacdef {
                 self.edit_group_files(groups).context("editing group files")
             }
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
-            Some((action::SHOW, _)) => Ok(self.show_packages_under_group()),
+            Some((action::SHOW, groups)) => {
+                self.show_group_content(groups).context("showing groups")
+            }
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((action::VERSION, _)) => Ok(self.show_version()),
@@ -169,12 +171,13 @@ impl Pacdef {
         }
     }
 
-    fn show_packages_under_group(&self) {
-        let groups = self.args.get_many::<String>("group").unwrap();
+    fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
+        let groups = groups.get_many::<String>("group").unwrap();
         for arg_group in groups {
             let group = self.groups.iter().find(|g| g.name == *arg_group).unwrap();
             println!("{group}");
         }
+        Ok(())
     }
 }
 
