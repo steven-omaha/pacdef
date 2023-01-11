@@ -23,6 +23,11 @@ impl Pacdef {
 
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
+        // TODO import
+        // TODO new
+        // TODO remove
+        // TODO review
+        // TODO search
         match self.args.subcommand() {
             Some((action::CLEAN, _)) => Ok(self.clean_packages()),
             Some((action::EDIT, groups)) => {
