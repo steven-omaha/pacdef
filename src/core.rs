@@ -1,12 +1,15 @@
 use std::collections::HashSet;
+use std::os::unix::fs::symlink;
 
 use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
 
 use crate::action;
+use crate::args;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
+use crate::path::get_pacdef_group_dir;
 use crate::ui::get_user_confirmation;
 use crate::Group;
 
@@ -34,6 +37,7 @@ impl Pacdef {
                 self.edit_group_files(groups).context("editing group files")
             }
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
+            Some((action::IMPORT, files)) => self.import_groups(files).context("importing groups"),
             Some((action::SHOW, groups)) => {
                 self.show_group_content(groups).context("showing groups")
             }
@@ -165,6 +169,31 @@ impl Pacdef {
             let group = self.groups.iter().find(|g| g.name == *arg_group).unwrap();
             println!("{group}");
         }
+        Ok(())
+    }
+
+    fn import_groups(&self, args: &ArgMatches) -> Result<()> {
+        let files = args::get_file_paths(args);
+        let groups_dir = get_pacdef_group_dir()?;
+
+        for target in files {
+            let target_name = target.file_name().unwrap().to_str().unwrap();
+
+            if !target.exists() {
+                println!("file {target_name} does not exist, skipping");
+                continue;
+            }
+
+            let mut link = groups_dir.clone();
+            link.push(target_name);
+
+            if link.exists() {
+                println!("group {target_name} already exists, skipping");
+            } else {
+                symlink(target, link)?;
+            }
+        }
+
         Ok(())
     }
 }

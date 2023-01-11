@@ -1,4 +1,7 @@
-use clap::{Arg, Command};
+use std::path::PathBuf;
+
+use clap::{Arg, ArgMatches, Command};
+use path_absolutize::Absolutize;
 
 use crate::action::*;
 
@@ -17,6 +20,12 @@ fn get_arg_parser() -> Command<'static> {
         )
         .subcommand(Command::new(GROUPS).about("show names of imported groups"))
         .subcommand(
+            Command::new(IMPORT)
+                .about("import one or more group files")
+                .arg_required_else_help(true)
+                .arg(Arg::new("files").multiple_values(true)),
+        )
+        .subcommand(
             Command::new(SHOW)
                 .about("show packages under an imported group")
                 .arg_required_else_help(true)
@@ -34,4 +43,14 @@ fn get_arg_parser() -> Command<'static> {
 #[must_use]
 pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
+}
+
+pub(crate) fn get_file_paths(arg_match: &ArgMatches) -> Vec<PathBuf> {
+    arg_match
+        .get_many::<String>("files")
+        .unwrap()
+        .cloned()
+        .map(PathBuf::from)
+        .map(|path| path.absolutize().unwrap().into_owned())
+        .collect()
 }

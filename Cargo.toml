@@ -8,6 +8,7 @@ alpm = "*"
 anyhow = "*"
 # clap 4 until (at least) 4.0.32 have scrapped actual color support. we stay on 3.x until that's fixed.
 clap = "3.*"
+path-absolutize = "*"
 serde_json = "1.0.91"
 
 [profile.release]
