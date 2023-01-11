@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::{ensure, Context, Result};
 
-use crate::Package;
+use super::Package;
 
 #[derive(Debug, Eq)]
 pub struct Section {

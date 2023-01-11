@@ -4,12 +4,10 @@ mod backend;
 mod cmd;
 mod core;
 mod env;
-mod group;
-mod package;
+mod grouping;
 mod path;
-mod section;
 mod ui;
 
 pub use crate::core::Pacdef;
-pub use group::Group;
-pub use package::Package;
+pub use crate::grouping::Group;
+pub(crate) use crate::grouping::Package;

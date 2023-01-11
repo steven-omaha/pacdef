@@ -5,7 +5,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use anyhow::{Context, Result};
 
-use crate::section::Section;
+use super::Section;
 
 #[derive(Debug)]
 pub struct Group {
