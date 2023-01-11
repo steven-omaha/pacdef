@@ -34,14 +34,18 @@ impl ToDoPerBackend {
         self.0.iter().all(|(_, packages)| packages.is_empty())
     }
 
-    pub(crate) fn show(&self) {
+    pub(crate) fn show(&self, keyword: Option<&str>) {
         for (backend, packages) in self.iter() {
             if packages.is_empty() {
                 continue;
             }
-            println!("{}", backend.get_section());
+
+            if let Some(kw) = keyword {
+                println!("Would {kw} the following packages:");
+            }
+            println!("[{}]", backend.get_section());
             for package in packages {
-                println!("  {package}");
+                println!("{package}");
             }
         }
     }

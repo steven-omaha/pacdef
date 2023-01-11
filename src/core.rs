@@ -65,7 +65,7 @@ impl Pacdef {
             return;
         }
 
-        to_install.show();
+        to_install.show("install".into());
 
         if !get_user_confirmation() {
             return;
@@ -110,15 +110,7 @@ impl Pacdef {
     fn show_unmanaged_packages(self) {
         let unmanaged_per_backend = &self.get_unmanaged_packages();
 
-        for (backend, packages) in unmanaged_per_backend.iter() {
-            if packages.is_empty() {
-                continue;
-            }
-            println!("{}", backend.get_section());
-            for package in packages {
-                println!("  {package}");
-            }
-        }
+        unmanaged_per_backend.show(None);
     }
 
     fn get_unmanaged_packages(self) -> ToDoPerBackend {
@@ -145,22 +137,13 @@ impl Pacdef {
 
     fn clean_packages(self) {
         let to_remove = self.get_unmanaged_packages();
+
         if to_remove.is_empty() {
             println!("nothing to do");
             return;
         }
 
-        println!("Would remove the following packages and their dependencies:");
-        for (backend, packages) in to_remove.iter() {
-            if packages.is_empty() {
-                continue;
-            }
-
-            println!("  {}", backend.get_section());
-            for package in packages {
-                println!("    {package}");
-            }
-        }
+        to_remove.show("remove".into());
 
         if !get_user_confirmation() {
             return;
