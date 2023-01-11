@@ -1,5 +1,7 @@
 use std::collections::HashSet;
+use std::fs::remove_file;
 use std::os::unix::fs::symlink;
+use std::path::PathBuf;
 
 use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
@@ -26,9 +28,7 @@ impl Pacdef {
 
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
-        // TODO import
         // TODO new
-        // TODO remove
         // TODO review
         // TODO search
         match self.args.subcommand() {
@@ -38,6 +38,7 @@ impl Pacdef {
             }
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::IMPORT, files)) => self.import_groups(files).context("importing groups"),
+            Some((action::REMOVE, groups)) => self.remove_groups(groups).context("removing groups"),
             Some((action::SHOW, groups)) => {
                 self.show_group_content(groups).context("showing groups")
             }
@@ -173,7 +174,7 @@ impl Pacdef {
     }
 
     fn import_groups(&self, args: &ArgMatches) -> Result<()> {
-        let files = args::get_file_paths(args);
+        let files = args::get_absolutized_file_paths(args);
         let groups_dir = get_pacdef_group_dir()?;
 
         for target in files {
@@ -196,6 +197,36 @@ impl Pacdef {
 
         Ok(())
     }
+
+    fn remove_groups(&self, arg_match: &ArgMatches) -> Result<()> {
+        let paths = get_assumed_group_file_names(arg_match)?;
+
+        for file in paths.iter() {
+            ensure!(file.exists(), "did not find the group under {file:?}");
+        }
+
+        for file in paths {
+            remove_file(file)?;
+        }
+
+        Ok(())
+    }
+}
+
+fn get_assumed_group_file_names(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
+    let groups_dir = get_pacdef_group_dir()?;
+
+    let paths: Vec<_> = arg_match
+        .get_many::<String>("groups")
+        .unwrap()
+        .map(|s| {
+            let mut possible_group_file = groups_dir.clone();
+            possible_group_file.push(s);
+            possible_group_file
+        })
+        .collect();
+
+    Ok(paths)
 }
 
 fn show_error(error: anyhow::Error, backend: Box<dyn Backend>) {

@@ -26,6 +26,12 @@ fn get_arg_parser() -> Command<'static> {
                 .arg(Arg::new("files").multiple_values(true)),
         )
         .subcommand(
+            Command::new(REMOVE)
+                .about("remove one or more previously imported groups")
+                .arg_required_else_help(true)
+                .arg(Arg::new("groups").multiple_values(true)),
+        )
+        .subcommand(
             Command::new(SHOW)
                 .about("show packages under an imported group")
                 .arg_required_else_help(true)
@@ -45,7 +51,7 @@ pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
 }
 
-pub(crate) fn get_file_paths(arg_match: &ArgMatches) -> Vec<PathBuf> {
+pub(crate) fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Vec<PathBuf> {
     arg_match
         .get_many::<String>("files")
         .unwrap()
