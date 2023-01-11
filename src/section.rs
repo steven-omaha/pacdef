@@ -5,7 +5,7 @@ use std::{
     iter::Peekable,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{ensure, Context, Result};
 
 use crate::Package;
 
@@ -38,6 +38,9 @@ impl Section {
                 packages.insert(package);
             }
         }
+
+        ensure!(!packages.is_empty());
+
         Ok(Self::new(name, packages))
     }
 }

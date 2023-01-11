@@ -79,9 +79,18 @@ impl Group {
         let mut sections = HashSet::new();
 
         while lines.peek().is_some() {
-            if let Ok(section) = Section::try_from_lines(&mut lines).context("reading section") {
-                sections.insert(section);
+            match Section::try_from_lines(&mut lines).context("reading section") {
+                Ok(section) => {
+                    sections.insert(section);
+                }
+                Err(e) => {
+                    println!("WARNING: could not process a section under group '{name}': {e:?}\n")
+                }
             }
+        }
+
+        if sections.is_empty() {
+            println!("WARNING: no sections found in group '{name}'");
         }
 
         Ok(Self { name, sections })
