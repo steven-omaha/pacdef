@@ -12,6 +12,7 @@ use crate::args;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
+use crate::grouping::{Package, Section};
 use crate::path::get_pacdef_group_dir;
 use crate::ui::get_user_confirmation;
 use crate::Group;
@@ -30,7 +31,6 @@ impl Pacdef {
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
         // TODO review
-        // TODO search
         match self.args.subcommand() {
             Some((action::CLEAN, _)) => Ok(self.clean_packages()),
             Some((action::EDIT, groups)) => {
@@ -259,13 +259,42 @@ impl Pacdef {
             }
         }
 
-        vec.sort_unstable();
-
-        for (g, s, p) in vec {
-            println!("{}:{}:{}", g.name, s.name, p.name);
-        }
+        print_triples(vec);
 
         Ok(())
+    }
+}
+
+fn print_triples(mut vec: Vec<(&Group, &Section, &Package)>) {
+    vec.sort_unstable();
+
+    let mut g0 = String::new();
+    let mut s0 = String::new();
+
+    let mut iter = vec.into_iter().peekable();
+
+    while let Some((g, s, p)) = iter.next() {
+        if g.name != g0 {
+            println!("{}", g.name);
+            for _ in 0..g.name.len() {
+                print!("-");
+            }
+            println!();
+            s0.clear();
+        }
+        if s.name != s0 {
+            println!("[{}]", s.name);
+        }
+        println!("{p}");
+
+        g0 = g.name.clone();
+        s0 = s.name.clone();
+
+        if let Some((g, _, _)) = iter.peek() {
+            if g.name != g0 {
+                println!();
+            }
+        }
     }
 }
 

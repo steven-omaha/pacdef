@@ -46,7 +46,7 @@ fn get_arg_parser() -> Command<'static> {
         )
         .subcommand(
             Command::new(SEARCH)
-                .about("search for packages which match a provided regex")
+                .about("search for packages which match a provided string literal or regex")
                 .arg_required_else_help(true)
                 .arg(Arg::new("string")),
         )
