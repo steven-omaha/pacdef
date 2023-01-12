@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::fs::read_to_string;
 use std::hash::Hash;
 use std::path::Path;
@@ -102,8 +103,13 @@ impl Display for Group {
         let mut sections: Vec<_> = self.sections.iter().collect();
         sections.sort_unstable();
 
-        for section in sections {
+        let mut iter = sections.into_iter().peekable();
+
+        while let Some(section) = iter.next() {
             section.fmt(f)?;
+            if iter.peek().is_some() {
+                f.write_char('\n')?;
+            }
         }
         Ok(())
     }
