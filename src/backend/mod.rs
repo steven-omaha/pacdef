@@ -17,11 +17,13 @@ pub(crate) use todo_per_backend::ToDoPerBackend;
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
+register_backends!(Pacman, Rust);
+
+// TODO find a way to include this in the `register_backends!` macro
 pub(crate) use pacman::Pacman;
 pub(crate) use rust::Rust;
 
-register_backends!(Pacman, Rust);
-
+// TODO find a way to include this in the `register_backends!` macro
 impl Backends {
     fn next(&self) -> Option<Self> {
         match self {
