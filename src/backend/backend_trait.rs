@@ -6,7 +6,8 @@ use anyhow::{Context, Result};
 
 use crate::{Group, Package};
 
-use super::types::{Switches, Text};
+pub(in crate::backend) type Switches = &'static [&'static str];
+pub(in crate::backend) type Text = &'static str;
 
 pub(crate) trait Backend {
     fn get_binary(&self) -> Text;

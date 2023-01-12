@@ -5,8 +5,7 @@ use std::path::PathBuf;
 use anyhow::{Context, Result};
 use serde_json::Value;
 
-use super::types::{Switches, Text};
-use super::Backend;
+use super::backend_trait::*;
 use crate::{impl_backend_constants, Group, Package};
 
 pub(crate) struct Rust {
