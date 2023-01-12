@@ -41,34 +41,3 @@ macro_rules! impl_backend_constants {
         }
     };
 }
-
-#[macro_export]
-macro_rules! register_backends {
-    ($first:ident, $($name:ident),*) => {
-        #[derive(Debug)]
-        pub(crate) enum Backends {
-            $first,
-            $(
-                $name,
-            )*
-        }
-
-        impl Backends {
-            pub fn iter() -> BackendIter {
-                BackendIter {
-                    next: Some(Backends::$first),
-                }
-            }
-
-            fn get_backend(&self) -> Box<dyn Backend> {
-                match self {
-                    Self::$first => Box::new($first::new()),
-                    $(
-                        Self::$name => Box::new($name::new()),
-                     )*
-                }
-            }
-
-        }
-    }
-}

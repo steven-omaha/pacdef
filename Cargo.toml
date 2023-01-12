@@ -11,6 +11,7 @@ clap = "3.*"
 path-absolutize = "*"
 regex = "1.7.1"
 serde_json = "1.0.91"
+pacdef_macro = {path = "pacdef_macro/"}
 
 [profile.release]
 lto = "fat"
