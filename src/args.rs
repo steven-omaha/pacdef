@@ -45,6 +45,12 @@ fn get_arg_parser() -> Command<'static> {
                 .arg(Arg::new("groups").multiple_values(true)),
         )
         .subcommand(
+            Command::new(SEARCH)
+                .about("search for packages which match a provided regex")
+                .arg_required_else_help(true)
+                .arg(Arg::new("string")),
+        )
+        .subcommand(
             Command::new(SHOW)
                 .about("show packages under an imported group")
                 .arg_required_else_help(true)

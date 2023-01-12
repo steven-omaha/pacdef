@@ -4,6 +4,7 @@ pub(crate) const GROUPS: &str = "groups";
 pub(crate) const IMPORT: &str = "import";
 pub(crate) const NEW: &str = "new";
 pub(crate) const REMOVE: &str = "remove";
+pub(crate) const SEARCH: &str = "search";
 pub(crate) const SHOW: &str = "show";
 pub(crate) const SYNC: &str = "sync";
 pub(crate) const UNMANAGED: &str = "unmanaged";

@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
+use regex::Regex;
 
 use crate::action;
 use crate::args;
@@ -28,7 +29,6 @@ impl Pacdef {
 
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
-        // TODO new
         // TODO review
         // TODO search
         match self.args.subcommand() {
@@ -44,6 +44,9 @@ impl Pacdef {
             Some((action::REMOVE, groups)) => self.remove_groups(groups).context("removing groups"),
             Some((action::SHOW, groups)) => {
                 self.show_group_content(groups).context("showing groups")
+            }
+            Some((action::SEARCH, args)) => {
+                self.search_packages(args).context("searching packages")
             }
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
@@ -232,6 +235,34 @@ impl Pacdef {
                 .success();
 
             ensure!(success, "editor exited with error");
+        }
+
+        Ok(())
+    }
+
+    fn search_packages(&self, args: &ArgMatches) -> Result<()> {
+        let search_string = args
+            .get_one::<String>("string")
+            .context("getting search string from arg")?;
+
+        let re = Regex::new(search_string)?;
+
+        let mut vec = vec![];
+
+        for group in &self.groups {
+            for section in &group.sections {
+                for package in &section.packages {
+                    if re.is_match(&package.name) {
+                        vec.push((group, section, package))
+                    }
+                }
+            }
+        }
+
+        vec.sort_unstable();
+
+        for (g, s, p) in vec {
+            println!("{}:{}:{}", g.name, s.name, p.name);
         }
 
         Ok(())
