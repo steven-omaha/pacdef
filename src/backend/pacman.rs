@@ -4,7 +4,8 @@ use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 use anyhow::{Context, Result};
 
-use super::{Backend, Switches, Text};
+use super::types::{Switches, Text};
+use super::Backend;
 use crate::{impl_backend_constants, Group, Package};
 
 pub(crate) struct Pacman {
