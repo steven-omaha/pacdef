@@ -45,7 +45,7 @@ macro_rules! impl_backend_constants {
 #[macro_export]
 macro_rules! register_backends {
     ($first:ident, $($name:ident),*) => {
-        #[derive(Debug, Hash, PartialEq, Eq)]
+        #[derive(Debug)]
         pub(crate) enum Backends {
             $first,
             $(
