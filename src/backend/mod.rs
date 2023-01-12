@@ -9,41 +9,35 @@ use std::process::Command;
 
 use anyhow::{Context, Result};
 
+use crate::register_backends;
 use crate::{Group, Package};
 
-pub(crate) use pacman::Pacman;
-pub(crate) use rust::Rust;
 pub(crate) use todo_per_backend::ToDoPerBackend;
 
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub(crate) enum Backends {
-    Pacman,
-    Rust,
-}
+pub(crate) use pacman::Pacman;
+pub(crate) use rust::Rust;
+
+register_backends!(Pacman, Rust);
 
 impl Backends {
-    pub fn iter() -> BackendIter {
-        BackendIter {
-            next: Some(Backends::Pacman),
-        }
-    }
+    // fn next(&self) -> Option<Self> {
+    //     match self {
+    //         Self::Pacman => Some(Self::Rust),
+    //         Self::Rust => Some(Self::Pip),
+    //         Self::Pip => None,
+    //     }
+    // }
 
-    fn next(&self) -> Option<Self> {
-        match self {
-            Self::Pacman => Some(Self::Rust),
-            Self::Rust => None,
-        }
-    }
-
-    fn get_backend(&self) -> Box<dyn Backend> {
-        match self {
-            Self::Pacman => Box::new(Pacman::new()),
-            Self::Rust => Box::new(Rust::new()),
-        }
-    }
+    // fn get_backend(&self) -> Box<dyn Backend> {
+    //     match self {
+    //         Self::Pacman => Box::new(Pacman::new()),
+    //         Self::Rust => Box::new(Rust::new()),
+    //         _ => todo!(),
+    //     }
+    // }
 }
 
 #[derive(Debug)]

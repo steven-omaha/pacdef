@@ -41,3 +41,75 @@ macro_rules! impl_backend_constants {
         }
     };
 }
+
+// #[macro_export]
+// macro_rules! register_backends {
+//     ($first:ident, $($name:ident),*) => {
+//         #[derive(Debug, Hash, PartialEq, Eq)]
+//         pub(crate) enum Backends {
+//             $first,
+//             $(
+//                 $name,
+//             )*
+//         }
+//
+//         impl Backends {
+//             pub fn iter() -> BackendIter {
+//                 BackendIter {
+//                     next: Some(Backends::$first),
+//                 }
+//             }
+//             fn next(&self) -> Option<Self> {
+//                 match self {
+//                     $(
+//                         Self::$name => match $name {
+//                             $(
+//                                 _ => Some(Self::$name),
+//                             )*
+//                             _ => None
+//                         },
+//                     )*
+//                 }
+//             }
+//         }
+//     }
+// }
+
+#[macro_export]
+macro_rules! register_backends {
+    ($first:ident, $($name:ident),*) => {
+        #[derive(Debug, Hash, PartialEq, Eq)]
+        pub(crate) enum Backends {
+            $first,
+            $(
+                $name,
+            )*
+        }
+
+        impl Backends {
+            pub fn iter() -> BackendIter {
+                BackendIter {
+                    next: Some(Backends::$first),
+                }
+            }
+
+            fn next(&self) -> Option<Self> {
+                println!("Some({:?})", Self::$first);
+                $(
+                    println!("{:?}", Self::$name);
+                 )*
+                None
+            }
+
+            fn get_backend(&self) -> Box<dyn Backend> {
+                match self {
+                    Self::$first => Box::new($first::new()),
+                    $(
+                        Self::$name => Box::new($name::new()),
+                     )*
+                }
+            }
+
+        }
+    }
+}
