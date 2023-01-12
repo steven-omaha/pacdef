@@ -6,6 +6,7 @@ mod core;
 mod env;
 mod grouping;
 mod path;
+mod search;
 mod ui;
 
 pub use crate::core::Pacdef;

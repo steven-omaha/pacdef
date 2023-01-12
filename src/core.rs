@@ -1,21 +1,18 @@
 use std::collections::HashSet;
 use std::fs::{remove_file, File};
-use std::iter::Peekable;
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;
-use std::vec::IntoIter;
 
 use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
-use regex::Regex;
 
 use crate::action;
 use crate::args;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
-use crate::grouping::{Package, Section};
 use crate::path::get_pacdef_group_dir;
+use crate::search;
 use crate::ui::get_user_confirmation;
 use crate::Group;
 
@@ -48,7 +45,7 @@ impl Pacdef {
                 self.show_group_content(groups).context("showing groups")
             }
             Some((action::SEARCH, args)) => {
-                self.search_packages(args).context("searching packages")
+                search::search_packages(args, &self.groups).context("searching packages")
             }
             Some((action::SYNC, _)) => Ok(self.install_packages()),
             Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
@@ -240,80 +237,6 @@ impl Pacdef {
         }
 
         Ok(())
-    }
-
-    fn search_packages(&self, args: &ArgMatches) -> Result<()> {
-        let search_string = args
-            .get_one::<String>("string")
-            .context("getting search string from arg")?;
-
-        let re = Regex::new(search_string)?;
-
-        let mut vec = vec![];
-
-        for group in &self.groups {
-            for section in &group.sections {
-                for package in &section.packages {
-                    if re.is_match(&package.name) {
-                        vec.push((group, section, package))
-                    }
-                }
-            }
-        }
-
-        print_triples(vec);
-
-        Ok(())
-    }
-}
-
-fn print_triples(mut vec: Vec<(&Group, &Section, &Package)>) {
-    vec.sort_unstable();
-
-    let mut g0 = String::new();
-    let mut s0 = String::new();
-
-    let mut iter = vec.into_iter().peekable();
-
-    while let Some((g, s, p)) = iter.next() {
-        print_group_if_changed(g, &g0, &mut s0);
-        print_section_if_changed(s, &s0);
-        println!("{p}");
-        save_group_and_section_name(&mut g0, g, &mut s0, s);
-        print_separator_unless_exhausted(&mut iter, &g0);
-    }
-}
-
-fn save_group_and_section_name(g0: &mut String, g: &Group, s0: &mut String, s: &Section) {
-    *g0 = g.name.clone();
-    *s0 = s.name.clone();
-}
-
-fn print_separator_unless_exhausted(
-    iter: &mut Peekable<IntoIter<(&Group, &Section, &Package)>>,
-    g0: &String,
-) {
-    if let Some((g, _, _)) = iter.peek() {
-        if g.name != *g0 {
-            println!();
-        }
-    }
-}
-
-fn print_section_if_changed(s: &Section, s0: &String) {
-    if s.name != *s0 {
-        println!("[{}]", s.name);
-    }
-}
-
-fn print_group_if_changed(g: &Group, g0: &String, s0: &mut String) {
-    if g.name != *g0 {
-        println!("{}", g.name);
-        for _ in 0..g.name.len() {
-            print!("-");
-        }
-        println!();
-        s0.clear();
     }
 }
 
