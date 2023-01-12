@@ -26,6 +26,12 @@ fn get_arg_parser() -> Command<'static> {
                 .arg(Arg::new("files").multiple_values(true)),
         )
         .subcommand(
+            Command::new(NEW)
+                .about("create new group files")
+                .arg_required_else_help(true)
+                .arg(Arg::new("groups").multiple_values(true)),
+        )
+        .subcommand(
             Command::new(REMOVE)
                 .about("remove one or more previously imported groups")
                 .arg_required_else_help(true)

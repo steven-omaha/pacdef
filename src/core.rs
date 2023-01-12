@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::fs::remove_file;
+use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;
 
@@ -38,6 +38,9 @@ impl Pacdef {
             }
             Some((action::GROUPS, _)) => Ok(self.show_groups()),
             Some((action::IMPORT, files)) => self.import_groups(files).context("importing groups"),
+            Some((action::NEW, files)) => {
+                self.new_groups(files).context("creating new group files")
+            }
             Some((action::REMOVE, groups)) => self.remove_groups(groups).context("removing groups"),
             Some((action::SHOW, groups)) => {
                 self.show_group_content(groups).context("showing groups")
@@ -207,6 +210,20 @@ impl Pacdef {
 
         for file in paths {
             remove_file(file)?;
+        }
+
+        Ok(())
+    }
+
+    fn new_groups(&self, files: &ArgMatches) -> Result<()> {
+        let paths = get_assumed_group_file_names(files)?;
+
+        for file in &paths {
+            ensure!(!file.exists(), "group already exists under {file:?}");
+        }
+
+        for file in paths {
+            File::create(file)?;
         }
 
         Ok(())
