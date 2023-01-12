@@ -215,15 +215,23 @@ impl Pacdef {
         Ok(())
     }
 
-    fn new_groups(&self, files: &ArgMatches) -> Result<()> {
-        let paths = get_assumed_group_file_names(files)?;
+    fn new_groups(&self, arg: &ArgMatches) -> Result<()> {
+        let paths = get_assumed_group_file_names(arg)?;
 
         for file in &paths {
             ensure!(!file.exists(), "group already exists under {file:?}");
         }
 
-        for file in paths {
+        for file in &paths {
             File::create(file)?;
+        }
+
+        if arg.get_flag("edit") {
+            let success = run_edit_command(&paths)
+                .context("running editor")?
+                .success();
+
+            ensure!(success, "editor exited with error");
         }
 
         Ok(())

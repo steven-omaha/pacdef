@@ -29,6 +29,13 @@ fn get_arg_parser() -> Command<'static> {
             Command::new(NEW)
                 .about("create new group files")
                 .arg_required_else_help(true)
+                .arg(
+                    Arg::new("edit")
+                        .short('e')
+                        .long("edit")
+                        .help("edit the new group files after creation")
+                        .action(clap::ArgAction::SetTrue),
+                )
                 .arg(Arg::new("groups").multiple_values(true)),
         )
         .subcommand(
