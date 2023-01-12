@@ -1,7 +1,9 @@
 use std::collections::HashSet;
 use std::fs::{remove_file, File};
+use std::iter::Peekable;
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;
+use std::vec::IntoIter;
 
 use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
@@ -274,27 +276,44 @@ fn print_triples(mut vec: Vec<(&Group, &Section, &Package)>) {
     let mut iter = vec.into_iter().peekable();
 
     while let Some((g, s, p)) = iter.next() {
-        if g.name != g0 {
-            println!("{}", g.name);
-            for _ in 0..g.name.len() {
-                print!("-");
-            }
-            println!();
-            s0.clear();
-        }
-        if s.name != s0 {
-            println!("[{}]", s.name);
-        }
+        print_group_if_changed(g, &g0, &mut s0);
+        print_section_if_changed(s, &s0);
         println!("{p}");
+        save_group_and_section_name(&mut g0, g, &mut s0, s);
+        print_separator_unless_exhausted(&mut iter, &g0);
+    }
+}
 
-        g0 = g.name.clone();
-        s0 = s.name.clone();
+fn save_group_and_section_name(g0: &mut String, g: &Group, s0: &mut String, s: &Section) {
+    *g0 = g.name.clone();
+    *s0 = s.name.clone();
+}
 
-        if let Some((g, _, _)) = iter.peek() {
-            if g.name != g0 {
-                println!();
-            }
+fn print_separator_unless_exhausted(
+    iter: &mut Peekable<IntoIter<(&Group, &Section, &Package)>>,
+    g0: &String,
+) {
+    if let Some((g, _, _)) = iter.peek() {
+        if g.name != *g0 {
+            println!();
         }
+    }
+}
+
+fn print_section_if_changed(s: &Section, s0: &String) {
+    if s.name != *s0 {
+        println!("[{}]", s.name);
+    }
+}
+
+fn print_group_if_changed(g: &Group, g0: &String, s0: &mut String) {
+    if g.name != *g0 {
+        println!("{}", g.name);
+        for _ in 0..g.name.len() {
+            print!("-");
+        }
+        println!();
+        s0.clear();
     }
 }
 
