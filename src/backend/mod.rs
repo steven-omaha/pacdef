@@ -23,21 +23,12 @@ pub(crate) use rust::Rust;
 register_backends!(Pacman, Rust);
 
 impl Backends {
-    // fn next(&self) -> Option<Self> {
-    //     match self {
-    //         Self::Pacman => Some(Self::Rust),
-    //         Self::Rust => Some(Self::Pip),
-    //         Self::Pip => None,
-    //     }
-    // }
-
-    // fn get_backend(&self) -> Box<dyn Backend> {
-    //     match self {
-    //         Self::Pacman => Box::new(Pacman::new()),
-    //         Self::Rust => Box::new(Rust::new()),
-    //         _ => todo!(),
-    //     }
-    // }
+    fn next(&self) -> Option<Self> {
+        match self {
+            Self::Pacman => Some(Self::Rust),
+            Self::Rust => None,
+        }
+    }
 }
 
 #[derive(Debug)]
