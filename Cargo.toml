@@ -17,13 +17,6 @@ lto = "fat"
 codegen-units = 1
 strip = true
 
-[dev-dependencies]
-criterion = "*"
-
-[[bench]]
-harness = false
-name = "bench"
-
 [[bin]]
 name = "pacdef"
 path = "src/main.rs"
