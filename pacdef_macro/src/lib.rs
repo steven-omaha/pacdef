@@ -71,7 +71,6 @@ where
 fn generate_variant_imports(enum_data: &syn::DataEnum) -> impl Iterator<Item = TokenStream2> + '_ {
     let variant_imports = enum_data.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
-        // let variant_module = variant_name.clone();
 
         let variant_module = proc_macro2::Ident::new(
             &variant_name.to_string().to_lowercase(),
@@ -79,7 +78,7 @@ fn generate_variant_imports(enum_data: &syn::DataEnum) -> impl Iterator<Item = T
         );
 
         quote! {
-            pub(crate) use #variant_module::#variant_name;
+            pub(crate) use actual::#variant_module::#variant_name;
 
         }
     });
