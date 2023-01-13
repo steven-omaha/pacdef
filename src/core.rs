@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use anyhow::{ensure, Context, Result};
 use clap::ArgMatches;
 
-use crate::action;
+use crate::action::*;
 use crate::args;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
@@ -21,6 +21,7 @@ pub struct Pacdef {
     groups: HashSet<Group>,
 }
 
+// TODO review
 impl Pacdef {
     #[must_use]
     pub fn new(args: ArgMatches, groups: HashSet<Group>) -> Self {
@@ -29,27 +30,20 @@ impl Pacdef {
 
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
-        // TODO review
         match self.args.subcommand() {
-            Some((action::CLEAN, _)) => Ok(self.clean_packages()),
-            Some((action::EDIT, groups)) => {
-                self.edit_group_files(groups).context("editing group files")
-            }
-            Some((action::GROUPS, _)) => Ok(self.show_groups()),
-            Some((action::IMPORT, files)) => self.import_groups(files).context("importing groups"),
-            Some((action::NEW, files)) => {
-                self.new_groups(files).context("creating new group files")
-            }
-            Some((action::REMOVE, groups)) => self.remove_groups(groups).context("removing groups"),
-            Some((action::SHOW, groups)) => {
-                self.show_group_content(groups).context("showing groups")
-            }
-            Some((action::SEARCH, args)) => {
+            Some((CLEAN, _)) => Ok(self.clean_packages()),
+            Some((EDIT, args)) => self.edit_group_files(args).context("editing group files"),
+            Some((GROUPS, _)) => Ok(self.show_groups()),
+            Some((IMPORT, args)) => self.import_groups(args).context("importing groups"),
+            Some((NEW, args)) => self.new_groups(args).context("creating new group files"),
+            Some((REMOVE, args)) => self.remove_groups(args).context("removing groups"),
+            Some((SHOW, args)) => self.show_group_content(args).context("showing groups"),
+            Some((SEARCH, args)) => {
                 search::search_packages(args, &self.groups).context("searching packages")
             }
-            Some((action::SYNC, _)) => Ok(self.install_packages()),
-            Some((action::UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
-            Some((action::VERSION, _)) => Ok(self.show_version()),
+            Some((SYNC, _)) => Ok(self.install_packages()),
+            Some((UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
+            Some((VERSION, _)) => Ok(self.show_version()),
             Some((_, _)) => todo!(),
             None => {
                 unreachable!("argument parser requires some subcommand to return an `ArgMatches`")

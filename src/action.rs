@@ -1,11 +1,16 @@
-pub(crate) const CLEAN: &str = "clean";
-pub(crate) const EDIT: &str = "edit";
-pub(crate) const GROUPS: &str = "groups";
-pub(crate) const IMPORT: &str = "import";
-pub(crate) const NEW: &str = "new";
-pub(crate) const REMOVE: &str = "remove";
-pub(crate) const SEARCH: &str = "search";
-pub(crate) const SHOW: &str = "show";
-pub(crate) const SYNC: &str = "sync";
-pub(crate) const UNMANAGED: &str = "unmanaged";
-pub(crate) const VERSION: &str = "version";
+use pacdef_macro::Action;
+
+#[derive(Debug, Action)]
+pub(crate) enum Actions {
+    Clean,
+    Edit,
+    Groups,
+    Import,
+    New,
+    Remove,
+    Search,
+    Show,
+    Sync,
+    Unmanaged,
+    Version,
+}
