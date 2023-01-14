@@ -64,7 +64,7 @@ impl PartialOrd for Section {
 }
 
 impl Ord for Section {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, _other: &Self) -> std::cmp::Ordering {
         todo!()
     }
 }
