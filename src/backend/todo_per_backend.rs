@@ -1,3 +1,5 @@
+use std::process::ExitStatus;
+
 use anyhow::{bail, ensure, Context, Result};
 
 use super::Backend;
@@ -22,31 +24,31 @@ impl ToDoPerBackend {
         self.0.iter().all(|(_, diff)| diff.is_empty())
     }
 
-    // TODO try to combine these methods into one
     pub(crate) fn install_missing_packages(&self) -> Result<()> {
-        for (backend, packages) in &self.0 {
-            let exit_status = backend
-                .install_packages(packages)
-                .with_context(|| format!("installing packages for {}", backend.get_binary()))?;
-
-            match exit_status.code() {
-                Some(val) => ensure!(val == 0, "command returned with exit code {val}"),
-                None => bail!("could not install packages for {}", backend.get_binary()),
-            }
-        }
-        Ok(())
+        self.handle_backend_command(Backend::install_packages, "install", "installing")
     }
 
-    // TODO this one
     pub(crate) fn remove_unmanaged_packages(&self) -> Result<()> {
+        self.handle_backend_command(Backend::remove_packages, "remove", "removing")
+    }
+
+    fn handle_backend_command<'a, F>(
+        &'a self,
+        func: F,
+        verb: &'static str,
+        verb_continuous: &'static str,
+    ) -> Result<()>
+    where
+        F: Fn(&'a dyn Backend, &'a [Package]) -> Result<ExitStatus>,
+    {
         for (backend, packages) in &self.0 {
-            let exit_status = backend
-                .remove_packages(packages)
-                .with_context(|| format!("removing packages for {}", backend.get_binary()))?;
+            let exit_status = func(&**backend, packages).with_context(|| {
+                format!("{verb_continuous} packages for {}", backend.get_binary())
+            })?;
 
             match exit_status.code() {
                 Some(val) => ensure!(val == 0, "command returned with exit code {val}"),
-                None => bail!("could not remove packages for {}", backend.get_binary()),
+                None => bail!("could not {verb} packages for {}", backend.get_binary()),
             }
         }
         Ok(())

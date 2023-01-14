@@ -61,14 +61,7 @@ impl Pacdef {
         let mut to_install = ToDoPerBackend::new();
 
         for backend in Backends::iter() {
-            let mut backend = if backend.get_section() == "pacman" {
-                Box::new(crate::backend::Pacman {
-                    binary: self.config.aur_helper.clone(),
-                    packages: HashSet::new(),
-                })
-            } else {
-                backend
-            };
+            let mut backend = self.overwrite_binary_from_config(backend);
 
             backend.load(&self.groups);
 
@@ -79,6 +72,17 @@ impl Pacdef {
         }
 
         to_install
+    }
+
+    fn overwrite_binary_from_config(&self, backend: Box<dyn Backend>) -> Box<dyn Backend> {
+        if backend.get_section() == "pacman" {
+            Box::new(crate::backend::Pacman {
+                binary: self.config.aur_helper.clone(),
+                packages: HashSet::new(),
+            })
+        } else {
+            backend
+        }
     }
 
     fn install_packages(&self) -> Result<()> {
@@ -140,7 +144,9 @@ impl Pacdef {
     fn get_unmanaged_packages(self) -> ToDoPerBackend {
         let mut result = ToDoPerBackend::new();
 
-        for mut backend in Backends::iter() {
+        for backend in Backends::iter() {
+            let mut backend = self.overwrite_binary_from_config(backend);
+
             backend.load(&self.groups);
 
             match backend.get_unmanaged_packages_sorted() {
