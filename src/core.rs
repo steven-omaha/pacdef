@@ -224,7 +224,7 @@ impl Pacdef {
     fn remove_groups(&self, arg_match: &ArgMatches) -> Result<()> {
         let paths = get_assumed_group_file_names(arg_match)?;
 
-        for file in paths.iter() {
+        for file in &paths {
             ensure!(file.exists(), "did not find the group under {file:?}");
         }
 
