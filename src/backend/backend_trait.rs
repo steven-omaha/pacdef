@@ -1,6 +1,5 @@
-use std::collections::HashSet;
-use std::os::unix::process::CommandExt;
 use std::process::Command;
+use std::{collections::HashSet, process::ExitStatus};
 
 use anyhow::{Context, Result};
 
@@ -24,27 +23,25 @@ pub(crate) trait Backend {
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>>;
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package]) {
-        if packages.is_empty() {
-            return;
-        }
-
+    fn install_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
         for p in packages {
             cmd.arg(format!("{p}"));
         }
-        cmd.exec();
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: Vec<Package>) {
+    fn remove_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_remove());
         for p in packages {
             cmd.arg(format!("{p}"));
         }
-        cmd.exec();
+        cmd.status()
+            .with_context(|| format!("running command [{cmd:?}]"))
     }
 
     /// extract packages from its own section as read from group files

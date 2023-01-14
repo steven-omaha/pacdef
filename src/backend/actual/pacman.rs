@@ -1,6 +1,5 @@
 use std::collections::HashSet;
-use std::os::unix::process::CommandExt;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
@@ -38,27 +37,28 @@ impl Backend for Pacman {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package]) {
-        if packages.is_empty() {
-            return;
-        }
-
+    fn install_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(&self.binary);
+
         cmd.args(self.get_switches_install());
+
         for p in packages {
             cmd.arg(format!("{p}"));
         }
-        cmd.exec();
+
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: Vec<Package>) {
+    fn remove_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(&self.binary);
         cmd.args(self.get_switches_remove());
         for p in packages {
             cmd.arg(format!("{p}"));
         }
-        cmd.exec();
+        cmd.status()
+            .with_context(|| format!("running command [{cmd:?}]"))
     }
 }
 

@@ -37,7 +37,7 @@ impl Pacdef {
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(self) -> Result<()> {
         match self.args.subcommand() {
-            Some((CLEAN, _)) => Ok(self.clean_packages()),
+            Some((CLEAN, _)) => self.clean_packages(),
             Some((EDIT, args)) => self.edit_group_files(args).context("editing group files"),
             Some((GROUPS, _)) => Ok(self.show_groups()),
             Some((IMPORT, args)) => self.import_groups(args).context("importing groups"),
@@ -47,7 +47,7 @@ impl Pacdef {
             Some((SEARCH, args)) => {
                 search::search_packages(args, &self.groups).context("searching packages")
             }
-            Some((SYNC, _)) => Ok(self.install_packages()),
+            Some((SYNC, _)) => self.install_packages(),
             Some((UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((VERSION, _)) => Ok(self.show_version()),
             Some((_, _)) => todo!(),
@@ -81,21 +81,21 @@ impl Pacdef {
         to_install
     }
 
-    fn install_packages(&self) {
+    fn install_packages(&self) -> Result<()> {
         let to_install = self.get_missing_packages();
 
         if to_install.nothing_to_do_for_all_backends() {
             println!("nothing to do");
-            return;
+            return Ok(());
         }
 
         to_install.show("install".into());
 
         if !get_user_confirmation() {
-            return;
+            return Ok(());
         };
 
-        to_install.install_missing_packages();
+        to_install.install_missing_packages()
     }
 
     fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
@@ -159,23 +159,21 @@ impl Pacdef {
         }
     }
 
-    fn clean_packages(self) {
+    fn clean_packages(self) -> Result<()> {
         let to_remove = self.get_unmanaged_packages();
 
         if to_remove.is_empty() {
             println!("nothing to do");
-            return;
+            return Ok(());
         }
 
         to_remove.show("remove".into());
 
         if !get_user_confirmation() {
-            return;
+            return Ok(());
         };
 
-        for (backend, packages) in to_remove.into_iter() {
-            backend.remove_packages(packages);
-        }
+        to_remove.remove_unmanaged_packages()
     }
 
     fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
