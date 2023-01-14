@@ -60,7 +60,16 @@ impl Pacdef {
     fn get_missing_packages(&self) -> ToDoPerBackend {
         let mut to_install = ToDoPerBackend::new();
 
-        for mut backend in Backends::iter() {
+        for backend in Backends::iter() {
+            let mut backend = if backend.get_section() == "pacman" {
+                Box::new(crate::backend::Pacman {
+                    binary: self.config.aur_helper.clone(),
+                    packages: HashSet::new(),
+                })
+            } else {
+                backend
+            };
+
             backend.load(&self.groups);
 
             match backend.get_missing_packages_sorted() {

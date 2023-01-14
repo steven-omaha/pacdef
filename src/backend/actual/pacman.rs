@@ -1,4 +1,6 @@
 use std::collections::HashSet;
+use std::os::unix::process::CommandExt;
+use std::process::Command;
 
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
@@ -12,7 +14,7 @@ pub(crate) struct Pacman {
     pub(crate) packages: HashSet<Package>,
 }
 
-const BINARY: Text = "paru";
+const BINARY: Text = "yay";
 const SECTION: Text = "pacman";
 const SWITCHES_INSTALL: Switches = &["-S"];
 const SWITCHES_REMOVE: Switches = &["-Rsn"];
@@ -33,6 +35,30 @@ impl Backend for Pacman {
             .context("getting all installed packages from alpm")?;
         let result = convert_to_pacdef_packages(alpm_packages);
         Ok(result)
+    }
+
+    /// Install the specified packages.
+    fn install_packages(&self, packages: &[Package]) {
+        if packages.is_empty() {
+            return;
+        }
+
+        let mut cmd = Command::new(&self.binary);
+        cmd.args(self.get_switches_install());
+        for p in packages {
+            cmd.arg(format!("{p}"));
+        }
+        cmd.exec();
+    }
+
+    /// Remove the specified packages.
+    fn remove_packages(&self, packages: Vec<Package>) {
+        let mut cmd = Command::new(&self.binary);
+        cmd.args(self.get_switches_remove());
+        for p in packages {
+            cmd.arg(format!("{p}"));
+        }
+        cmd.exec();
     }
 }
 
