@@ -8,6 +8,7 @@ use crate::backend::backend_trait::*;
 use crate::{impl_backend_constants, Group, Package};
 
 pub(crate) struct Pacman {
+    pub(crate) binary: String,
     pub(crate) packages: HashSet<Package>,
 }
 
@@ -69,6 +70,7 @@ fn get_db_handle() -> Result<Alpm> {
 impl Pacman {
     pub(crate) fn new() -> Self {
         Self {
+            binary: BINARY.to_string(),
             packages: HashSet::new(),
         }
     }

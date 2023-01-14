@@ -14,18 +14,24 @@ use crate::env::get_single_var;
 use crate::path::get_pacdef_group_dir;
 use crate::search;
 use crate::ui::get_user_confirmation;
+use crate::Config;
 use crate::Group;
 
 pub struct Pacdef {
     args: ArgMatches,
+    config: Config,
     groups: HashSet<Group>,
 }
 
 // TODO review
 impl Pacdef {
     #[must_use]
-    pub fn new(args: ArgMatches, groups: HashSet<Group>) -> Self {
-        Self { args, groups }
+    pub fn new(args: ArgMatches, config: Config, groups: HashSet<Group>) -> Self {
+        Self {
+            args,
+            config,
+            groups,
+        }
     }
 
     #[allow(clippy::unit_arg)]

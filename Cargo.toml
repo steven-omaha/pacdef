@@ -11,6 +11,9 @@ clap = "3.*"
 path-absolutize = "*"
 regex = "*"
 serde_json = "*"
+serde_yaml = "*"
+serde_derive = "*"
+serde = "*"
 pacdef_macro = {path = "pacdef_macro/"}
 
 [profile.release]

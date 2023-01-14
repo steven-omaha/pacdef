@@ -8,6 +8,8 @@ use anyhow::{Context, Result};
 
 use super::Section;
 
+use crate::Config;
+
 #[derive(Debug)]
 pub struct Group {
     pub(crate) name: String,
@@ -15,7 +17,7 @@ pub struct Group {
 }
 
 impl Group {
-    pub fn load_from_dir() -> Result<HashSet<Self>> {
+    pub fn load(config: &Config) -> Result<HashSet<Self>> {
         let mut result = HashSet::new();
 
         let path = crate::path::get_pacdef_group_dir().context("getting pacdef group dir")?;
@@ -23,8 +25,13 @@ impl Group {
             let file = entry.context("getting group file")?;
             let path = file.path();
 
+            if config.warn_not_symlinks && !path.is_symlink() {
+                println!("WARNING: group file {path:?} is not a symlink");
+            }
+
             let group =
                 Group::try_from(&path).with_context(|| format!("reading group file {path:?}"))?;
+
             result.insert(group);
         }
 

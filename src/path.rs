@@ -8,7 +8,7 @@ pub(crate) fn get_pacdef_group_dir() -> Result<PathBuf> {
     Ok(result)
 }
 
-fn get_pacdef_base_dir() -> Result<PathBuf> {
+pub(crate) fn get_pacdef_base_dir() -> Result<PathBuf> {
     let mut dir = get_xdg_config_home().context("getting XDG_CONFIG_HOME")?;
     dir.push("pacdef");
     Ok(dir)
