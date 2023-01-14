@@ -7,6 +7,7 @@ mod core;
 mod env;
 mod grouping;
 mod path;
+mod review;
 mod search;
 mod ui;
 

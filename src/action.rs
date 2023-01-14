@@ -8,6 +8,7 @@ pub(crate) enum Actions {
     Import,
     New,
     Remove,
+    Review,
     Search,
     Show,
     Sync,

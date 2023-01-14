@@ -12,6 +12,7 @@ use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
 use crate::path::get_pacdef_group_dir;
+use crate::review;
 use crate::search;
 use crate::ui::get_user_confirmation;
 use crate::Config;
@@ -43,6 +44,8 @@ impl Pacdef {
             Some((IMPORT, args)) => self.import_groups(args).context("importing groups"),
             Some((NEW, args)) => self.new_groups(args).context("creating new group files"),
             Some((REMOVE, args)) => self.remove_groups(args).context("removing groups"),
+            Some((REVIEW, _)) => review::review(self.get_unmanaged_packages(), self.groups)
+                .context("removing groups"),
             Some((SHOW, args)) => self.show_group_content(args).context("showing groups"),
             Some((SEARCH, args)) => {
                 search::search_packages(args, &self.groups).context("searching packages")
@@ -141,7 +144,7 @@ impl Pacdef {
         unmanaged_per_backend.show(None);
     }
 
-    fn get_unmanaged_packages(self) -> ToDoPerBackend {
+    fn get_unmanaged_packages(&self) -> ToDoPerBackend {
         let mut result = ToDoPerBackend::new();
 
         for backend in Backends::iter() {

@@ -16,6 +16,10 @@ impl ToDoPerBackend {
         self.0.push(item);
     }
 
+    pub(crate) fn into_iter(self) -> impl Iterator<Item = (Box<dyn Backend>, Vec<Package>)> {
+        self.0.into_iter()
+    }
+
     pub(crate) fn iter(&self) -> impl Iterator<Item = &(Box<dyn Backend>, Vec<Package>)> {
         self.0.iter()
     }

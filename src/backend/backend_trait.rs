@@ -68,6 +68,10 @@ pub(crate) trait Backend {
 
     fn add_packages(&mut self, packages: HashSet<Package>);
 
+    fn show_package_info(&self, package: &Package) -> Result<()> {
+        todo!()
+    }
+
     fn get_unmanaged_packages_sorted(&self) -> Result<Vec<Package>> {
         let installed = self
             .get_explicitly_installed_packages()

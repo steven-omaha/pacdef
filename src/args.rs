@@ -44,6 +44,7 @@ fn get_arg_parser() -> Command<'static> {
                 .arg_required_else_help(true)
                 .arg(Arg::new("groups").multiple_values(true)),
         )
+        .subcommand(Command::new(REVIEW).about("review unmanaged packages"))
         .subcommand(
             Command::new(SEARCH)
                 .about("search for packages which match a provided string literal or regex")
