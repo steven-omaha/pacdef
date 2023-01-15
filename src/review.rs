@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::io::{self, stdin, Read};
 use std::rc::Rc;
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use termios::*;
 
 use crate::backend::{Backend, Backends, ToDoPerBackend};
@@ -24,7 +24,7 @@ struct Reviews<'a> {
     pub assign: Vec<(Rc<Box<dyn Backend>>, Package, &'a Group, &'a Section)>,
 }
 
-impl Reviews {
+impl<'a> Reviews<'a> {
     fn new() -> Self {
         Self {
             delete: vec![],
@@ -79,10 +79,57 @@ fn ask_user_group_section<'a>(
     groups: &'a [Group],
 ) -> Result<Option<(&'a Group, &'a Section)>> {
     if let Some(group) = ask_group(groups)? {
-        if let Some(section) = ask_section(section)? {
+        if let Some(section_reply) = ask_section(&group.sections)? {
+            match section_reply {
+                SectionReply::Existing(section) => Ok(Some((group, section))),
+                SectionReply::New(name) => 
+            }
             return Ok(Some((group, section)));
+        } else {
+            return Ok(None);
         }
     }
+}
+
+enum SectionReply<'a> {
+    Existing(&'a Section),
+    New(String),
+}
+
+fn ask_section(sections: &HashSet<Section>) -> Result<Option<SectionReply>> {
+    let sections: Vec<_> = sections.iter().collect();
+
+    let mut buf = String::new();
+    stdin().read_line(&mut buf)?;
+    let reply = buf.trim();
+
+    let idx: usize = if let Ok(idx) = reply.parse() {
+        idx
+    } else {
+        return Ok(None);
+    };
+
+    if idx < sections.len() {
+        Ok(Some(SectionReply::Existing(&sections[idx])))
+    } else if idx == sections.len() {
+        let new_section_name = ask_new_section_name()?;
+        Ok(Some(SectionReply::New(new_section_name)))
+    } else {
+        Ok(None)
+    }
+}
+
+fn ask_new_section_name() -> Result<String> {
+    print!("new section name: ");
+    let reply = stdin().lines().next().context("reading line from stdin")?;
+    reply.map_err(|e| anyhow!(e))
+}
+
+fn print_enumerated_sections(sections: &[Section]) {
+    for (i, section) in sections.iter().enumerate() {
+        println!("{i}: {}", section.name);
+    }
+    println!("{}: [new]", sections.len());
 }
 
 fn ask_user_action_for_package() -> Result<ReviewAction> {
