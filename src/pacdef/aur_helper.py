@@ -69,7 +69,7 @@ class AURHelper:
         """
         config = Config()
         aur_helper_rm_args: list[str] = config.aur_helper_rm_args or []
-        switches_remove: list[str] = list(set(Switches.remove + aur_helper_rm_args))
+        switches_remove: list[str] = list(Switches.remove + aur_helper_rm_args)
         packages_str = [str(p) for p in packages]
         command: list[str] = switches_remove + packages_str
         self._execute(command)
