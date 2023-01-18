@@ -47,53 +47,67 @@ pub(crate) fn review(todo_per_backend: ToDoPerBackend, groups: HashSet<Group>) -
         let backend = Rc::new(backend);
         for package in packages {
             println!("{}: {package}", backend.get_section());
-            'inner: loop {
-                match ask_user_action_for_package()? {
-                    ReviewAction::AsDependency => todo!(),
-                    ReviewAction::AssignGroupBackend => {
-                        if let Some((group, section)) = ask_user_group_section(&package, &groups)? {
-                            reviews
-                                .assign
-                                .push((backend.clone(), package, &group, &section));
-                            break 'inner;
-                        }
-                    }
-                    ReviewAction::Delete => {
-                        reviews.delete.push((backend.clone(), package));
-                        break 'inner;
-                    }
-                    ReviewAction::Info => backend.show_package_info(&package)?,
-                    ReviewAction::Invalid => (),
-                    ReviewAction::Skip => break 'inner,
-                    ReviewAction::Quit => bail!("user wants to quit"),
-                }
-            }
+            get_action_for_package(package, &groups, &mut reviews, &backend)?;
         }
     }
 
     todo!()
 }
 
-fn ask_user_group_section<'a>(
-    package: &'a Package,
-    groups: &'a [Group],
-) -> Result<Option<(&'a Group, &'a Section)>> {
-    if let Some(group) = ask_group(groups)? {
-        if let Some(section_reply) = ask_section(&group.sections)? {
-            match section_reply {
-                SectionReply::Existing(section) => Ok(Some((group, section))),
-                SectionReply::New(name) => 
+fn get_action_for_package(
+    package: Package,
+    groups: &[Group],
+    reviews: &mut Reviews,
+    backend: &Rc<Box<dyn Backend>>,
+) -> Result<()> {
+    loop {
+        match ask_user_action_for_package()? {
+            ReviewAction::AsDependency => todo!(),
+            ReviewAction::AssignGroupBackend => {
+                if let Some(val) = assign_group_backend(&package, groups)? {
+                    break;
+                };
             }
-            return Ok(Some((group, section)));
-        } else {
-            return Ok(None);
+            ReviewAction::Delete => {
+                reviews.delete.push((backend.clone(), package));
+                break;
+            }
+            ReviewAction::Info => backend.show_package_info(&package)?,
+            ReviewAction::Invalid => (),
+            ReviewAction::Skip => break,
+            ReviewAction::Quit => bail!("user wants to quit"),
         }
     }
+    Ok(())
+}
+
+fn ask_user_group_section(groups: &[Group]) -> Result<Option<GroupSectionReply>> {
+    let group = match ask_group(groups)? {
+        Some(group) => group,
+        None => return Ok(None),
+    };
+
+    let section_reply = match ask_section(&group.sections)? {
+        Some(reply) => reply,
+        None => return Ok(None),
+    };
+
+    let section = match section_reply {
+        SectionReply::Existing(section) => section,
+        SectionReply::New => return Ok(Some(GroupSectionReply::New)),
+    };
+
+    Ok(Some(GroupSectionReply::Existing((group, section))))
+}
+
+enum GroupSectionReply<'a> {
+    Existing((&'a Group, &'a Section)),
+    New,
 }
 
 enum SectionReply<'a> {
     Existing(&'a Section),
-    New(String),
+    New,
 }
 
 fn ask_section(sections: &HashSet<Section>) -> Result<Option<SectionReply>> {
@@ -112,8 +126,7 @@ fn ask_section(sections: &HashSet<Section>) -> Result<Option<SectionReply>> {
     if idx < sections.len() {
         Ok(Some(SectionReply::Existing(&sections[idx])))
     } else if idx == sections.len() {
-        let new_section_name = ask_new_section_name()?;
-        Ok(Some(SectionReply::New(new_section_name)))
+        Ok(Some(SectionReply::New))
     } else {
         Ok(None)
     }
@@ -186,4 +199,14 @@ fn ask_group(groups: &[Group]) -> Result<Option<&Group>> {
     } else {
         Ok(None)
     }
+}
+
+fn assign_group_backend(package: &Package, groups: &[Group]) -> Result<()> {
+    let reply = ask_user_group_section(groups)?;
+    match reply {
+        Some(val) => todo!(),
+        None => todo!(),
+    }
+
+    todo!()
 }
