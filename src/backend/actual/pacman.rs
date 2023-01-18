@@ -10,6 +10,7 @@ use crate::{impl_backend_constants, Group, Package};
 
 pub(crate) struct Pacman {
     pub(crate) binary: String,
+    pub(crate) aur_rm_args: Option<Vec<String>>,
     pub(crate) packages: HashSet<Package>,
 }
 
@@ -53,10 +54,16 @@ impl Backend for Pacman {
     /// Remove the specified packages.
     fn remove_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(&self.binary);
+
         cmd.args(self.get_switches_remove());
+        if let Some(rm_args) = &self.aur_rm_args {
+            cmd.args(rm_args);
+        }
+
         for p in packages {
             cmd.arg(format!("{p}"));
         }
+
         cmd.status()
             .with_context(|| format!("running command [{cmd:?}]"))
     }
@@ -97,6 +104,7 @@ impl Pacman {
     pub(crate) fn new() -> Self {
         Self {
             binary: BINARY.to_string(),
+            aur_rm_args: None,
             packages: HashSet::new(),
         }
     }

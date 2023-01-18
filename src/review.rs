@@ -60,24 +60,25 @@ fn get_action_for_package(
     reviews: &mut Reviews,
     backend: &Rc<Box<dyn Backend>>,
 ) -> Result<()> {
-    loop {
-        match ask_user_action_for_package()? {
-            ReviewAction::AsDependency => todo!(),
-            ReviewAction::AssignGroupBackend => {
-                if let Some(val) = assign_group_backend(&package, groups)? {
-                    break;
-                };
-            }
-            ReviewAction::Delete => {
-                reviews.delete.push((backend.clone(), package));
-                break;
-            }
-            ReviewAction::Info => backend.show_package_info(&package)?,
-            ReviewAction::Invalid => (),
-            ReviewAction::Skip => break,
-            ReviewAction::Quit => bail!("user wants to quit"),
-        }
-    }
+    todo!();
+    // loop {
+    //     match ask_user_action_for_package()? {
+    //         ReviewAction::AsDependency => todo!(),
+    //         ReviewAction::AssignGroupBackend => {
+    //             if let Some(val) = assign_group_backend(&package, groups)? {
+    //                 break;
+    //             };
+    //         }
+    //         ReviewAction::Delete => {
+    //             reviews.delete.push((backend.clone(), package));
+    //             break;
+    //         }
+    //         ReviewAction::Info => backend.show_package_info(&package)?,
+    //         ReviewAction::Invalid => (),
+    //         ReviewAction::Skip => break,
+    //         ReviewAction::Quit => bail!("user wants to quit"),
+    //     }
+    // }
     Ok(())
 }
 

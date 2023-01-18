@@ -36,7 +36,7 @@ impl Pacdef {
     }
 
     #[allow(clippy::unit_arg)]
-    pub fn run_action_from_arg(self) -> Result<()> {
+    pub fn run_action_from_arg(mut self) -> Result<()> {
         match self.args.subcommand() {
             Some((CLEAN, _)) => self.clean_packages(),
             Some((EDIT, args)) => self.edit_group_files(args).context("editing group files"),
@@ -60,11 +60,11 @@ impl Pacdef {
         }
     }
 
-    fn get_missing_packages(&self) -> ToDoPerBackend {
+    fn get_missing_packages(&mut self) -> ToDoPerBackend {
         let mut to_install = ToDoPerBackend::new();
 
         for backend in Backends::iter() {
-            let mut backend = self.overwrite_binary_from_config(backend);
+            let mut backend = self.overwrite_values_from_config(backend);
 
             backend.load(&self.groups);
 
@@ -77,10 +77,11 @@ impl Pacdef {
         to_install
     }
 
-    fn overwrite_binary_from_config(&self, backend: Box<dyn Backend>) -> Box<dyn Backend> {
+    fn overwrite_values_from_config(&mut self, backend: Box<dyn Backend>) -> Box<dyn Backend> {
         if backend.get_section() == "pacman" {
             Box::new(crate::backend::Pacman {
                 binary: self.config.aur_helper.clone(),
+                aur_rm_args: self.config.aur_rm_args.take(),
                 packages: HashSet::new(),
             })
         } else {
@@ -88,7 +89,7 @@ impl Pacdef {
         }
     }
 
-    fn install_packages(&self) -> Result<()> {
+    fn install_packages(&mut self) -> Result<()> {
         let to_install = self.get_missing_packages();
 
         if to_install.nothing_to_do_for_all_backends() {
@@ -138,17 +139,17 @@ impl Pacdef {
         println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"));
     }
 
-    fn show_unmanaged_packages(self) {
+    fn show_unmanaged_packages(mut self) {
         let unmanaged_per_backend = &self.get_unmanaged_packages();
 
         unmanaged_per_backend.show(None);
     }
 
-    fn get_unmanaged_packages(&self) -> ToDoPerBackend {
+    fn get_unmanaged_packages(&mut self) -> ToDoPerBackend {
         let mut result = ToDoPerBackend::new();
 
         for backend in Backends::iter() {
-            let mut backend = self.overwrite_binary_from_config(backend);
+            let mut backend = self.overwrite_values_from_config(backend);
 
             backend.load(&self.groups);
 
@@ -168,7 +169,7 @@ impl Pacdef {
         }
     }
 
-    fn clean_packages(self) -> Result<()> {
+    fn clean_packages(mut self) -> Result<()> {
         let to_remove = self.get_unmanaged_packages();
 
         if to_remove.is_empty() {

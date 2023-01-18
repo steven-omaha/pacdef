@@ -12,6 +12,7 @@ const CONFIG_FILE_NAME: &str = "pacdef.yaml";
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub aur_helper: String,
+    pub aur_rm_args: Option<Vec<String>>,
     pub warn_not_symlinks: bool,
 }
 
@@ -55,6 +56,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             aur_helper: "paru".into(),
+            aur_rm_args: None,
             warn_not_symlinks: true,
         }
     }
