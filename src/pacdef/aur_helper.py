@@ -67,8 +67,11 @@ class AURHelper:
 
         :param packages: list of packages to be removed.
         """
+        config = Config()
+        aur_helper_rm_args: list[str] = config.aur_helper_rm_args or []
+        switches_remove: list[str] = Switches.remove + aur_helper_rm_args
         packages_str = [str(p) for p in packages]
-        command: list[str] = Switches.remove + packages_str
+        command: list[str] = switches_remove + packages_str
         self._execute(command)
 
     @classmethod
