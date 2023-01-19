@@ -36,7 +36,9 @@ class Config:
         self._create_config_files_and_dirs(config_file_path, pacdef_path)
 
         self.aur_helper: Path = aur_helper or self._get_aur_helper()
-        self.aur_helper_rm_args: list[str] | None = aur_helper_rm_args or self._get_rm_args()
+        self.aur_helper_rm_args: list[str] | None = (
+            aur_helper_rm_args or self._get_rm_args()
+        )
         self._editor: Path | None = editor or self._get_editor()
         self._warn_symlinks: bool = warn_symlinks and self._get_warn_symlinks()
         logging.info(f"{self.aur_helper=}")
@@ -93,6 +95,7 @@ class Config:
         args = self._get_value_from_conf("misc", "aur_rm_args")
         if args is not None:
             return args.split()
+        return None
 
     @classmethod
     def _get_value_from_env_variables(
