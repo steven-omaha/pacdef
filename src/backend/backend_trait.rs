@@ -33,8 +33,6 @@ pub(crate) trait Backend {
             .with_context(|| format!("running command {cmd:?}"))
     }
 
-    fn supports_assigning_packages_as_dependency(&self) -> bool;
-
     /// Remove the specified packages.
     fn remove_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());

@@ -67,10 +67,6 @@ impl Backend for Pacman {
         cmd.status()
             .with_context(|| format!("running command [{cmd:?}]"))
     }
-
-    fn supports_assigning_packages_as_dependency(&self) -> bool {
-        true
-    }
 }
 
 fn get_all_installed_packages_from_alpm() -> Result<HashSet<String>> {
