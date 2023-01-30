@@ -15,8 +15,10 @@ pub(crate) struct Pacman {
     pub(crate) packages: HashSet<Package>,
 }
 
+// TODO replace with paru
 const BINARY: Text = "yay";
 const SECTION: Text = "pacman";
+// TODO replace these with the long version
 const SWITCHES_INSTALL: Switches = &["-S"];
 const SWITCHES_REMOVE: Switches = &["-Rsn"];
 
