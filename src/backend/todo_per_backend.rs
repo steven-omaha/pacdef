@@ -40,8 +40,8 @@ impl ToDoPerBackend {
     fn handle_backend_command<'a, F>(
         &'a self,
         func: F,
-        verb: &'static str,
-        verb_continuous: &'static str,
+        verb: &'_ str,
+        verb_continuous: &'_ str,
     ) -> Result<()>
     where
         F: Fn(&'a dyn Backend, &'a [Package]) -> Result<ExitStatus>,
