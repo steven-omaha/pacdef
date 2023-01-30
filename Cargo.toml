@@ -6,8 +6,7 @@ edition = "2021"
 [dependencies]
 alpm = "*"
 anyhow = "*"
-# clap 4 until (at least) 4.0.32 have scrapped actual color support. we stay on 3.x until that's fixed.
-clap = "3.*"
+clap = "*"
 path-absolutize = "*"
 regex = "*"
 serde_json = "*"
