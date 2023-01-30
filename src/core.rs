@@ -136,7 +136,7 @@ impl Pacdef {
     }
 
     fn show_version(self) {
-        println!("pacdef, version: {}", env!("CARGO_PKG_VERSION"));
+        println!("{}", get_version_string());
     }
 
     fn show_unmanaged_packages(mut self) {
@@ -288,4 +288,14 @@ fn show_error(error: anyhow::Error, backend: Box<dyn Backend>) {
         }
         None => println!("WARNING: skipping backend '{section}': {error}"),
     }
+}
+
+pub(crate) const fn get_version_string() -> &'static str {
+    concat!(
+        "pacdef, version: ",
+        env!("CARGO_PKG_VERSION"),
+        " (",
+        env!("GIT_HASH"),
+        ")",
+    )
 }
