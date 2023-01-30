@@ -5,6 +5,7 @@ use anyhow::{bail, ensure, Context, Result};
 use super::Backend;
 use crate::Package;
 
+#[derive(Debug)]
 pub(crate) struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
 
 impl ToDoPerBackend {
