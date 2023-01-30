@@ -8,6 +8,7 @@ use anyhow::{Context, Result};
 use crate::backend::backend_trait::*;
 use crate::{impl_backend_constants, Group, Package};
 
+#[derive(Debug)]
 pub(crate) struct Pacman {
     pub(crate) binary: String,
     pub(crate) aur_rm_args: Option<Vec<String>>,

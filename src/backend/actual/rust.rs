@@ -8,6 +8,7 @@ use serde_json::Value;
 use crate::backend::backend_trait::*;
 use crate::{impl_backend_constants, Group, Package};
 
+#[derive(Debug)]
 pub(crate) struct Rust {
     pub(crate) packages: HashSet<Package>,
 }

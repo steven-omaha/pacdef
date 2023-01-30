@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::process::Command;
 use std::{collections::HashSet, process::ExitStatus};
 
@@ -8,7 +9,7 @@ use crate::{Group, Package};
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
-pub(crate) trait Backend {
+pub(crate) trait Backend: Debug {
     fn get_binary(&self) -> Text;
     fn get_section(&self) -> Text;
     fn get_switches_install(&self) -> Switches;
