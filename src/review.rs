@@ -47,7 +47,7 @@ pub(crate) fn review(todo_per_backend: ToDoPerBackend, groups: HashSet<Group>) -
         let backend = Rc::new(backend);
         for package in packages {
             println!("{}: {package}", backend.get_section());
-            get_action_for_package(package, &groups, &mut reviews, &backend)?;
+            get_action_for_package(package, &mut groups, &mut reviews, &backend)?;
         }
     }
 
@@ -56,81 +56,43 @@ pub(crate) fn review(todo_per_backend: ToDoPerBackend, groups: HashSet<Group>) -
 
 fn get_action_for_package(
     package: Package,
-    groups: &[Group],
+    groups: &mut [Group],
     reviews: &mut Reviews,
     backend: &Rc<Box<dyn Backend>>,
 ) -> Result<()> {
-    todo!();
-    // loop {
-    //     match ask_user_action_for_package()? {
-    //         ReviewAction::AsDependency => todo!(),
-    //         ReviewAction::AssignGroupBackend => {
-    //             if let Some(val) = assign_group_backend(&package, groups)? {
-    //                 break;
-    //             };
-    //         }
-    //         ReviewAction::Delete => {
-    //             reviews.delete.push((backend.clone(), package));
-    //             break;
-    //         }
-    //         ReviewAction::Info => backend.show_package_info(&package)?,
-    //         ReviewAction::Invalid => (),
-    //         ReviewAction::Skip => break,
-    //         ReviewAction::Quit => bail!("user wants to quit"),
-    //     }
-    // }
+    loop {
+        match ask_user_action_for_package()? {
+            ReviewAction::AsDependency => todo!(),
+            ReviewAction::AssignGroupBackend => {
+                if let Ok(()) = assign_package_to_group(&package, groups) {
+                    break;
+                };
+            }
+            ReviewAction::Delete => {
+                reviews.delete.push((backend.clone(), package));
+                break;
+            }
+            ReviewAction::Info => backend.show_package_info(&package)?,
+            ReviewAction::Invalid => (),
+            ReviewAction::Skip => break,
+            ReviewAction::Quit => bail!("user wants to quit"),
+        }
+    }
     Ok(())
 }
 
-fn ask_user_group_section(groups: &[Group]) -> Result<Option<GroupSectionReply>> {
+fn ask_user_group(groups: &[Group]) -> Result<Option<GroupReply>> {
     let group = match ask_group(groups)? {
         Some(group) => group,
         None => return Ok(None),
     };
 
-    let section_reply = match ask_section(&group.sections)? {
-        Some(reply) => reply,
-        None => return Ok(None),
-    };
-
-    let section = match section_reply {
-        SectionReply::Existing(section) => section,
-        SectionReply::New => return Ok(Some(GroupSectionReply::New)),
-    };
-
-    Ok(Some(GroupSectionReply::Existing((group, section))))
+    Ok(Some(GroupReply::Existing(group)))
 }
 
-enum GroupSectionReply<'a> {
-    Existing((&'a Group, &'a Section)),
+enum GroupReply<'a> {
+    Existing(&'a Group),
     New,
-}
-
-enum SectionReply<'a> {
-    Existing(&'a Section),
-    New,
-}
-
-fn ask_section(sections: &HashSet<Section>) -> Result<Option<SectionReply>> {
-    let sections: Vec<_> = sections.iter().collect();
-
-    let mut buf = String::new();
-    stdin().read_line(&mut buf)?;
-    let reply = buf.trim();
-
-    let idx: usize = if let Ok(idx) = reply.parse() {
-        idx
-    } else {
-        return Ok(None);
-    };
-
-    if idx < sections.len() {
-        Ok(Some(SectionReply::Existing(&sections[idx])))
-    } else if idx == sections.len() {
-        Ok(Some(SectionReply::New))
-    } else {
-        Ok(None)
-    }
 }
 
 fn ask_new_section_name() -> Result<String> {
@@ -202,10 +164,11 @@ fn ask_group(groups: &[Group]) -> Result<Option<&Group>> {
     }
 }
 
-fn assign_group_backend(package: &Package, groups: &[Group]) -> Result<()> {
-    let reply = ask_user_group_section(groups)?;
+fn assign_package_to_group(package: &Package, groups: &mut [Group]) -> Result<()> {
+    let reply = ask_user_group(groups)?;
     match reply {
-        Some(val) => todo!(),
+        Some(GroupReply::Existing(group)) => todo!(),
+        Some(GroupReply::New) => todo!(),
         None => todo!(),
     }
 
