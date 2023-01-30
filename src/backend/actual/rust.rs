@@ -31,10 +31,6 @@ impl Backend for Rust {
         self.get_all_installed_packages()
             .context("getting all installed packages")
     }
-
-    fn supports_assigning_packages_as_dependency(&self) -> bool {
-        false
-    }
 }
 
 fn extract_packages(json: Value) -> Result<HashSet<Package>> {
