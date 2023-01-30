@@ -46,6 +46,9 @@ impl ToDoPerBackend {
         F: Fn(&'a dyn Backend, &'a [Package]) -> Result<ExitStatus>,
     {
         for (backend, packages) in &self.0 {
+            if packages.is_empty() {
+                continue;
+            }
             let exit_status = func(&**backend, packages).with_context(|| {
                 format!("{verb_continuous} packages for {}", backend.get_binary())
             })?;
