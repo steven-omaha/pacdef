@@ -4,11 +4,12 @@ use clap::{Arg, ArgMatches, Command};
 use path_absolutize::Absolutize;
 
 use crate::action::*;
+use crate::core::get_version_string;
 
 fn get_arg_parser() -> Command {
     Command::new("pacdef")
         .about("declarative package manager for Arch Linux")
-        .version("1.0.0-alpha")
+        .version(get_version_string())
         .subcommand_required(true)
         .arg_required_else_help(true)
         .subcommand(Command::new(CLEAN).about("remove unmanaged packages"))
