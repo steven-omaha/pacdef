@@ -197,7 +197,19 @@ impl Strategy {
     }
 
     fn execute(self) -> Result<()> {
-        todo!()
+        if !self.delete.is_empty() {
+            self.backend.remove_packages(&self.delete)?;
+        }
+
+        if !self.as_dependency.is_empty() {
+            self.backend.make_dependency(&self.as_dependency)?;
+        }
+
+        if !self.assign_group.is_empty() {
+            self.backend.assign_group(self.assign_group);
+        }
+
+        Ok(())
     }
 
     fn show(&self) {

@@ -1,7 +1,7 @@
 use std::fmt::Write;
 use std::fs::read_to_string;
 use std::hash::Hash;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::{collections::HashSet, fmt::Display};
 
 use anyhow::{Context, Result};
@@ -14,6 +14,7 @@ use crate::Config;
 pub struct Group {
     pub(crate) name: String,
     pub(crate) sections: HashSet<Section>,
+    pub(crate) path: PathBuf,
 }
 
 impl Group {
@@ -101,7 +102,13 @@ impl Group {
             println!("WARNING: no sections found in group '{name}'");
         }
 
-        Ok(Self { name, sections })
+        let path = path.into();
+
+        Ok(Self {
+            name,
+            sections,
+            path,
+        })
     }
 }
 

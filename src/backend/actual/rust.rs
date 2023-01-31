@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::path::PathBuf;
+use std::process::ExitStatus;
 
 use anyhow::{Context, Result};
 use serde_json::Value;
@@ -17,6 +18,7 @@ const BINARY: Text = "cargo";
 const SECTION: Text = "rust";
 const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_INFO: Switches = &["search", "--limit", "1"];
+const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 impl Backend for Rust {
@@ -33,6 +35,10 @@ impl Backend for Rust {
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
         self.get_all_installed_packages()
             .context("getting all installed packages")
+    }
+
+    fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
+        unreachable!()
     }
 }
 
