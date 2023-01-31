@@ -9,6 +9,10 @@ macro_rules! impl_backend_constants {
             SECTION
         }
 
+        fn get_switches_info(&self) -> Switches {
+            SWITCHES_INFO
+        }
+
         fn get_switches_install(&self) -> Switches {
             SWITCHES_INSTALL
         }

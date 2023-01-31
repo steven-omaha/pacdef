@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::io::{self, stdin, Read};
+use std::io::{self, stdin, stdout, Read, Write};
 use std::rc::Rc;
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -7,11 +7,12 @@ use termios::*;
 
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::grouping::{Group, Package, Section};
+use crate::ui::get_user_confirmation;
 
 #[derive(Debug)]
 enum ReviewAction {
     AsDependency,
-    AssignGroupBackend,
+    AssignGroup,
     Delete,
     Info,
     Invalid,
@@ -19,21 +20,47 @@ enum ReviewAction {
     Quit,
 }
 
+#[derive(Debug)]
 struct Reviews<'a> {
+    pub as_dependency: Vec<(Rc<Box<dyn Backend>>, Package)>,
+    pub assign: Vec<(Rc<Box<dyn Backend>>, Package, &'a Group)>,
     pub delete: Vec<(Rc<Box<dyn Backend>>, Package)>,
-    pub assign: Vec<(Rc<Box<dyn Backend>>, Package, &'a Group, &'a Section)>,
 }
 
 impl<'a> Reviews<'a> {
     fn new() -> Self {
         Self {
-            delete: vec![],
+            as_dependency: vec![],
             assign: vec![],
+            delete: vec![],
+        }
+    }
+
+    fn run_strategy(self) -> Result<()> {
+        todo!()
+    }
+
+    fn print_strategy(&self) {
+        println!("delete:");
+        for (backend, package) in &self.delete {
+            println!("{} {}", backend.get_section(), package.name);
+        }
+
+        println!("assign:");
+        for (backend, package, group) in &self.assign {
+            println!("{} {} {}", backend.get_section(), package.name, group.name);
+        }
+
+        println!("as dependency:");
+        for (backend, package) in &self.as_dependency {
+            println!("{} {}", backend.get_section(), package.name);
         }
     }
 }
 
 pub(crate) fn review(todo_per_backend: ToDoPerBackend, groups: HashSet<Group>) -> Result<()> {
+    dbg!(&todo_per_backend);
+
     let mut reviews = Reviews::new();
     let mut groups: Vec<_> = groups.into_iter().collect();
     groups.sort_unstable();
@@ -47,24 +74,34 @@ pub(crate) fn review(todo_per_backend: ToDoPerBackend, groups: HashSet<Group>) -
         let backend = Rc::new(backend);
         for package in packages {
             println!("{}: {package}", backend.get_section());
-            get_action_for_package(package, &mut groups, &mut reviews, &backend)?;
+            get_action_for_package(package, &groups, &mut reviews, &backend)?;
         }
     }
 
-    todo!()
+    reviews.print_strategy();
+
+    if !get_user_confirmation() {
+        return Ok(());
+    }
+
+    reviews.run_strategy()
 }
 
-fn get_action_for_package(
+fn get_action_for_package<'a>(
     package: Package,
-    groups: &mut [Group],
-    reviews: &mut Reviews,
+    groups: &'a [Group],
+    reviews: &mut Reviews<'a>,
     backend: &Rc<Box<dyn Backend>>,
 ) -> Result<()> {
     loop {
         match ask_user_action_for_package()? {
-            ReviewAction::AsDependency => todo!(),
-            ReviewAction::AssignGroupBackend => {
-                if let Ok(()) = assign_package_to_group(&package, groups) {
+            ReviewAction::AsDependency => {
+                reviews.as_dependency.push((backend.clone(), package));
+                break;
+            }
+            ReviewAction::AssignGroup => {
+                if let Ok(Some(group)) = ask_group(groups) {
+                    reviews.assign.push((backend.clone(), package, group));
                     break;
                 };
             }
@@ -72,48 +109,25 @@ fn get_action_for_package(
                 reviews.delete.push((backend.clone(), package));
                 break;
             }
-            ReviewAction::Info => backend.show_package_info(&package)?,
+            ReviewAction::Info => {
+                backend.show_package_info(&package)?;
+            }
             ReviewAction::Invalid => (),
             ReviewAction::Skip => break,
+            // TODO custom return type
             ReviewAction::Quit => bail!("user wants to quit"),
         }
     }
     Ok(())
 }
 
-fn ask_user_group(groups: &[Group]) -> Result<Option<GroupReply>> {
-    let group = match ask_group(groups)? {
-        Some(group) => group,
-        None => return Ok(None),
-    };
-
-    Ok(Some(GroupReply::Existing(group)))
-}
-
-enum GroupReply<'a> {
-    Existing(&'a Group),
-    New,
-}
-
-fn ask_new_section_name() -> Result<String> {
-    print!("new section name: ");
-    let reply = stdin().lines().next().context("reading line from stdin")?;
-    reply.map_err(|e| anyhow!(e))
-}
-
-fn print_enumerated_sections(sections: &[Section]) {
-    for (i, section) in sections.iter().enumerate() {
-        println!("{i}: {}", section.name);
-    }
-    println!("{}: [new]", sections.len());
-}
-
 fn ask_user_action_for_package() -> Result<ReviewAction> {
     print!("assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? ");
+    stdout().lock().flush()?;
     match read_single_char_from_terminal()? {
         'a' => Ok(ReviewAction::AsDependency),
         'd' => Ok(ReviewAction::Delete),
-        'g' => Ok(ReviewAction::AssignGroupBackend),
+        'g' => Ok(ReviewAction::AssignGroup),
         'i' => Ok(ReviewAction::Info),
         'q' => Ok(ReviewAction::Quit),
         's' => Ok(ReviewAction::Skip),
@@ -162,15 +176,4 @@ fn ask_group(groups: &[Group]) -> Result<Option<&Group>> {
     } else {
         Ok(None)
     }
-}
-
-fn assign_package_to_group(package: &Package, groups: &mut [Group]) -> Result<()> {
-    let reply = ask_user_group(groups)?;
-    match reply {
-        Some(GroupReply::Existing(group)) => todo!(),
-        Some(GroupReply::New) => todo!(),
-        None => todo!(),
-    }
-
-    todo!()
 }

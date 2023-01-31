@@ -12,6 +12,7 @@ pub(in crate::backend) type Text = &'static str;
 pub(crate) trait Backend: Debug {
     fn get_binary(&self) -> Text;
     fn get_section(&self) -> Text;
+    fn get_switches_info(&self) -> Switches;
     fn get_switches_install(&self) -> Switches;
     fn get_switches_remove(&self) -> Switches;
     fn get_managed_packages(&self) -> &HashSet<Package>;
@@ -69,8 +70,13 @@ pub(crate) trait Backend: Debug {
 
     fn add_packages(&mut self, packages: HashSet<Package>);
 
-    fn show_package_info(&self, package: &Package) -> Result<()> {
-        todo!()
+    /// Show information from package manager for package.
+    fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
+        let mut cmd = Command::new(self.get_binary());
+        cmd.args(self.get_switches_info());
+        cmd.arg(format!("{package}"));
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
     }
 
     fn get_unmanaged_packages_sorted(&self) -> Result<Vec<Package>> {

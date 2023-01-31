@@ -16,6 +16,7 @@ pub(crate) struct Rust {
 const BINARY: Text = "cargo";
 const SECTION: Text = "rust";
 const SWITCHES_INSTALL: Switches = &["install"];
+const SWITCHES_INFO: Switches = &["search", "--limit", "1"];
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 impl Backend for Rust {

@@ -151,6 +151,8 @@ impl Pacdef {
         for backend in Backends::iter() {
             let mut backend = self.overwrite_values_from_config(backend);
 
+            dbg!(&backend);
+
             backend.load(&self.groups);
 
             match backend.get_unmanaged_packages_sorted() {
