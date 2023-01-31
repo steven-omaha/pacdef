@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::io::{self, stdin, stdout, Read, Write};
 use std::rc::Rc;
 
@@ -8,6 +8,45 @@ use termios::*;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::grouping::{Group, Package, Section};
 use crate::ui::get_user_confirmation;
+
+#[derive(Debug)]
+struct BackendVectorMap<I>(Vec<(Rc<Box<dyn Backend>>, Vec<I>)>);
+
+impl<I> BackendVectorMap<I> {
+    fn new() -> Self {
+        Self(vec![])
+    }
+
+    fn get(&self, backend: &Rc<Box<dyn Backend>>) -> Option<&[I]> {
+        for (b, value) in &self.0 {
+            if b.get_section() == backend.get_section() {
+                return Some(value);
+            }
+        }
+        return None;
+    }
+
+    fn get_mut(&mut self, backend: &Rc<Box<dyn Backend>>) -> Option<&mut [I]> {
+        for (b, value) in &mut self.0 {
+            if b.get_section() == backend.get_section() {
+                return Some(value);
+            }
+        }
+        return None;
+    }
+
+    fn push(&mut self, val: I) {
+        todo!()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.0.iter().all(|(_, packages)| packages.is_empty())
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &I> {
+        self.0.iter().flat_map(|(_, items)| items)
+    }
+}
 
 #[derive(Debug)]
 enum ReviewAction {
@@ -22,39 +61,50 @@ enum ReviewAction {
 
 #[derive(Debug)]
 struct Reviews<'a> {
-    pub as_dependency: Vec<(Rc<Box<dyn Backend>>, Package)>,
-    pub assign: Vec<(Rc<Box<dyn Backend>>, Package, &'a Group)>,
-    pub delete: Vec<(Rc<Box<dyn Backend>>, Package)>,
+    pub as_dependency: BackendVectorMap<Package>,
+    pub assign: BackendVectorMap<(Package, &'a Group)>,
+    pub delete: BackendVectorMap<Package>,
 }
 
 impl<'a> Reviews<'a> {
     fn new() -> Self {
         Self {
-            as_dependency: vec![],
-            assign: vec![],
-            delete: vec![],
+            as_dependency: BackendVectorMap::new(),
+            assign: BackendVectorMap::new(),
+            delete: BackendVectorMap::new(),
         }
     }
 
+    // order will be: per backend, first assign, then delete, then as dependency
     fn run_strategy(self) -> Result<()> {
         todo!()
     }
 
     fn print_strategy(&self) {
         println!("delete:");
-        for (backend, package) in &self.delete {
-            println!("{} {}", backend.get_section(), package.name);
+        if !self.delete.is_empty() {
+            for (backend, package) in self.delete.iter() {
+                println!("{} {}", backend.get_section(), package.name);
+            }
         }
 
-        println!("assign:");
-        for (backend, package, group) in &self.assign {
-            println!("{} {} {}", backend.get_section(), package.name, group.name);
+        if !self.assign.is_empty() {
+            println!("assign:");
+            for (backend, package, group) in &self.assign {
+                println!("{} {} {}", backend.get_section(), package.name, group.name);
+            }
         }
 
-        println!("as dependency:");
-        for (backend, package) in &self.as_dependency {
-            println!("{} {}", backend.get_section(), package.name);
+        if !self.as_dependency.is_empty() {
+            println!("as dependency:");
+            for (backend, package) in &self.as_dependency {
+                println!("{} {}", backend.get_section(), package.name);
+            }
         }
+    }
+
+    pub(crate) fn nothing_to_do(&self) -> bool {
+        self.as_dependency.is_empty() && self.assign.is_empty() && self.delete.is_empty()
     }
 }
 
@@ -78,6 +128,10 @@ pub(crate) fn review(todo_per_backend: ToDoPerBackend, groups: HashSet<Group>) -
         }
     }
 
+    if reviews.nothing_to_do() {
+        return Ok(());
+    }
+
     reviews.print_strategy();
 
     if !get_user_confirmation() {
@@ -96,6 +150,7 @@ fn get_action_for_package<'a>(
     loop {
         match ask_user_action_for_package()? {
             ReviewAction::AsDependency => {
+                // reviews.as_dependency.insert(_);
                 reviews.as_dependency.push((backend.clone(), package));
                 break;
             }
