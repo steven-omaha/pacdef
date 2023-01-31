@@ -1,4 +1,5 @@
 use std::io::{self, stdin, stdout, Read, Write};
+use std::rc::Rc;
 
 use anyhow::{bail, Result};
 use termios::*;
@@ -8,7 +9,7 @@ use crate::grouping::{Group, Package};
 use crate::ui::get_user_confirmation;
 
 #[derive(Debug)]
-struct ReviewsPerBackend<'a>(Vec<(Box<dyn Backend>, Vec<ReviewAction<'a>>)>);
+struct ReviewsPerBackend(Vec<(Box<dyn Backend>, Vec<ReviewAction>)>);
 
 #[derive(Debug)]
 enum ReviewIntention {
@@ -22,13 +23,13 @@ enum ReviewIntention {
 }
 
 #[derive(Debug, PartialEq)]
-enum ReviewAction<'a> {
+enum ReviewAction {
     AsDependency(Package),
     Delete(Package),
-    AssignGroup(Package, &'a Group),
+    AssignGroup(Package, Rc<Group>),
 }
 
-impl<'a> ReviewsPerBackend<'a> {
+impl ReviewsPerBackend {
     fn new() -> Self {
         Self(vec![])
     }
@@ -42,10 +43,8 @@ pub(crate) fn review(
     todo_per_backend: ToDoPerBackend,
     groups: impl IntoIterator<Item = Group>,
 ) -> Result<()> {
-    dbg!(&todo_per_backend);
-
     let mut reviews = ReviewsPerBackend::new();
-    let mut groups: Vec<_> = groups.into_iter().collect();
+    let mut groups: Vec<Rc<Group>> = groups.into_iter().map(Rc::new).collect();
     groups.sort_unstable();
 
     if todo_per_backend.nothing_to_do_for_all_backends() {
@@ -63,22 +62,31 @@ pub(crate) fn review(
     }
 
     if reviews.nothing_to_do() {
+        println!("nothing to do");
         return Ok(());
     }
 
-    let strategy: Vec<Strategy> = reviews.into();
+    let strategies: Vec<Strategy> = reviews.into();
+
+    for strat in &strategies {
+        strat.show();
+    }
 
     if !get_user_confirmation() {
         return Ok(());
     }
 
-    strategy.execute()
+    for strat in strategies {
+        strat.execute()?
+    }
+
+    Ok(())
 }
 
-fn get_action_for_package<'a>(
+fn get_action_for_package(
     package: Package,
-    groups: &'a [Group],
-    reviews: &mut Vec<ReviewAction<'a>>,
+    groups: &[Rc<Group>],
+    reviews: &mut Vec<ReviewAction>,
     backend: &dyn Backend,
 ) -> Result<()> {
     loop {
@@ -141,13 +149,13 @@ fn read_single_char_from_terminal() -> Result<char> {
     Ok(result)
 }
 
-fn print_enumerated_groups(groups: &[Group]) {
+fn print_enumerated_groups(groups: &[Rc<Group>]) {
     for (i, group) in groups.iter().enumerate() {
         println!("{i}: {}", group.name);
     }
 }
 
-fn ask_group(groups: &[Group]) -> Result<Option<&Group>> {
+fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
     print_enumerated_groups(groups);
     let mut buf = String::new();
     stdin().read_line(&mut buf)?;
@@ -160,7 +168,7 @@ fn ask_group(groups: &[Group]) -> Result<Option<&Group>> {
     };
 
     if idx < groups.len() {
-        Ok(Some(&groups[idx]))
+        Ok(Some(groups[idx].clone()))
     } else {
         Ok(None)
     }
@@ -170,7 +178,7 @@ struct Strategy {
     backend: Box<dyn Backend>,
     delete: Vec<Package>,
     as_dependency: Vec<Package>,
-    assign_group: Vec<(Package, Group)>,
+    assign_group: Vec<(Package, Rc<Group>)>,
 }
 
 impl Strategy {
@@ -178,7 +186,7 @@ impl Strategy {
         backend: Box<dyn Backend>,
         delete: Vec<Package>,
         as_dependency: Vec<Package>,
-        assign_group: Vec<(Package, Group)>,
+        assign_group: Vec<(Package, Rc<Group>)>,
     ) -> Self {
         Self {
             backend,
@@ -188,101 +196,77 @@ impl Strategy {
         }
     }
 
-    fn get_assign_to_group<'a>(actions: &'a mut [ReviewAction<'a>]) -> Vec<(Package, Group)> {
-        let mut result: Vec<_> = actions
-            .iter()
-            .filter_map(|action| {
-                if let ReviewAction::AssignGroup(p, g) = action {
-                    todo!()
-                    // Some((*p, **g))
-                } else {
-                    None
-                }
-            })
-            .collect();
-        result.sort();
-        result
-    }
-
-    fn get_make_dependency<'a>(actions: &'a mut [ReviewAction<'a>]) -> Vec<Package> {
-        let mut result: Vec<_> = actions
-            .iter()
-            .filter_map(|action| {
-                if let ReviewAction::AsDependency(p) = action {
-                    todo!()
-                    // Some(*p)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        result.sort();
-        result
-    }
-
-    fn get_to_delete<'a>(actions: &'a [ReviewAction<'a>]) -> Vec<&'a Package> {
-        let mut result: Vec<_> = actions
-            .iter()
-            .filter_map(|action| {
-                if let ReviewAction::Delete(p) = action {
-                    Some(p)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        result.sort();
-        result
-    }
-
-    // fn print_strategy(&self) {
-    //     for (backend, actions) in &self.0 {
-    //         if actions.is_empty() {
-    //             continue;
-    //         }
-
-    //         println!("[{}]", backend.get_section());
-
-    //         let to_delete = get_to_delete(actions);
-    //         let as_dependency = get_make_dependency(actions);
-    //         let assign_group = get_assign_to_group(actions);
-
-    //         if !to_delete.is_empty() {
-    //             println!("delete:");
-    //             for p in &to_delete {
-    //                 println!("  {p}");
-    //             }
-    //         }
-
-    //         if !as_dependency.is_empty() {
-    //             println!("as dependency:");
-    //             for p in &as_dependency {
-    //                 println!("  {p}");
-    //             }
-    //         }
-
-    //         if !assign_group.is_empty() {
-    //             println!("assign group:");
-    //             for &(p, g) in &assign_group {
-    //                 println!("  {p} -> {}", g.name);
-    //             }
-    //         }
-    //     }
-    // }
-    //
     fn execute(self) -> Result<()> {
         todo!()
     }
+
+    fn show(&self) {
+        if self.nothing_to_do() {
+            return;
+        }
+
+        println!("[{}]", self.backend.get_section());
+
+        if !self.delete.is_empty() {
+            println!("delete:");
+            for p in &self.delete {
+                println!("  {p}");
+            }
+        }
+
+        if !self.as_dependency.is_empty() {
+            println!("as depdendency:");
+            for p in &self.as_dependency {
+                println!("  {p}");
+            }
+        }
+
+        if !self.assign_group.is_empty() {
+            println!("assign groups:");
+            for (p, g) in &self.assign_group {
+                println!("  {p} -> {}", g.name);
+            }
+        }
+    }
+
+    fn nothing_to_do(&self) -> bool {
+        self.delete.is_empty() && self.as_dependency.is_empty() && self.assign_group.is_empty()
+    }
 }
 
-impl<'a> From<ReviewsPerBackend<'a>> for Vec<Strategy> {
+impl From<ReviewsPerBackend> for Vec<Strategy> {
     fn from(reviews: ReviewsPerBackend) -> Self {
         let mut result = vec![];
 
         for (backend, actions) in reviews.0 {
             let (to_delete, assign_group, as_dependency) = divide_actions(actions);
+
+            result.push(Strategy::new(
+                backend,
+                to_delete,
+                as_dependency,
+                assign_group,
+            ));
         }
 
         result
     }
+}
+
+fn divide_actions(
+    actions: Vec<ReviewAction>,
+) -> (Vec<Package>, Vec<(Package, Rc<Group>)>, Vec<Package>) {
+    let mut to_delete = vec![];
+    let mut assign_group = vec![];
+    let mut as_dependency = vec![];
+
+    for action in actions {
+        match action {
+            ReviewAction::Delete(package) => to_delete.push(package),
+            ReviewAction::AssignGroup(package, group) => assign_group.push((package, group)),
+            ReviewAction::AsDependency(package) => as_dependency.push(package),
+        }
+    }
+
+    (to_delete, assign_group, as_dependency)
 }
