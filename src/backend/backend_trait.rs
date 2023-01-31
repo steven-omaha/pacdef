@@ -33,6 +33,7 @@ pub(crate) trait Backend: Debug {
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>>;
 
     fn assign_group(&self, to_assign: Vec<(Package, Rc<Group>)>) {
+        todo!();
         let mut group_package_map = HashMap::new();
 
         for (p, group) in to_assign {
@@ -58,38 +59,38 @@ pub(crate) trait Backend: Debug {
             lines.find(|line| line.contains(&format!("[{}]", self.get_section())));
             lines.next().unwrap();
 
-            let start_of_section = if let Some(start_of_section) = group_file_content.find() {
-                start_of_section
-            } else {
-                must_write_section_header = true;
-                old_length
-            };
+            // let start_of_section = if let Some(start_of_section) = group_file_content.find() {
+            //     start_of_section
+            // } else {
+            //     must_write_section_header = true;
+            //     old_length
+            // };
 
-            dbg!(&start_of_section);
+            // dbg!(&start_of_section);
 
-            let mut new_file_content = group_file_content
-                .get(..start_of_section)
-                .unwrap()
-                .to_owned();
+            // let mut new_file_content = group_file_content
+            //     .get(..start_of_section)
+            //     .unwrap()
+            //     .to_owned();
 
-            dbg!(&new_file_content);
+            // dbg!(&new_file_content);
 
-            todo!();
+            // todo!();
 
-            if dbg!(must_write_section_header) {
-                new_file_content.push_str(&format!("\n[{}]", self.get_section()));
-            }
-            for package in packages {
-                new_file_content.push_str(&format!("\n{package}"));
-            }
-            new_file_content.push('\n');
+            // if dbg!(must_write_section_header) {
+            //     new_file_content.push_str(&format!("\n[{}]", self.get_section()));
+            // }
+            // for package in packages {
+            //     new_file_content.push_str(&format!("\n{package}"));
+            // }
+            // new_file_content.push('\n');
 
-            if old_length > start_of_section {
-                new_file_content.push_str(group_file_content.get(old_length..).unwrap());
-            }
+            // if old_length > start_of_section {
+            //     new_file_content.push_str(group_file_content.get(old_length..).unwrap());
+            // }
 
-            let mut file = File::create(&group.path).unwrap();
-            write!(file, "{new_file_content}").unwrap();
+            // let mut file = File::create(&group.path).unwrap();
+            // write!(file, "{new_file_content}").unwrap();
         }
     }
 
