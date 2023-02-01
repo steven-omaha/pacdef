@@ -44,6 +44,7 @@ pub(crate) fn review(
 ) -> Result<()> {
     let mut reviews = ReviewsPerBackend::new();
     let mut groups: Vec<Rc<Group>> = groups.into_iter().map(Rc::new).collect();
+
     groups.sort_unstable();
 
     if todo_per_backend.nothing_to_do_for_all_backends() {
@@ -136,6 +137,7 @@ fn ask_user_action_for_package() -> Result<ReviewIntention> {
         _ => Ok(ReviewIntention::Invalid),
     }
 }
+
 fn print_enumerated_groups(groups: &[Rc<Group>]) {
     for (i, group) in groups.iter().enumerate() {
         println!("{i}: {}", group.name);
@@ -160,6 +162,7 @@ fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
         Ok(None)
     }
 }
+
 #[derive(Debug)]
 struct Strategy {
     backend: Box<dyn Backend>,
