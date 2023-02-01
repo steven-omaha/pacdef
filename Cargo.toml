@@ -1,6 +1,6 @@
 [package]
 name = "pacdef"
-version = "1.0.0-alpha2"
+version = "1.0.0-beta1"
 edition = "2021"
 
 [dependencies]
