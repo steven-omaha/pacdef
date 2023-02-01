@@ -1,7 +1,7 @@
 use std::io::{self, stdin, stdout, Read, Write};
 use std::rc::Rc;
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use termios::*;
 
 use crate::backend::{Backend, ToDoPerBackend};
@@ -56,7 +56,10 @@ pub(crate) fn review(
         let mut actions = vec![];
         for package in packages {
             println!("{}: {package}", backend.get_section());
-            get_action_for_package(package, &groups, &mut actions, &*backend)?;
+            match get_action_for_package(package, &groups, &mut actions, &*backend)? {
+                ContinueWithReview::Yes => continue,
+                ContinueWithReview::No => return Ok(()),
+            }
         }
         reviews.0.push((backend, actions));
     }
@@ -88,7 +91,7 @@ fn get_action_for_package(
     groups: &[Rc<Group>],
     reviews: &mut Vec<ReviewAction>,
     backend: &dyn Backend,
-) -> Result<()> {
+) -> Result<ContinueWithReview> {
     loop {
         match ask_user_action_for_package()? {
             ReviewIntention::AsDependency => {
@@ -110,11 +113,15 @@ fn get_action_for_package(
             }
             ReviewIntention::Invalid => (),
             ReviewIntention::Skip => break,
-            // TODO custom return type
-            ReviewIntention::Quit => bail!("user wants to quit"),
+            ReviewIntention::Quit => return Ok(ContinueWithReview::No),
         }
     }
-    Ok(())
+    Ok(ContinueWithReview::Yes)
+}
+
+enum ContinueWithReview {
+    Yes,
+    No,
 }
 
 fn ask_user_action_for_package() -> Result<ReviewIntention> {

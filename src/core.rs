@@ -24,7 +24,6 @@ pub struct Pacdef {
     groups: HashSet<Group>,
 }
 
-// TODO review
 impl Pacdef {
     #[must_use]
     pub fn new(args: ArgMatches, config: Config, groups: HashSet<Group>) -> Self {
