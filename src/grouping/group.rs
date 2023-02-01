@@ -1,12 +1,13 @@
-use std::fmt::Write;
-use std::fs::read_to_string;
+use std::fmt::Write as FmtWrite;
+use std::fs::{read_to_string, File};
 use std::hash::Hash;
+use std::io::Write as IoWrite;
 use std::path::{Path, PathBuf};
 use std::{collections::HashSet, fmt::Display};
 
 use anyhow::{Context, Result};
 
-use super::Section;
+use super::{Package, Section};
 
 use crate::Config;
 
@@ -110,6 +111,19 @@ impl Group {
             path,
         })
     }
+
+    pub(crate) fn save_packages(&self, section_header: &str, packages: Vec<Package>) {
+        let mut content = read_to_string(&self.path).unwrap();
+
+        if content.contains(section_header) {
+            write_packages_to_existing_section(&mut content, section_header, &packages);
+        } else {
+            add_new_section_with_packages(&mut content, section_header, &packages);
+        }
+
+        let mut file = File::create(&self.path).unwrap();
+        write!(file, "{content}").unwrap();
+    }
 }
 
 impl Display for Group {
@@ -126,5 +140,42 @@ impl Display for Group {
             }
         }
         Ok(())
+    }
+}
+
+fn write_packages_to_existing_section(
+    group_file_content: &mut String,
+    section_header: &str,
+    packages: &[Package],
+) {
+    let idx_of_first_package_line_in_section =
+        find_first_package_line_in_section(group_file_content, section_header);
+
+    let after = group_file_content.split_off(idx_of_first_package_line_in_section);
+
+    for p in packages {
+        group_file_content.push_str(&format!("{p}\n"));
+    }
+
+    group_file_content.push_str(&after);
+}
+
+fn find_first_package_line_in_section(group_file_content: &str, section_header: &str) -> usize {
+    let section_start = group_file_content.find(section_header).unwrap();
+    let distance_to_next_newline = group_file_content[section_start..].find('\n').unwrap();
+
+    section_start + distance_to_next_newline + 1 // + 1 to be after the newline
+}
+
+fn add_new_section_with_packages(
+    group_file_content: &mut String,
+    section_header: &str,
+    packages: &[Package],
+) {
+    group_file_content.push('\n');
+    group_file_content.push_str(section_header);
+    group_file_content.push('\n');
+    for p in packages {
+        group_file_content.push_str(&format!("{p}\n"));
     }
 }
