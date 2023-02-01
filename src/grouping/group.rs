@@ -94,7 +94,7 @@ impl Group {
                     sections.insert(section);
                 }
                 Err(e) => {
-                    println!("WARNING: could not process a section under group '{name}': {e:?}\n")
+                    println!("WARNING: could not process a section under group '{name}': {e:?}\n");
                 }
             }
         }
@@ -112,13 +112,13 @@ impl Group {
         })
     }
 
-    pub(crate) fn save_packages(&self, section_header: &str, packages: Vec<Package>) {
+    pub(crate) fn save_packages(&self, section_header: &str, packages: &[Package]) {
         let mut content = read_to_string(&self.path).unwrap();
 
         if content.contains(section_header) {
-            write_packages_to_existing_section(&mut content, section_header, &packages);
+            write_packages_to_existing_section(&mut content, section_header, packages);
         } else {
-            add_new_section_with_packages(&mut content, section_header, &packages);
+            add_new_section_with_packages(&mut content, section_header, packages);
         }
 
         let mut file = File::create(&self.path).unwrap();

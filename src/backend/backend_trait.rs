@@ -35,7 +35,7 @@ pub(crate) trait Backend: Debug {
         let section_header = format!("[{}]", self.get_section());
 
         for (group, packages) in group_package_map {
-            group.save_packages(&section_header, packages);
+            group.save_packages(&section_header, &packages);
         }
     }
 

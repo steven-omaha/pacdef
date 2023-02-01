@@ -29,7 +29,7 @@ impl Backend for Rust {
         let content = read_to_string(file).context("reading crates file")?;
         let json: Value =
             serde_json::from_str(&content).context("parsing JSON from crates file")?;
-        extract_packages(json).context("extracing packages from crates file")
+        extract_packages(&json).context("extracing packages from crates file")
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
@@ -42,7 +42,7 @@ impl Backend for Rust {
     }
 }
 
-fn extract_packages(json: Value) -> Result<HashSet<Package>> {
+fn extract_packages(json: &Value) -> Result<HashSet<Package>> {
     let result: HashSet<_> = json
         .get("installs")
         .context("get 'installs' field from json")?

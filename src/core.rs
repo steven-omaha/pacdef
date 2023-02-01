@@ -70,7 +70,7 @@ impl Pacdef {
 
             match backend.get_missing_packages_sorted() {
                 Ok(diff) => to_install.push((backend, diff)),
-                Err(error) => show_error(error, backend),
+                Err(error) => show_error(&error, &*backend),
             };
         }
 
@@ -155,7 +155,7 @@ impl Pacdef {
 
             match backend.get_unmanaged_packages_sorted() {
                 Ok(unmanaged) => result.push((backend, unmanaged)),
-                Err(error) => show_error(error, backend),
+                Err(error) => show_error(&error, &*backend),
             };
         }
         result
@@ -278,7 +278,7 @@ fn get_assumed_group_file_names(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> 
     Ok(paths)
 }
 
-fn show_error(error: anyhow::Error, backend: Box<dyn Backend>) {
+fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
     let section = backend.get_section();
     match get_single_var("RUST_BACKTRACE") {
         Some(s) => {

@@ -77,7 +77,7 @@ pub(crate) fn review(
     }
 
     for strat in strategies {
-        strat.execute()?
+        strat.execute()?;
     }
 
     Ok(())

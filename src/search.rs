@@ -21,7 +21,7 @@ pub(crate) fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Res
         for section in &group.sections {
             for package in &section.packages {
                 if re.is_match(&package.name) {
-                    vec.push((group, section, package))
+                    vec.push((group, section, package));
                 }
             }
         }
