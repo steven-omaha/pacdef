@@ -172,7 +172,7 @@ impl Pacdef {
     fn clean_packages(mut self) -> Result<()> {
         let to_remove = self.get_unmanaged_packages();
 
-        if to_remove.is_empty() {
+        if to_remove.nothing_to_do_for_all_backends() {
             println!("nothing to do");
             return Ok(());
         }

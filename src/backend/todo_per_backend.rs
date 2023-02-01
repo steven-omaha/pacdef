@@ -50,6 +50,7 @@ impl ToDoPerBackend {
             if packages.is_empty() {
                 continue;
             }
+
             let exit_status = func(&**backend, packages).with_context(|| {
                 format!("{verb_continuous} packages for {}", backend.get_binary())
             })?;
@@ -60,10 +61,6 @@ impl ToDoPerBackend {
             }
         }
         Ok(())
-    }
-
-    pub(crate) fn is_empty(&self) -> bool {
-        self.0.iter().all(|(_, packages)| packages.is_empty())
     }
 
     pub(crate) fn show(&self, keyword: Option<&str>) {
