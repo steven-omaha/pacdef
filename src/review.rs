@@ -1,12 +1,11 @@
-use std::io::{self, stdin, stdout, Read, Write};
+use std::io::{stdin, stdout, Write};
 use std::rc::Rc;
 
 use anyhow::Result;
-use termios::*;
 
 use crate::backend::{Backend, ToDoPerBackend};
 use crate::grouping::{Group, Package};
-use crate::ui::get_user_confirmation;
+use crate::ui::{get_user_confirmation, read_single_char_from_terminal};
 
 #[derive(Debug)]
 struct ReviewsPerBackend(Vec<(Box<dyn Backend>, Vec<ReviewAction>)>);
@@ -137,25 +136,6 @@ fn ask_user_action_for_package() -> Result<ReviewIntention> {
         _ => Ok(ReviewIntention::Invalid),
     }
 }
-
-fn read_single_char_from_terminal() -> Result<char> {
-    let fd = 0; // 0 is the file descriptor for stdin
-    let termios = Termios::from_fd(fd)?;
-    let mut new_termios = termios;
-    new_termios.c_lflag &= !(ICANON | ECHO);
-    new_termios.c_cc[VMIN] = 1;
-    new_termios.c_cc[VTIME] = 0;
-    tcsetattr(fd, TCSANOW, &new_termios).unwrap();
-
-    let mut input = [0u8; 1];
-    io::stdin().read_exact(&mut input[..]).unwrap();
-    let result = input[0] as char;
-    println!("{result}");
-
-    tcsetattr(fd, TCSANOW, &termios).unwrap(); // restore previous settings
-    Ok(result)
-}
-
 fn print_enumerated_groups(groups: &[Rc<Group>]) {
     for (i, group) in groups.iter().enumerate() {
         println!("{i}: {}", group.name);
