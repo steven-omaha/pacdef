@@ -37,8 +37,8 @@ impl Backend for Rust {
             .context("getting all installed packages")
     }
 
-    fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
-        unreachable!()
+    fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
+        unreachable!("cargo does not have unmanaged packages")
     }
 }
 

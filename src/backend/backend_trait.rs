@@ -32,6 +32,7 @@ pub(crate) trait Backend: Debug {
     /// Get all packages that were installed in the system explicitly.
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>>;
 
+    // TODO continue here
     fn assign_group(&self, to_assign: Vec<(Package, Rc<Group>)>) {
         todo!();
         let mut group_package_map = HashMap::new();
