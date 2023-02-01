@@ -52,7 +52,7 @@ impl Pacdef {
             Some((SYNC, _)) => self.install_packages(),
             Some((UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
             Some((VERSION, _)) => Ok(self.show_version()),
-            Some((_, _)) => todo!(),
+            Some((_, _)) => panic!(),
             None => {
                 unreachable!("argument parser requires some subcommand to return an `ArgMatches`")
             }

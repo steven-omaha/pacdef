@@ -9,7 +9,7 @@ use anyhow::{ensure, Context, Result};
 
 use super::Package;
 
-#[derive(Debug, Eq)]
+#[derive(Debug)]
 pub struct Section {
     pub name: String,
     pub packages: HashSet<Package>,
@@ -57,6 +57,10 @@ impl PartialEq for Section {
     }
 }
 
+impl Eq for Section {
+    fn assert_receiver_is_total_eq(&self) {}
+}
+
 impl PartialOrd for Section {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         self.name.partial_cmp(&other.name)
@@ -64,8 +68,8 @@ impl PartialOrd for Section {
 }
 
 impl Ord for Section {
-    fn cmp(&self, _other: &Self) -> std::cmp::Ordering {
-        todo!()
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
     }
 }
 
