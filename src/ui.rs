@@ -3,7 +3,6 @@ use std::io::{self, Read, Write};
 use anyhow::{Context, Result};
 use termios::*;
 
-#[must_use]
 pub(crate) fn get_user_confirmation() -> Result<bool> {
     print!("Continue? [Y/n] ");
     std::io::stdout().flush().unwrap();
