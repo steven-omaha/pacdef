@@ -23,7 +23,7 @@ pub(super) enum ReviewIntention {
 
 #[derive(Debug)]
 pub(super) struct ReviewsPerBackend {
-    pub items: Vec<(Box<dyn Backend>, Vec<ReviewAction>)>,
+    items: Vec<(Box<dyn Backend>, Vec<ReviewAction>)>,
 }
 
 impl ReviewsPerBackend {
@@ -37,6 +37,16 @@ impl ReviewsPerBackend {
 
     pub(super) fn push(&mut self, value: (Box<dyn Backend>, Vec<ReviewAction>)) {
         self.items.push(value);
+    }
+}
+
+impl IntoIterator for ReviewsPerBackend {
+    type Item = (Box<dyn Backend>, Vec<ReviewAction>);
+
+    type IntoIter = std::vec::IntoIter<(Box<dyn Backend>, Vec<ReviewAction>)>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.items.into_iter()
     }
 }
 
