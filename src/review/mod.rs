@@ -1,42 +1,17 @@
+mod datastructures;
+mod strategy;
+
 use std::io::{stdin, stdout, Write};
 use std::rc::Rc;
 
 use anyhow::Result;
 
 use crate::backend::{Backend, ToDoPerBackend};
-use crate::grouping::{Group, Package};
 use crate::ui::{get_user_confirmation, read_single_char_from_terminal};
+use crate::{Group, Package};
 
-#[derive(Debug)]
-struct ReviewsPerBackend(Vec<(Box<dyn Backend>, Vec<ReviewAction>)>);
-
-#[derive(Debug)]
-enum ReviewIntention {
-    AsDependency,
-    AssignGroup,
-    Delete,
-    Info,
-    Invalid,
-    Skip,
-    Quit,
-}
-
-#[derive(Debug, PartialEq)]
-enum ReviewAction {
-    AsDependency(Package),
-    Delete(Package),
-    AssignGroup(Package, Rc<Group>),
-}
-
-impl ReviewsPerBackend {
-    fn new() -> Self {
-        Self(vec![])
-    }
-
-    pub(crate) fn nothing_to_do(&self) -> bool {
-        self.0.iter().all(|(_, vec)| vec.is_empty())
-    }
-}
+use self::datastructures::{ContinueWithReview, ReviewAction, ReviewIntention, ReviewsPerBackend};
+use self::strategy::Strategy;
 
 pub(crate) fn review(
     todo_per_backend: ToDoPerBackend,
@@ -119,11 +94,6 @@ fn get_action_for_package(
     Ok(ContinueWithReview::Yes)
 }
 
-enum ContinueWithReview {
-    Yes,
-    No,
-}
-
 fn ask_user_action_for_package() -> Result<ReviewIntention> {
     print!("assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? ");
     stdout().lock().flush()?;
@@ -162,80 +132,6 @@ fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
         Ok(None)
     }
 }
-
-#[derive(Debug)]
-struct Strategy {
-    backend: Box<dyn Backend>,
-    delete: Vec<Package>,
-    as_dependency: Vec<Package>,
-    assign_group: Vec<(Package, Rc<Group>)>,
-}
-
-impl Strategy {
-    fn new(
-        backend: Box<dyn Backend>,
-        delete: Vec<Package>,
-        as_dependency: Vec<Package>,
-        assign_group: Vec<(Package, Rc<Group>)>,
-    ) -> Self {
-        Self {
-            backend,
-            delete,
-            as_dependency,
-            assign_group,
-        }
-    }
-
-    fn execute(self) -> Result<()> {
-        if !self.delete.is_empty() {
-            self.backend.remove_packages(&self.delete)?;
-        }
-
-        if !self.as_dependency.is_empty() {
-            self.backend.make_dependency(&self.as_dependency)?;
-        }
-
-        if !self.assign_group.is_empty() {
-            self.backend.assign_group(self.assign_group);
-        }
-
-        Ok(())
-    }
-
-    fn show(&self) {
-        if self.nothing_to_do() {
-            return;
-        }
-
-        println!("[{}]", self.backend.get_section());
-
-        if !self.delete.is_empty() {
-            println!("delete:");
-            for p in &self.delete {
-                println!("  {p}");
-            }
-        }
-
-        if !self.as_dependency.is_empty() {
-            println!("as depdendency:");
-            for p in &self.as_dependency {
-                println!("  {p}");
-            }
-        }
-
-        if !self.assign_group.is_empty() {
-            println!("assign groups:");
-            for (p, g) in &self.assign_group {
-                println!("  {p} -> {}", g.name);
-            }
-        }
-    }
-
-    fn nothing_to_do(&self) -> bool {
-        self.delete.is_empty() && self.as_dependency.is_empty() && self.assign_group.is_empty()
-    }
-}
-
 impl From<ReviewsPerBackend> for Vec<Strategy> {
     fn from(reviews: ReviewsPerBackend) -> Self {
         let mut result = vec![];
