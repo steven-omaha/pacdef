@@ -36,7 +36,7 @@ pub(crate) fn review(
                 ContinueWithReview::No => return Ok(()),
             }
         }
-        reviews.0.push((backend, actions));
+        reviews.push((backend, actions));
     }
 
     if reviews.nothing_to_do() {

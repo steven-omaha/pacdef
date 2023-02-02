@@ -22,15 +22,21 @@ pub(super) enum ReviewIntention {
 }
 
 #[derive(Debug)]
-pub(super) struct ReviewsPerBackend(pub Vec<(Box<dyn Backend>, Vec<ReviewAction>)>);
+pub(super) struct ReviewsPerBackend {
+    pub items: Vec<(Box<dyn Backend>, Vec<ReviewAction>)>,
+}
 
 impl ReviewsPerBackend {
     pub(super) fn new() -> Self {
-        Self(vec![])
+        Self { items: vec![] }
     }
 
     pub(super) fn nothing_to_do(&self) -> bool {
-        self.0.iter().all(|(_, vec)| vec.is_empty())
+        self.items.iter().all(|(_, vec)| vec.is_empty())
+    }
+
+    pub(super) fn push(&mut self, value: (Box<dyn Backend>, Vec<ReviewAction>)) {
+        self.items.push(value);
     }
 }
 

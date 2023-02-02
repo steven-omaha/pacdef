@@ -84,7 +84,7 @@ impl From<ReviewsPerBackend> for Vec<Strategy> {
     fn from(reviews: ReviewsPerBackend) -> Self {
         let mut result = vec![];
 
-        for (backend, actions) in reviews.0 {
+        for (backend, actions) in reviews.items {
             let (to_delete, assign_group, as_dependency) = divide_actions(actions);
 
             result.push(Strategy::new(
