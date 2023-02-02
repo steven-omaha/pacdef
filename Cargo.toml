@@ -2,6 +2,9 @@
 name = "pacdef"
 version = "1.0.0-beta1"
 edition = "2021"
+description = "declarative package manager for Arch Linux"
+license = "GPLv3"
+repository = "https://github.com/steven-omaha/pacdef"
 
 [dependencies]
 alpm = "*"
@@ -13,7 +16,7 @@ serde_json = "*"
 serde_yaml = "*"
 serde_derive = "*"
 serde = "*"
-pacdef_macro = {path = "pacdef_macro/"}
+pacdef_macro = {path = "pacdef_macro/", version = "*"}
 termios = "*"
 
 [profile.release]
