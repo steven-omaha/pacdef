@@ -98,7 +98,7 @@ impl Pacdef {
 
         to_install.show("install".into());
 
-        if !get_user_confirmation() {
+        if !get_user_confirmation()? {
             return Ok(());
         };
 
@@ -178,7 +178,7 @@ impl Pacdef {
 
         to_remove.show("remove".into());
 
-        if !get_user_confirmation() {
+        if !get_user_confirmation()? {
             return Ok(());
         };
 

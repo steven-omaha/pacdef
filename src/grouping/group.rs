@@ -1,7 +1,6 @@
-use std::fmt::Write as FmtWrite;
 use std::fs::{read_to_string, File};
 use std::hash::Hash;
-use std::io::Write as IoWrite;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{collections::HashSet, fmt::Display};
 

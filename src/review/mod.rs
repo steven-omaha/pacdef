@@ -50,7 +50,7 @@ pub(crate) fn review(
         strat.show();
     }
 
-    if !get_user_confirmation() {
+    if !get_user_confirmation()? {
         return Ok(());
     }
 
