@@ -16,8 +16,9 @@ serde_json = "*"
 serde_yaml = "*"
 serde_derive = "*"
 serde = "*"
-pacdef_macro = {path = "pacdef_macro/", version = "*"}
 termios = "*"
+
+pacdef_macro = {path = "pacdef_macro", version = "*"}
 
 [profile.release]
 lto = "off"
