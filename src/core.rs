@@ -188,12 +188,24 @@ impl Pacdef {
     fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
         let mut iter = groups.get_many::<String>("group").unwrap().peekable();
 
+        let show_more_than_one_group = iter.size_hint().0 > 1;
+
         while let Some(arg_group) = iter.next() {
             let group = self
                 .groups
                 .iter()
                 .find(|g| g.name == *arg_group)
                 .ok_or_else(|| anyhow!("group {} not found", *arg_group))?;
+
+            if show_more_than_one_group {
+                let name = &group.name;
+                println!("{name}");
+                for _ in 0..name.len() {
+                    print!("-");
+                }
+                println!();
+            }
+
             println!("{group}");
             if iter.peek().is_some() {
                 println!();

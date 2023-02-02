@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::ArgMatches;
 use regex::Regex;
 
@@ -25,6 +25,10 @@ pub(crate) fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Res
                 }
             }
         }
+    }
+
+    if vec.is_empty() {
+        bail!("no packages matching query")
     }
 
     print_triples(vec);

@@ -136,7 +136,7 @@ impl Display for Group {
         while let Some(section) = iter.next() {
             section.fmt(f)?;
             if iter.peek().is_some() {
-                f.write_char('\n')?;
+                f.write_str("\n\n")?;
             }
         }
         Ok(())
