@@ -132,39 +132,3 @@ fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
         Ok(None)
     }
 }
-impl From<ReviewsPerBackend> for Vec<Strategy> {
-    fn from(reviews: ReviewsPerBackend) -> Self {
-        let mut result = vec![];
-
-        for (backend, actions) in reviews.0 {
-            let (to_delete, assign_group, as_dependency) = divide_actions(actions);
-
-            result.push(Strategy::new(
-                backend,
-                to_delete,
-                as_dependency,
-                assign_group,
-            ));
-        }
-
-        result
-    }
-}
-
-fn divide_actions(
-    actions: Vec<ReviewAction>,
-) -> (Vec<Package>, Vec<(Package, Rc<Group>)>, Vec<Package>) {
-    let mut to_delete = vec![];
-    let mut assign_group = vec![];
-    let mut as_dependency = vec![];
-
-    for action in actions {
-        match action {
-            ReviewAction::Delete(package) => to_delete.push(package),
-            ReviewAction::AssignGroup(package, group) => assign_group.push((package, group)),
-            ReviewAction::AsDependency(package) => as_dependency.push(package),
-        }
-    }
-
-    (to_delete, assign_group, as_dependency)
-}
