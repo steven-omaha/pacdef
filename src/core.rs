@@ -3,7 +3,7 @@ use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::{anyhow, ensure, Context, Result};
 use clap::ArgMatches;
 
 use crate::action::*;
@@ -189,7 +189,11 @@ impl Pacdef {
         let mut iter = groups.get_many::<String>("group").unwrap().peekable();
 
         while let Some(arg_group) = iter.next() {
-            let group = self.groups.iter().find(|g| g.name == *arg_group).unwrap();
+            let group = self
+                .groups
+                .iter()
+                .find(|g| g.name == *arg_group)
+                .ok_or_else(|| anyhow!("group {} not found", *arg_group))?;
             println!("{group}");
             if iter.peek().is_some() {
                 println!();

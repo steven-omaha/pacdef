@@ -18,10 +18,10 @@ pub(crate) struct Pacman {
 const BINARY: Text = "paru";
 const SECTION: Text = "pacman";
 
-const SWITCHES_INFO: Switches = &["-Qi"];
-const SWITCHES_INSTALL: Switches = &["-S"];
-const SWITCHES_MAKE_DEPENDENCY: Switches = &["-D", "--asdeps"];
-const SWITCHES_REMOVE: Switches = &["-Rsn"];
+const SWITCHES_INFO: Switches = &["--query", "--info"];
+const SWITCHES_INSTALL: Switches = &["--sync"];
+const SWITCHES_MAKE_DEPENDENCY: Switches = &["--database", "--asdeps"];
+const SWITCHES_REMOVE: Switches = &["--remove", "--recursive"];
 
 impl Backend for Pacman {
     impl_backend_constants!();

@@ -31,10 +31,12 @@ impl ToDoPerBackend {
 
     pub(crate) fn install_missing_packages(&self) -> Result<()> {
         self.handle_backend_command(Backend::install_packages, "install", "installing")
+            .context("installing packages")
     }
 
     pub(crate) fn remove_unmanaged_packages(&self) -> Result<()> {
         self.handle_backend_command(Backend::remove_packages, "remove", "removing")
+            .context("removing packages")
     }
 
     fn handle_backend_command<'a, F>(
