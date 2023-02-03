@@ -85,7 +85,16 @@ impl From<ReviewsPerBackend> for Vec<Strategy> {
         let mut result = vec![];
 
         for (backend, actions) in reviews {
-            let (to_delete, assign_group, as_dependency) = divide_actions(actions);
+            let mut to_delete = vec![];
+            let mut assign_group = vec![];
+            let mut as_dependency = vec![];
+
+            extract_actions(
+                actions,
+                &mut to_delete,
+                &mut assign_group,
+                &mut as_dependency,
+            );
 
             result.push(Strategy::new(
                 backend,
@@ -99,13 +108,12 @@ impl From<ReviewsPerBackend> for Vec<Strategy> {
     }
 }
 
-fn divide_actions(
+fn extract_actions(
     actions: Vec<ReviewAction>,
-) -> (Vec<Package>, Vec<(Package, Rc<Group>)>, Vec<Package>) {
-    let mut to_delete = vec![];
-    let mut assign_group = vec![];
-    let mut as_dependency = vec![];
-
+    to_delete: &mut Vec<Package>,
+    assign_group: &mut Vec<(Package, Rc<Group>)>,
+    as_dependency: &mut Vec<Package>,
+) {
     for action in actions {
         match action {
             ReviewAction::Delete(package) => to_delete.push(package),
@@ -113,6 +121,4 @@ fn divide_actions(
             ReviewAction::AsDependency(package) => as_dependency.push(package),
         }
     }
-
-    (to_delete, assign_group, as_dependency)
 }
