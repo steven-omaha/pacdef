@@ -96,7 +96,8 @@ impl Pacdef {
             return Ok(());
         }
 
-        to_install.show("install".into());
+        println!("Would install the following packages:");
+        to_install.show();
 
         if !get_user_confirmation()? {
             return Ok(());
@@ -141,7 +142,7 @@ impl Pacdef {
     fn show_unmanaged_packages(mut self) {
         let unmanaged_per_backend = &self.get_unmanaged_packages();
 
-        unmanaged_per_backend.show(None);
+        unmanaged_per_backend.show();
     }
 
     fn get_unmanaged_packages(&mut self) -> ToDoPerBackend {
@@ -176,7 +177,8 @@ impl Pacdef {
             return Ok(());
         }
 
-        to_remove.show("remove".into());
+        println!("Would remove the following packages");
+        to_remove.show();
 
         if !get_user_confirmation()? {
             return Ok(());
