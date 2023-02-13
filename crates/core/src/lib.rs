@@ -1,10 +1,12 @@
 #![warn(
     clippy::as_conversions,
-    clippy::use_debug,
+    clippy::option_if_let_else,
+    clippy::redundant_pub_crate,
+    clippy::unused_self,
     clippy::unwrap_used,
-    clippy::wildcard_dependencies,
+    clippy::use_debug,
     clippy::use_self,
-    clippy::unused_self
+    clippy::wildcard_dependencies
 )]
 
 mod action;
