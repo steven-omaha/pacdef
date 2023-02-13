@@ -11,7 +11,7 @@ use crate::{Group, Package};
 pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
-pub(crate) trait Backend: Debug {
+pub trait Backend: Debug {
     fn get_binary(&self) -> Text;
     fn get_section(&self) -> Text;
 

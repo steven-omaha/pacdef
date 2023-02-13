@@ -1,7 +1,7 @@
 use super::{Backend, Backends};
 
 #[derive(Debug)]
-pub(crate) struct BackendIter {
+pub struct BackendIter {
     pub(crate) next: Option<Backends>,
 }
 

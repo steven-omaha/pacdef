@@ -307,6 +307,7 @@ fn get_assumed_group_file_names(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> 
     Ok(paths)
 }
 
+#[allow(clippy::option_if_let_else)]
 fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
     let section = backend.get_section();
     match get_single_var("RUST_BACKTRACE") {
@@ -319,7 +320,7 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
     }
 }
 
-pub(crate) const fn get_version_string() -> &'static str {
+pub const fn get_version_string() -> &'static str {
     concat!(
         "pacdef, version: ",
         env!("CARGO_PKG_VERSION"),

@@ -6,7 +6,7 @@ use super::Backend;
 use crate::Package;
 
 #[derive(Debug)]
-pub(crate) struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
+pub struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
 
 impl ToDoPerBackend {
     pub(crate) fn new() -> Self {

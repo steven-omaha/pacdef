@@ -48,14 +48,16 @@ impl Package {
 
 impl PartialEq for Package {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-            && match &self.repo {
-                None => true,
-                Some(r) => match &other.repo {
-                    None => true,
-                    Some(r2) => r == r2,
-                },
-            }
+        let self_repo = self.repo.as_ref();
+        let other_repo = other.repo.as_ref();
+
+        // iff both packages have repos, they must be identical, otherwise we don't care
+        let repos_are_identical =
+            self_repo.map_or(true, |sr| other_repo.map_or(true, |or| sr == or));
+
+        let names_are_identical = self.name == other.name;
+
+        names_are_identical && repos_are_identical
     }
 }
 

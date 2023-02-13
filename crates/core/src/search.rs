@@ -10,7 +10,7 @@ use crate::grouping::{Group, Package, Section};
 
 pub const NO_PACKAGES_FOUND: &str = "no packages matching query";
 
-pub(crate) fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {
+pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {
     let search_string = args
         .get_one::<String>("string")
         .context("getting search string from arg")?;

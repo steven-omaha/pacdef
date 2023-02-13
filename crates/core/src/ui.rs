@@ -3,7 +3,7 @@ use std::io::{self, Read, Write};
 use anyhow::{Context, Result};
 use termios::*;
 
-pub(crate) fn get_user_confirmation() -> Result<bool> {
+pub fn get_user_confirmation() -> Result<bool> {
     print!("Continue? [Y/n] ");
     std::io::stdout().flush().context("flushing stdout")?;
 
@@ -15,7 +15,7 @@ pub(crate) fn get_user_confirmation() -> Result<bool> {
     Ok(reply.trim().is_empty() || reply.to_lowercase().contains('y'))
 }
 
-pub(crate) fn read_single_char_from_terminal() -> Result<char> {
+pub fn read_single_char_from_terminal() -> Result<char> {
     // 0 is the file descriptor for stdin
     let fd = 0;
     let termios = Termios::from_fd(fd).context("getting stdin fd")?;
