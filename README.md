@@ -208,4 +208,6 @@ topgrade
 
 ## TODO
 
-add zsh completion
+* add zsh completion
+* add license
+

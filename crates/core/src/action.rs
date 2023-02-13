@@ -1,4 +1,4 @@
-use pacdef_macro::Action;
+use macros::Action;
 
 #[derive(Debug, Action)]
 pub(crate) enum Actions {

@@ -1,0 +1,15 @@
+[package]
+name = "main"
+version = "1.0.0-beta2"
+edition = "2021"
+description = "declarative package manager for Arch Linux"
+license = "GPLv3"
+repository = "https://github.com/steven-omaha/pacdef"
+
+[[bin]]
+name = "pacdef"
+path = "main.rs"
+
+[dependencies]
+anyhow = "*"
+core = { path = "../core", version = "1.0.0-beta2" }

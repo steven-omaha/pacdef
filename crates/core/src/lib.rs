@@ -17,4 +17,4 @@ pub use crate::grouping::Group;
 pub(crate) use crate::grouping::Package;
 pub use crate::search::NO_PACKAGES_FOUND;
 
-extern crate pacdef_macro;
+extern crate macros;

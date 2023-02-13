@@ -1,8 +1,5 @@
-[workspace]
-members = ["crates/main", "crates/macros", "crates/core"]
-
 [package]
-name = "pacdef"
+name = "core"
 version = "1.0.0-beta2"
 edition = "2021"
 description = "declarative package manager for Arch Linux"
@@ -21,15 +18,4 @@ serde_derive = "*"
 serde = "*"
 termios = "*"
 
-macros = {path = "crates/macros", version = "*"}
-core = {path = "crates/core", version = "1.0.0-beta2"}
-
-[profile.release]
-lto = "off"
-opt-level = "z"
-strip = true
-
-[[bin]]
-name = "pacdef"
-path = "crates/main/main.rs"
-
+macros = {path = "../macros", version = "*"}

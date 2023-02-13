@@ -77,6 +77,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "core"
+version = "1.0.0-beta2"
+dependencies = [
+ "alpm",
+ "anyhow",
+ "clap",
+ "macros",
+ "path-absolutize",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_yaml",
+ "termios",
+]
+
+[[package]]
 name = "errno"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -160,6 +177,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f051f77a7c8e6957c0696eac88f26b0117e54f52d3fc682ab19397a8812846a4"
 
 [[package]]
+name = "macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "main"
+version = "1.0.0-beta2"
+dependencies = [
+ "anyhow",
+ "core",
+]
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -184,7 +218,8 @@ dependencies = [
  "alpm",
  "anyhow",
  "clap",
- "pacdef_macro",
+ "core",
+ "macros",
  "path-absolutize",
  "regex",
  "serde",
@@ -192,15 +227,6 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "termios",
-]
-
-[[package]]
-name = "pacdef_macro"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

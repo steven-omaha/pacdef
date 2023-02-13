@@ -14,8 +14,8 @@ pub fn action(input: TokenStream) -> TokenStream {
         panic!("`Register` can only be used on enums");
     };
 
-    let variant_description = generate_variant_description(&enum_data);
-    let variant_constants = generate_variant_constants(&name, &enum_data);
+    let variant_description = generate_variant_description(enum_data);
+    let variant_constants = generate_variant_constants(name, enum_data);
 
     let expanded = compile_output(name, variant_description, variant_constants);
 
