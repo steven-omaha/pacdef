@@ -8,7 +8,8 @@ use regex::Regex;
 
 use crate::grouping::{Group, Package, Section};
 
-// TODO don't show an error message when search yields no results
+pub const NO_PACKAGES_FOUND: &str = "no packages matching query";
+
 pub(crate) fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {
     let search_string = args
         .get_one::<String>("string")
@@ -29,7 +30,7 @@ pub(crate) fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Res
     }
 
     if vec.is_empty() {
-        bail!("no packages matching query")
+        bail!(NO_PACKAGES_FOUND)
     }
 
     print_triples(vec);
