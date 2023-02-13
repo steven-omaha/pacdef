@@ -15,11 +15,12 @@ anyhow = "*"
 clap = "*"
 path-absolutize = "*"
 regex = "*"
+termios = "*"
+
 serde_json = "*"
 serde_yaml = "*"
 serde_derive = "*"
 serde = "*"
-termios = "*"
 
 macros = {path = "crates/macros", version = "*"}
 core = {path = "crates/core", version = "1.0.0-beta2"}
