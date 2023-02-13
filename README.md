@@ -208,7 +208,6 @@ topgrade
 
 ## TODO
 
-* add zsh completion
 * add license
 * in outermost Cargo.toml, add categories, keywords, readme
 
