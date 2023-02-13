@@ -31,7 +31,7 @@ impl Group {
             }
 
             let group =
-                Group::try_from(&path).with_context(|| format!("reading group file {path:?}"))?;
+                Self::try_from(&path).with_context(|| format!("reading group file {path:?}"))?;
 
             result.insert(group);
         }
@@ -111,17 +111,21 @@ impl Group {
         })
     }
 
-    pub(crate) fn save_packages(&self, section_header: &str, packages: &[Package]) {
-        let mut content = read_to_string(&self.path).unwrap();
+    pub(crate) fn save_packages(&self, section_header: &str, packages: &[Package]) -> Result<()> {
+        let mut content = read_to_string(&self.path)
+            .with_context(|| format!("reading existing file contents from {:?}", &self.path))?;
 
         if content.contains(section_header) {
-            write_packages_to_existing_section(&mut content, section_header, packages);
+            write_packages_to_existing_section(&mut content, section_header, packages)
+                .context("existing section")?;
         } else {
             add_new_section_with_packages(&mut content, section_header, packages);
         }
 
-        let mut file = File::create(&self.path).unwrap();
-        write!(file, "{content}").unwrap();
+        let mut file = File::create(&self.path)
+            .with_context(|| format!("creating descriptor to output file {:?}", &self.path))?;
+
+        write!(file, "{content}").with_context(|| format!("writing file {:?}", &self.path))
     }
 }
 
@@ -146,9 +150,9 @@ fn write_packages_to_existing_section(
     group_file_content: &mut String,
     section_header: &str,
     packages: &[Package],
-) {
+) -> Result<()> {
     let idx_of_first_package_line_in_section =
-        find_first_package_line_in_section(group_file_content, section_header);
+        find_first_package_line_in_section(group_file_content, section_header)?;
 
     let after = group_file_content.split_off(idx_of_first_package_line_in_section);
 
@@ -157,13 +161,22 @@ fn write_packages_to_existing_section(
     }
 
     group_file_content.push_str(&after);
+    Ok(())
 }
 
-fn find_first_package_line_in_section(group_file_content: &str, section_header: &str) -> usize {
-    let section_start = group_file_content.find(section_header).unwrap();
-    let distance_to_next_newline = group_file_content[section_start..].find('\n').unwrap();
+fn find_first_package_line_in_section(
+    group_file_content: &str,
+    section_header: &str,
+) -> Result<usize> {
+    let section_start = group_file_content
+        .find(section_header)
+        .context("finding first package after section header")?;
 
-    section_start + distance_to_next_newline + 1 // + 1 to be after the newline
+    let distance_to_next_newline = group_file_content[section_start..]
+        .find('\n')
+        .context("getting next newline")?;
+
+    Ok(section_start + distance_to_next_newline + 1) // + 1 to be after the newline
 }
 
 fn add_new_section_with_packages(

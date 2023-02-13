@@ -32,9 +32,15 @@ impl Section {
             .to_string();
 
         let mut packages = HashSet::new();
-        // `while let` is unstable, unfortunately
-        while iter.peek().is_some() && !iter.peek().unwrap().starts_with('[') {
-            if let Some(package) = Package::try_from(iter.next().unwrap()) {
+        // `while let` chains are unstable, unfortunately
+        while iter.peek().is_some()
+            && !iter
+                .peek()
+                .expect("we checked this is some")
+                .starts_with('[')
+        {
+            if let Some(package) = Package::try_from(iter.next().expect("we checked this is some"))
+            {
                 packages.insert(package);
             }
         }

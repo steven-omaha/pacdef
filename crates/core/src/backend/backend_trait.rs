@@ -30,13 +30,15 @@ pub(crate) trait Backend: Debug {
     /// Get all packages that were installed in the system explicitly.
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>>;
 
-    fn assign_group(&self, to_assign: Vec<(Package, Rc<Group>)>) {
+    fn assign_group(&self, to_assign: Vec<(Package, Rc<Group>)>) -> Result<()> {
         let group_package_map = get_group_packages_map(to_assign);
         let section_header = format!("[{}]", self.get_section());
 
         for (group, packages) in group_package_map {
-            group.save_packages(&section_header, &packages);
+            group.save_packages(&section_header, &packages)?;
         }
+
+        Ok(())
     }
 
     /// Install the specified packages.
@@ -125,7 +127,9 @@ fn get_group_packages_map(
             group_package_map.insert(group.clone(), vec![]);
         }
 
-        let inner = group_package_map.get_mut(&group).unwrap();
+        let inner = group_package_map
+            .get_mut(&group)
+            .expect("either it was already there or we created it");
         inner.push(p);
     }
 

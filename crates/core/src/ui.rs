@@ -5,7 +5,7 @@ use termios::*;
 
 pub(crate) fn get_user_confirmation() -> Result<bool> {
     print!("Continue? [Y/n] ");
-    std::io::stdout().flush().unwrap();
+    std::io::stdout().flush().context("flushing stdout")?;
 
     let mut reply = String::new();
     std::io::stdin()
@@ -29,7 +29,9 @@ pub(crate) fn read_single_char_from_terminal() -> Result<char> {
     io::stdin()
         .read_exact(&mut input[..])
         .context("reading one byte from stdin")?;
-    let result = input[0] as char;
+    let result: char = input[0]
+        .try_into()
+        .context("reading a single byte from stdin")?;
     // stdin is not echoed automatically in this terminal mode
     println!("{result}");
 

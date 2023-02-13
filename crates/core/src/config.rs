@@ -30,7 +30,7 @@ impl Config {
             };
         }
 
-        let content = from_file.unwrap();
+        let content = from_file.expect("we already handled that error");
 
         serde_yaml::from_str(&content).context("parsing yaml config")
     }

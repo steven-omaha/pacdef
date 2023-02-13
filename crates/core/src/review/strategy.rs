@@ -40,7 +40,7 @@ impl Strategy {
         }
 
         if !self.assign_group.is_empty() {
-            self.backend.assign_group(self.assign_group);
+            self.backend.assign_group(self.assign_group)?;
         }
 
         Ok(())

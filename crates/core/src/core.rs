@@ -26,7 +26,7 @@ pub struct Pacdef {
 
 impl Pacdef {
     #[must_use]
-    pub fn new(args: ArgMatches, config: Config, groups: HashSet<Group>) -> Self {
+    pub const fn new(args: ArgMatches, config: Config, groups: HashSet<Group>) -> Self {
         Self {
             args,
             config,
@@ -106,6 +106,7 @@ impl Pacdef {
         to_install.install_missing_packages()
     }
 
+    #[allow(clippy::unused_self)]
     fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
         let group_dir = crate::path::get_pacdef_group_dir()?;
 
@@ -135,6 +136,7 @@ impl Pacdef {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn show_version(self) {
         println!("{}", get_version_string());
     }
@@ -188,7 +190,10 @@ impl Pacdef {
     }
 
     fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
-        let mut iter = groups.get_many::<String>("group").unwrap().peekable();
+        let mut iter = groups
+            .get_many::<String>("group")
+            .context("getting groups from args")?
+            .peekable();
 
         let show_more_than_one_group = iter.size_hint().0 > 1;
 
@@ -217,12 +222,17 @@ impl Pacdef {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn import_groups(&self, args: &ArgMatches) -> Result<()> {
-        let files = args::get_absolutized_file_paths(args);
+        let files = args::get_absolutized_file_paths(args)?;
         let groups_dir = get_pacdef_group_dir()?;
 
         for target in files {
-            let target_name = target.file_name().unwrap().to_str().unwrap();
+            let target_name = target
+                .file_name()
+                .context("path should not end in '..'")?
+                .to_str()
+                .context("filename is not valid UTF-8")?;
 
             if !target.exists() {
                 println!("file {target_name} does not exist, skipping");
@@ -242,6 +252,7 @@ impl Pacdef {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn remove_groups(&self, arg_match: &ArgMatches) -> Result<()> {
         let paths = get_assumed_group_file_names(arg_match)?;
 
@@ -256,6 +267,7 @@ impl Pacdef {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn new_groups(&self, arg: &ArgMatches) -> Result<()> {
         let paths = get_assumed_group_file_names(arg)?;
 
@@ -284,7 +296,7 @@ fn get_assumed_group_file_names(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> 
 
     let paths: Vec<_> = arg_match
         .get_many::<String>("groups")
-        .unwrap()
+        .context("getting groups from args")?
         .map(|s| {
             let mut possible_group_file = groups_dir.clone();
             possible_group_file.push(s);

@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use anyhow::{Context, Result};
 use clap::{Arg, ArgMatches, Command};
 use path_absolutize::Absolutize;
 
@@ -71,12 +72,16 @@ pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
 }
 
-pub(crate) fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Vec<PathBuf> {
-    arg_match
+pub(crate) fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
+    Ok(arg_match
         .get_many::<String>("files")
-        .unwrap()
+        .context("getting files from args")?
         .cloned()
         .map(PathBuf::from)
-        .map(|path| path.absolutize().unwrap().into_owned())
-        .collect()
+        .map(|path| {
+            path.absolutize()
+                .expect("absolute path should exist")
+                .into_owned()
+        })
+        .collect())
 }

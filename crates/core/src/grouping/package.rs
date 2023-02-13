@@ -27,7 +27,7 @@ impl From<String> for Package {
 impl Package {
     fn split_into_name_and_repo(s: &str) -> (String, Option<String>) {
         let mut iter = s.split('/').rev();
-        let name = iter.next().unwrap().to_string();
+        let name = iter.next().expect("we checked that earlier").to_string();
         let repo = iter.next().map(|s| s.to_string());
         (name, repo)
     }
@@ -95,6 +95,7 @@ mod tests {
         assert_eq!(repo, None);
     }
 
+    #[allow(clippy::unwrap_used)]
     #[test]
     fn from() {
         let x = "myrepo/somepackage  #  ".to_string();

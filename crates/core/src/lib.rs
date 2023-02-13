@@ -1,3 +1,12 @@
+#![warn(
+    clippy::as_conversions,
+    clippy::use_debug,
+    clippy::unwrap_used,
+    clippy::wildcard_dependencies,
+    clippy::use_self,
+    clippy::unused_self
+)]
+
 mod action;
 pub mod args;
 mod backend;
