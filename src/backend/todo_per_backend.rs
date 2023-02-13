@@ -65,15 +65,21 @@ impl ToDoPerBackend {
         Ok(())
     }
 
-    pub(crate) fn show(&self) {
+    pub(crate) fn show(&self, indentend: bool) {
         for (backend, packages) in self.iter() {
             if packages.is_empty() {
                 continue;
             }
 
-            println!("  [{}]", backend.get_section());
+            if indentend {
+                print!("  ");
+            }
+            println!("[{}]", backend.get_section());
             for package in packages {
-                println!("    {package}");
+                if indentend {
+                    print!("  ");
+                }
+                println!("  {package}");
             }
         }
     }
