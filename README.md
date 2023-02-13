@@ -78,6 +78,8 @@ Continue? [Y/n]
 
 ### show
 
+TODO this is inconsistent when multiple groups are printed in one command
+
 ```
 [pacman]
 asciinema
@@ -203,3 +205,7 @@ pacdef
 topgrade
 ```
 
+
+## TODO
+
+add zsh completion
