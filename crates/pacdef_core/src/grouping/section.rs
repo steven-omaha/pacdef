@@ -75,7 +75,8 @@ impl PartialOrd for Section {
 
 impl Ord for Section {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
+        self.partial_cmp(other)
+            .expect("partial_cmp compares &str, which provide total order")
     }
 }
 
