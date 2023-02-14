@@ -46,10 +46,18 @@ pub fn review(
 
     let strategies: Vec<Strategy> = reviews.into();
 
-    for strat in &strategies {
+    println!();
+    let mut iter = strategies.iter().peekable();
+
+    while let Some(strat) = iter.next() {
         strat.show();
+
+        if iter.peek().is_some() {
+            println!();
+        }
     }
 
+    println!();
     if !get_user_confirmation()? {
         return Ok(());
     }
