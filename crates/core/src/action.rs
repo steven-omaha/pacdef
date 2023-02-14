@@ -1,7 +1,7 @@
 use macros::Action;
 
 #[derive(Debug, Action)]
-pub(crate) enum Actions {
+pub enum Actions {
     Clean,
     Edit,
     Groups,

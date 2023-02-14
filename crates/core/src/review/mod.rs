@@ -13,7 +13,7 @@ use crate::{Group, Package};
 use self::datastructures::{ContinueWithReview, ReviewAction, ReviewIntention, ReviewsPerBackend};
 use self::strategy::Strategy;
 
-pub(crate) fn review(
+pub fn review(
     todo_per_backend: ToDoPerBackend,
     groups: impl IntoIterator<Item = Group>,
 ) -> Result<()> {

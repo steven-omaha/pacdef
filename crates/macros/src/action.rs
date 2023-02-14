@@ -49,7 +49,7 @@ fn generate_variant_constants<'a>(
         );
 
         quote! {
-            pub(crate) const #variant_uppercase: &str = #name::#variant_name.name();
+            pub const #variant_uppercase: &str = #name::#variant_name.name();
         }
     });
     result

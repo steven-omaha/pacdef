@@ -3,5 +3,5 @@ mod package;
 mod section;
 
 pub use group::Group;
-pub(super) use package::Package;
-pub(super) use section::Section;
+pub use package::Package;
+pub use section::Section;

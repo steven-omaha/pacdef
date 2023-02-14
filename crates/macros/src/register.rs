@@ -77,7 +77,7 @@ fn generate_variant_imports(enum_data: &syn::DataEnum) -> impl Iterator<Item = T
         );
 
         quote! {
-            pub(crate) use actual::#variant_module::#variant_name;
+            pub use actual::#variant_module::#variant_name;
 
         }
     });

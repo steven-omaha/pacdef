@@ -11,7 +11,7 @@ pub use todo_per_backend::ToDoPerBackend;
 use ::macros::Register;
 
 #[derive(Debug, Register)]
-pub(crate) enum Backends {
+pub enum Backends {
     Pacman,
     Rust,
 }
