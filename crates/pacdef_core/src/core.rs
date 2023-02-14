@@ -18,6 +18,7 @@ use crate::ui::get_user_confirmation;
 use crate::Config;
 use crate::Group;
 
+/// Most data that is required during runtime of the program.
 pub struct Pacdef {
     args: ArgMatches,
     config: Config,
@@ -25,6 +26,8 @@ pub struct Pacdef {
 }
 
 impl Pacdef {
+    /// Creates a new [`Pacdef`]. `config` should be passed from [`Config::load`], and `args` from
+    /// [`args::get`].
     #[must_use]
     pub const fn new(args: ArgMatches, config: Config, groups: HashSet<Group>) -> Self {
         Self {
@@ -34,6 +37,18 @@ impl Pacdef {
         }
     }
 
+    /// Run the action that was provided by the user as first argument.
+    ///
+    /// For convenience sake, all called functions take a `&self` argument, even if these are not
+    /// strictly required.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the user passed an unexpected action. This means all fields from `crate::action::Action` must be matched in this function.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if any of the underlying functions return an error.
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(mut self) -> Result<()> {
         match self.args.subcommand() {

@@ -1,30 +1,34 @@
 use std::fs::{read_to_string, File};
 use std::io::{ErrorKind, Write};
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{bail, Context, Result};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::path::get_pacdef_base_dir;
-
-const CONFIG_FILE_NAME: &str = "pacdef.yaml";
-
+/// Config for the program, as listed in `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
+    /// The AUR helper to use for Arch Linux.
     pub aur_helper: String,
+    /// Additional arguments to pass to `aur_helper` when removing a package.
     pub aur_rm_args: Option<Vec<String>>,
+    /// Warn the user when a group is not a symlink.
     pub warn_not_symlinks: bool,
 }
 
 impl Config {
-    pub fn load() -> Result<Self> {
-        let file = get_config_file()?;
-        let from_file = read_to_string(&file);
+    /// Load the config from the associated file. If the config does not exist, create a default
+    /// config.
+    pub fn load(config_file: &Path) -> Result<Self> {
+        let from_file = read_to_string(config_file);
 
         if let Err(e) = from_file {
             if e.kind() == ErrorKind::NotFound {
-                println!("creating default config under {}", file.to_string_lossy());
-                return Self::use_default_and_save_to(file);
+                println!(
+                    "creating default config under {}",
+                    config_file.to_string_lossy()
+                );
+                return Self::use_default_and_save_to(config_file);
             }
             bail!("unexpected error occured: {e:?}");
         }
@@ -34,7 +38,7 @@ impl Config {
         serde_yaml::from_str(&content).context("parsing yaml config")
     }
 
-    fn use_default_and_save_to(file: PathBuf) -> Result<Self> {
+    fn use_default_and_save_to(file: &Path) -> Result<Self> {
         let result = Self::default();
 
         let content = serde_yaml::to_string(&result).context("converting Config to yaml")?;
@@ -43,12 +47,6 @@ impl Config {
 
         Ok(result)
     }
-}
-
-fn get_config_file() -> Result<PathBuf> {
-    let mut file = get_pacdef_base_dir().context("getting pacdef base dir for config file")?;
-    file.push(CONFIG_FILE_NAME);
-    Ok(file)
 }
 
 impl Default for Config {

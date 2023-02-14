@@ -8,6 +8,7 @@ use regex::Regex;
 
 use crate::grouping::{Group, Package, Section};
 
+/// Error message provided when a package search yields no results.
 pub const NO_PACKAGES_FOUND: &str = "no packages matching query";
 
 pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {

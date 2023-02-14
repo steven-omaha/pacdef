@@ -8,8 +8,8 @@ use anyhow::{Context, Result};
 
 use super::{Package, Section};
 
-use crate::Config;
-
+/// Representation of a group file, composed of a name (file name from which it was read), the
+/// sections in the file, and the absolute path of the original file.
 #[derive(Debug)]
 pub struct Group {
     pub(crate) name: String,
@@ -18,15 +18,21 @@ pub struct Group {
 }
 
 impl Group {
-    pub fn load(config: &Config) -> Result<HashSet<Self>> {
+    /// Load all group files from the pacdef group dir. If a group file is not a symlink and
+    /// `warn_not_symlinks` is true, a warning is printed.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if any of the files under `group_dir` cannot be
+    /// accessed.
+    pub fn load(group_dir: &Path, warn_not_symlinks: bool) -> Result<HashSet<Self>> {
         let mut result = HashSet::new();
 
-        let path = crate::path::get_pacdef_group_dir().context("getting pacdef group dir")?;
-        for entry in path.read_dir().context("reading group dir")? {
+        for entry in group_dir.read_dir().context("reading group dir")? {
             let file = entry.context("getting group file")?;
             let path = file.path();
 
-            if config.warn_not_symlinks && !path.is_symlink() {
+            if warn_not_symlinks && !path.is_symlink() {
                 eprintln!(
                     "WARNING: group file {} is not a symlink",
                     path.to_string_lossy()

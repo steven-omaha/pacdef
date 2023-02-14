@@ -1,3 +1,5 @@
+/// Used to implement parts of the `Backend` trait that should not change between the actual
+/// backends (boilerplate).
 #[macro_export]
 macro_rules! impl_backend_constants {
     () => {

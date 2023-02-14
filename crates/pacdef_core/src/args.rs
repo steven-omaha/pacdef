@@ -67,6 +67,7 @@ fn get_arg_parser() -> Command {
         .subcommand(Command::new(VERSION).about("show version info"))
 }
 
+/// Get and parse the CLI arguments.
 #[must_use]
 pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
