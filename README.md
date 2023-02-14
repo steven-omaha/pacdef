@@ -1,210 +1,87 @@
-# pacdef_rust
+# pacdef
+declarative package manager for Linux, originally designed for Arch Linux
 
-## output formats
+## Installation
+`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git).
 
-### search
+## Use-case
+`pacdef` allows the user to have consistent packages among multiple Arch machines by managing packages in group files.
+The group files are maintained outside of `pacdef` by any VCS.
 
+`pacdef import`ing a package group file creates a symlink to that file in `pacdef`'s config dir, thereby letting
+`pacdef` know you want to have the packages in this file on your machine.
+Then installing all packages from all groups is as simple as `pacdef sync`.
+All package operations are executed by your favourite AUR helper.
 
+If you work with multiple Arch installations and have asked yourself "*Why do I have the program that I use every day on
+my other machine not installed here?*", then `pacdef` is the tool for you.
+
+### Example
+This tree shows my pacdef repository (not the `pacdef` config dir).
 ```
-base
-----
-[pacman]
-base-devel
-
-fwdh95
-------
-[pacman]
-udev-led-rules
-
-xorg
-----
-[pacman]
-devour
-```
-
-### unmanaged
-```
-[pacman]
-  libxcrypt-compat
-  strace
-```
-
-### clean
-
-```
-Would remove the following packages
-  [pacman]
-    libxcrypt-compat
-    strace
-Continue? [Y/n] 
+.
+├── generic
+│   ├── audio
+│   ├── base
+│   ├── desktop
+│   ├── private
+│   ├── rust
+│   ├── wayland
+│   ├── wireless
+│   ├── work
+│   └── xorg
+├── hosts
+│   ├── hostname_a
+│   ├── hostname_b
+│   └── hostname_c
+└── pacdef.conf
 ```
 
-### review
+* The `base` group holds all packages I need unconditionally, and includes things like zfs,
+  [paru](https://github.com/Morganamilo/paru) and [neovim](https://github.com/neovim/neovim).
+* In `xorg` and `wayland` I have stored the respective graphic servers and DEs.
+* `wireless` contains tools like `iwd` and `bluez-utils` for machines with wireless interfaces.
+* Under `hosts` I have one file for each machine I use. The filenames match the corresponding hostname. The packages
+  are specific to one machine only, like device drivers, or any programs I use exclusively on that machine.
 
-```
-pacman: libxcrypt-compat
-assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? d
-pacman: strace
-assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? g
-0: base
-1: desktop
-2: fwdh95
-3: notebook
-4: panthera
-5: python
-6: rust
-7: ssd
-8: wayland
-9: wireless
-10: work
-11: xorg
-0
-[pacman]
-delete:
-  libxcrypt-compat
-assign groups:
-  strace -> base
-Continue? [Y/n]
-```
+Usage on different machines: 
+* home server: `base private hostname_a`
+* private PC: `audio base desktop private rust wayland hostname_b`
+* work PC: `base desktop rust work xorg hostname_c`
 
-### sync
-```
-Would install the following packages:
-  [pacman]
-    broot
-Continue? [Y/n]
+## How to use
+* import one or more groups: `pacdef import base desktop audio`
+* install packages from the imported groups: `pacdef sync`
+* show packages that are not part of any group: `pacdef unmanaged`
+* remove packages that are not in any group: `pacdef clean`
+* show imported groups: `pacdef groups`
+* remove a previously imported group: `pacdef remove audio`
+* review all unmanaged packages interactively: `pacdef review`
+* search for the group that contains a package: `pacdef search firefox`
+* show packages of a group: `pacdef show desktop`
+
+
+### Configuration
+
+On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.conf`. The program only needs to know your AUR helper of choice. Configure it as follows.
+```ini
+[misc]
+aur_helper = paru
 ```
 
-### show
+### package group files
+1. One package per line. 
+2. Anything after a `#` is ignored.
+3. Empty lines are ignored.
+4. If a package exists in multiple repositories, the repo can be specified as prefix followed by a forward slash.
+   The AUR helper must understand this notation.
 
-TODO this is inconsistent when multiple groups are printed in one command
-
+Example:
+```ini
+# desktop
+alacritty
+firefox
+libreoffice-fresh
+mycustomrepo/zsh-theme-powerlevel10k
+...
 ```
-[pacman]
-asciinema
-autoconf
-automake
-base
-base-devel
-bashtop
-bat
-bat-extras
-binutils
-bison
-broot
-cheat
-ctags
-docker
-docker-compose
-dog
-downgrade
-duf
-dust
-fakeroot
-fd
-file
-findpkg
-findutils
-flex
-fzf
-gawk
-gcc
-gettext
-git
-git-delta
-gptfdisk
-grep
-groff
-gzip
-htop
-hyperfine
-iftop
-inetutils
-intel-ucode
-iotop
-kernel-modules-hook
-libtool
-linux
-linux-firmware
-linux-headers
-linux-lts
-linux-lts-headers
-logrotate
-lsb-release
-lsd
-lshw
-lsix-git
-lsof
-m4
-make
-man-db
-man-pages
-moreutils
-namcap
-ncdu
-neovim
-neovim-symlinks
-net-tools
-nextcloud-client
-nnn
-ntp
-openssh
-overdue
-pacman
-pacman-contrib
-pandoc-bin
-paru-bin
-patch
-pkgconf
-plocate
-polkit
-prettier
-procps-ng
-psmisc
-pwgen
-python
-python-joblib
-python-pydantic
-python-pynvim
-ripgrep
-rsync
-sd
-sed
-smartmontools
-sshfs
-sudo
-texinfo
-tmux
-usbutils
-viddy
-vifm
-vim-pacmanlog
-vv-sixel-git
-wget
-which
-yarn
-yt-dlp
-zfs-auto-snapshot
-zfs-linux
-zfs-linux-lts
-zfs-undelete-git
-zfs-utils
-zoxide
-zpool-scrub-unit
-zsh
-zsh-autosuggestions
-zsh-completions
-zsh-syntax-highlighting
-community/zsh-theme-powerlevel10k
-zsh-you-should-use
-
-[rust]
-cargo-update
-pacdef
-topgrade
-```
-
-
-## TODO
-
-* make output format consistent
