@@ -10,7 +10,7 @@ keywords = ["package-manager", "linux", "declarative", "cli"]
 categories = ["command-line-utilities"]
 
 [workspace]
-members = ["crates/pacdef_main", "crates/pacdef_macros", "crates/pacdef_core"]
+members = ["crates/pacdef_macros", "crates/pacdef_core"]
 
 [dependencies]
 alpm = "2.2"

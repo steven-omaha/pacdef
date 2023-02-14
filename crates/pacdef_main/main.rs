@@ -1,5 +1,5 @@
 /*!
-Main program for `pacdef`. All internal logic happens in `pacdef_core`.
+Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
 */
 
 #![warn(

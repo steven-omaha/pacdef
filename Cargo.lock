@@ -222,14 +222,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pacdef_main"
-version = "1.0.0-beta4"
-dependencies = [
- "anyhow",
- "pacdef_core",
-]
-
-[[package]]
 name = "path-absolutize"
 version = "3.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
