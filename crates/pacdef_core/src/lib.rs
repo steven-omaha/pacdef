@@ -1,3 +1,7 @@
+/*!
+This library contains all logic that happens in `pacdef` under the hood.
+*/
+
 #![warn(
     clippy::as_conversions,
     clippy::option_if_let_else,

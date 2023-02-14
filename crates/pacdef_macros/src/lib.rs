@@ -1,3 +1,6 @@
+/*!
+Procedural macros for `pacdef`.
+*/
 #![warn(
     clippy::as_conversions,
     clippy::option_if_let_else,

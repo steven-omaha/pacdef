@@ -73,7 +73,7 @@ pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
 }
 
-pub(crate) fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
+pub fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
     Ok(arg_match
         .get_many::<String>("files")
         .context("getting files from args")?

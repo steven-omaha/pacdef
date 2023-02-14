@@ -1,3 +1,18 @@
+/*!
+Main program for `pacdef`. All internal logic happens in `pacdef_core`.
+*/
+
+#![warn(
+    clippy::as_conversions,
+    clippy::option_if_let_else,
+    clippy::redundant_pub_crate,
+    clippy::unused_self,
+    clippy::unwrap_used,
+    clippy::use_debug,
+    clippy::use_self,
+    clippy::wildcard_dependencies,
+    missing_docs
+)]
 use std::process::{ExitCode, Termination};
 
 use anyhow::{Context, Result};

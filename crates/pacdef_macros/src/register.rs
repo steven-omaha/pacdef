@@ -4,7 +4,7 @@ use syn::DeriveInput;
 use syn::__private::TokenStream2;
 
 pub fn register(input: TokenStream) -> TokenStream {
-    let input = syn::parse::<DeriveInput>(input).unwrap();
+    let input = syn::parse::<DeriveInput>(input).expect("I don't know when this could fail");
 
     let name = &input.ident;
 
