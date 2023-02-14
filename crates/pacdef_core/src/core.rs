@@ -65,7 +65,7 @@ impl Pacdef {
                 search::search_packages(args, &self.groups).context("searching packages")
             }
             Some((SYNC, _)) => self.install_packages(),
-            Some((UNMANAGED, _)) => Ok(self.show_unmanaged_packages()),
+            Some((UNMANAGED, _)) => self.show_unmanaged_packages(),
             Some((VERSION, _)) => Ok(self.show_version()),
             Some((_, _)) => panic!(),
             None => {
@@ -111,9 +111,10 @@ impl Pacdef {
             return Ok(());
         }
 
-        println!("Would install the following packages:");
-        to_install.show(true);
+        println!("Would install the following packages:\n");
+        to_install.show().context("printing things to do")?;
 
+        println!();
         if !get_user_confirmation()? {
             return Ok(());
         };
@@ -156,10 +157,12 @@ impl Pacdef {
         println!("{}", get_version_string());
     }
 
-    fn show_unmanaged_packages(mut self) {
+    fn show_unmanaged_packages(mut self) -> Result<()> {
         let unmanaged_per_backend = &self.get_unmanaged_packages();
 
-        unmanaged_per_backend.show(false);
+        unmanaged_per_backend
+            .show()
+            .context("printing things to do")
     }
 
     fn get_unmanaged_packages(&mut self) -> ToDoPerBackend {
@@ -194,9 +197,10 @@ impl Pacdef {
             return Ok(());
         }
 
-        println!("Would remove the following packages");
-        to_remove.show(true);
+        println!("Would remove the following packages:\n");
+        to_remove.show().context("printing things to do")?;
 
+        println!();
         if !get_user_confirmation()? {
             return Ok(());
         };

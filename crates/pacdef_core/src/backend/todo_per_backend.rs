@@ -1,4 +1,4 @@
-use std::process::ExitStatus;
+use std::{fmt::Write, process::ExitStatus};
 
 use anyhow::{bail, ensure, Context, Result};
 
@@ -65,22 +65,36 @@ impl ToDoPerBackend {
         Ok(())
     }
 
-    pub(crate) fn show(&self, indentend: bool) {
+    pub(crate) fn show(&self) -> Result<()> {
+        let mut parts = vec![];
+
         for (backend, packages) in self.iter() {
             if packages.is_empty() {
                 continue;
             }
 
-            if indentend {
-                print!("  ");
-            }
-            println!("[{}]", backend.get_section());
+            let mut segment = String::new();
+
+            segment.write_str(&format!("[{}]", backend.get_section()))?;
             for package in packages {
-                if indentend {
-                    print!("  ");
-                }
-                println!("  {package}");
+                segment.write_str(&format!("\n{package}"))?;
+            }
+
+            parts.push(segment);
+        }
+
+        let mut output = String::new();
+        let mut iter = parts.iter().peekable();
+
+        while let Some(part) = iter.next() {
+            output.write_str(part)?;
+            if iter.peek().is_some() {
+                output.write_str("\n\n")?;
             }
         }
+
+        println!("{output}");
+
+        Ok(())
     }
 }
