@@ -4,7 +4,6 @@
 
 ### search
 
-TODO: make these consistent!
 
 ```
 base
@@ -208,4 +207,4 @@ topgrade
 
 ## TODO
 
-* docs
+* make output format consistent
