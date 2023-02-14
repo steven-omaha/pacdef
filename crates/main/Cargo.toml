@@ -9,5 +9,5 @@ name = "pacdef"
 path = "main.rs"
 
 [dependencies]
-anyhow = "*"
+anyhow = "1.0"
 core = { path = "../core", version = "1.0.0-beta2" }

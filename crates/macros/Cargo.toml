@@ -5,9 +5,9 @@ edition = "2021"
 description = "procedural macros for pacdef"
 
 [dependencies]
-proc-macro2 = "*"
-quote = "*"
-syn = "*"
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "1.0"
 
 [lib]
 proc-macro = true
