@@ -160,6 +160,10 @@ impl Pacdef {
     fn show_unmanaged_packages(mut self) -> Result<()> {
         let unmanaged_per_backend = &self.get_unmanaged_packages();
 
+        if unmanaged_per_backend.nothing_to_do_for_all_backends() {
+            return Ok(());
+        }
+
         unmanaged_per_backend
             .show()
             .context("printing things to do")
