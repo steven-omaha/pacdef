@@ -181,18 +181,8 @@ checksum = "9b7820b9daea5457c9f21c69448905d723fbd21136ccf521748f23fd49e723ee"
 name = "pacdef"
 version = "1.0.0-beta4"
 dependencies = [
- "alpm",
  "anyhow",
- "clap",
  "pacdef_core",
- "pacdef_macros",
- "path-absolutize",
- "regex",
- "serde",
- "serde_derive",
- "serde_json",
- "serde_yaml",
- "termios",
 ]
 
 [[package]]
