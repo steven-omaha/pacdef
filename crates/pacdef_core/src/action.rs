@@ -1,4 +1,4 @@
-use macros::Action;
+use pacdef_macros::Action;
 
 #[derive(Debug, Action)]
 pub enum Actions {

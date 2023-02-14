@@ -1,0 +1,18 @@
+[package]
+name = "pacdef_macros"
+version = "0.1.0"
+edition = "2021"
+license = "GPLv3"
+readme = "README.md"
+repository = "https://github.com/steven-omaha/pacdef"
+description = "procedural macros for pacdef"
+keywords = ["macro", "proc-macro"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "1.0"
+
+[lib]
+proc-macro = true

@@ -1,16 +1,13 @@
 [package]
-name = "pacdef"
+name = "pacdef_core"
 version = "1.0.0-beta2"
 edition = "2021"
-description = "declarative package manager for Arch Linux"
+description = "pacdef core library"
 license = "GPLv3"
 repository = "https://github.com/steven-omaha/pacdef"
 readme = "README.md"
 keywords = ["package-manager", "linux", "declarative", "cli"]
 categories = ["command-line-utilities"]
-
-[workspace]
-members = ["crates/pacdef_main", "crates/pacdef_macros", "crates/pacdef_core"]
 
 [dependencies]
 alpm = "2.2"
@@ -25,14 +22,4 @@ serde_yaml = "0.9"
 serde_derive = "1.0"
 serde = "1.0"
 
-pacdef_macros = {path = "crates/pacdef_macros", version = "0.1"}
-pacdef_core = {path = "crates/pacdef_core", version = "1.0.0-beta2"}
-
-[[bin]]
-name = "pacdef"
-path = "crates/pacdef_main/main.rs"
-
-[profile.release]
-lto = "off"
-opt-level = "z"
-strip = true
+pacdef_macros = {path = "../pacdef_macros", version = "0.1"}

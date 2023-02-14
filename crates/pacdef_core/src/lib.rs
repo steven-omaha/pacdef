@@ -28,4 +28,4 @@ pub use crate::grouping::Group;
 pub(crate) use crate::grouping::Package;
 pub use crate::search::NO_PACKAGES_FOUND;
 
-extern crate macros;
+extern crate pacdef_macros;

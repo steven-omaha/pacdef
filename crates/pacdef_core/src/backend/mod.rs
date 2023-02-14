@@ -8,7 +8,7 @@ pub use backend_trait::Backend;
 pub use iter::BackendIter;
 pub use todo_per_backend::ToDoPerBackend;
 
-use ::macros::Register;
+use pacdef_macros::Register;
 
 #[derive(Debug, Register)]
 pub enum Backends {

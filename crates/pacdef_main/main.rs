@@ -2,7 +2,8 @@ use std::process::{ExitCode, Termination};
 
 use anyhow::{Context, Result};
 
-use core::{args, Config, Group, Pacdef};
+use pacdef_core as core;
+use pacdef_core::{args, Config, Group, Pacdef};
 
 fn main() -> ExitCode {
     handle_final_result(main_inner())

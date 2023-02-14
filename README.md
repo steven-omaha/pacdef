@@ -208,6 +208,4 @@ topgrade
 
 ## TODO
 
-* add license
-* in outermost Cargo.toml, add categories, keywords, readme
-
+none at this time
