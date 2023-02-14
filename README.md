@@ -1,11 +1,11 @@
 # pacdef
-declarative package manager for Linux, originally designed for Arch Linux
+multi-backend declarative package manager for Linux
 
 ## Installation
-`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git).
+`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git), and on [crates.io](https://crates.io/crates/pacdef).
 
 ## Use-case
-`pacdef` allows the user to have consistent packages among multiple Arch machines by managing packages in group files.
+`pacdef` allows the user to have consistent packages among multiple Linux machines by managing packages in group files.
 The group files are maintained outside of `pacdef` by any VCS.
 
 `pacdef import`ing a package group file creates a symlink to that file in `pacdef`'s config dir, thereby letting
@@ -15,6 +15,13 @@ All package operations are executed by your favourite AUR helper.
 
 If you work with multiple Arch installations and have asked yourself "*Why do I have the program that I use every day on
 my other machine not installed here?*", then `pacdef` is the tool for you.
+
+## Supported Backends
+At the moment, supported backends are limited to 
+* pacman (Arch Linux) and pacman-wrapping AUR helpers,
+* cargo (Rust package manager).
+
+Pull requests for additional backends are welcome!
 
 ### Example
 This tree shows my pacdef repository (not the `pacdef` config dir).
@@ -53,6 +60,7 @@ Usage on different machines:
 * import one or more groups: `pacdef import base desktop audio`
 * install packages from the imported groups: `pacdef sync`
 * show packages that are not part of any group: `pacdef unmanaged`
+* create a new group: `pacdef new temp` (use `new -e` to edit the file right away)
 * remove packages that are not in any group: `pacdef clean`
 * show imported groups: `pacdef groups`
 * remove a previously imported group: `pacdef remove audio`
@@ -63,10 +71,11 @@ Usage on different machines:
 
 ### Configuration
 
-On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.conf`. The program only needs to know your AUR helper of choice. Configure it as follows.
-```ini
-[misc]
-aur_helper = paru
+On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`. The program only needs to know your AUR helper of choice. Configure it as follows.
+```yaml
+aur_helper: paru  # AUR helper to use (paru, yay, ...)
+aur_rm_args: null  # additional args to pass to AUR helper when removing packages
+warn_not_symlinks: true  # warn if a group file is not a symlink
 ```
 
 ### package group files
@@ -78,10 +87,14 @@ aur_helper = paru
 
 Example:
 ```ini
-# desktop
+[pacman]
 alacritty
-firefox
+firefox  # this comment is ignored
 libreoffice-fresh
 mycustomrepo/zsh-theme-powerlevel10k
 ...
+
+[rust]
+cargo-update
+topgrade
 ```
