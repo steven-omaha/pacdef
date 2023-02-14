@@ -5,7 +5,7 @@ use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 use anyhow::{Context, Result};
 
-use crate::backend::backend_trait::*;
+use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
 
 #[derive(Debug)]

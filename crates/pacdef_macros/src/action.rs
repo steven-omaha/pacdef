@@ -8,9 +8,7 @@ pub fn action(input: TokenStream) -> TokenStream {
 
     let name = &input.ident;
 
-    let enum_data = if let syn::Data::Enum(enum_data) = &input.data {
-        enum_data
-    } else {
+    let syn::Data::Enum(enum_data) = &input.data else {
         panic!("`Register` can only be used on enums");
     };
 

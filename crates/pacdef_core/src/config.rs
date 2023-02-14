@@ -25,9 +25,8 @@ impl Config {
             if e.kind() == ErrorKind::NotFound {
                 println!("creating default config under {}", file.to_string_lossy());
                 return Self::use_default_and_save_to(file);
-            } else {
-                bail!("unexpected error occured: {e:?}");
-            };
+            }
+            bail!("unexpected error occured: {e:?}");
         }
 
         let content = from_file.expect("we already handled that error");

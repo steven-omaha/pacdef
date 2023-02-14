@@ -6,7 +6,7 @@ use std::process::ExitStatus;
 use anyhow::{Context, Result};
 use serde_json::Value;
 
-use crate::backend::backend_trait::*;
+use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
 
 #[derive(Debug)]
