@@ -1,9 +1,7 @@
-use std::{
-    collections::HashSet,
-    fmt::{Display, Write},
-    hash::Hash,
-    iter::Peekable,
-};
+use std::collections::HashSet;
+use std::fmt::{Display, Write};
+use std::hash::Hash;
+use std::iter::Peekable;
 
 use anyhow::{ensure, Context, Result};
 

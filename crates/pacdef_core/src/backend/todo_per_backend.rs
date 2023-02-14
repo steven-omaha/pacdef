@@ -1,4 +1,5 @@
-use std::{fmt::Write, process::ExitStatus};
+use std::fmt::Write;
+use std::process::ExitStatus;
 
 use anyhow::{bail, ensure, Context, Result};
 

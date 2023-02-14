@@ -1,7 +1,6 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::DeriveInput;
-use syn::__private::TokenStream2;
+use syn::{DeriveInput, __private::TokenStream2};
 
 pub fn action(input: TokenStream) -> TokenStream {
     let input = syn::parse::<DeriveInput>(input).expect("I don't know when this could fail");

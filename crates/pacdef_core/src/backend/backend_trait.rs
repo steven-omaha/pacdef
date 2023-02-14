@@ -1,8 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 use std::rc::Rc;
-use std::{collections::HashSet, process::ExitStatus};
 
 use anyhow::{Context, Result};
 
