@@ -44,7 +44,7 @@ impl Pacdef {
             Some((NEW, args)) => self.new_groups(args).context("creating new group files"),
             Some((REMOVE, args)) => self.remove_groups(args).context("removing groups"),
             Some((REVIEW, _)) => review::review(self.get_unmanaged_packages(), self.groups)
-                .context("removing groups"),
+                .context("review unmanaged packages"),
             Some((SHOW, args)) => self.show_group_content(args).context("showing groups"),
             Some((SEARCH, args)) => {
                 search::search_packages(args, &self.groups).context("searching packages")
