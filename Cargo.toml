@@ -1,6 +1,6 @@
 [package]
 name = "pacdef"
-version = "1.0.0-beta2"
+version = "1.0.0-beta3"
 edition = "2021"
 description = "declarative package manager for Arch Linux"
 license = "GPLv3"
@@ -26,7 +26,7 @@ serde_derive = "1.0"
 serde = "1.0"
 
 pacdef_macros = {path = "crates/pacdef_macros", version = "0.1"}
-pacdef_core = {path = "crates/pacdef_core", version = "1.0.0-beta2"}
+pacdef_core = {path = "crates/pacdef_core", version = "1.0.0-beta3"}
 
 [[bin]]
 name = "pacdef"
