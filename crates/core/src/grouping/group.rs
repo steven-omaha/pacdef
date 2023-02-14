@@ -27,7 +27,10 @@ impl Group {
             let path = file.path();
 
             if config.warn_not_symlinks && !path.is_symlink() {
-                println!("WARNING: group file {path:?} is not a symlink");
+                println!(
+                    "WARNING: group file {} is not a symlink",
+                    path.to_string_lossy()
+                );
             }
 
             let group =
@@ -88,12 +91,14 @@ impl Group {
         let mut sections = HashSet::new();
 
         while lines.peek().is_some() {
-            match Section::try_from_lines(&mut lines).context("reading section") {
+            let result = Section::try_from_lines(&mut lines).context("reading section");
+            match result {
                 Ok(section) => {
                     sections.insert(section);
                 }
                 Err(e) => {
-                    println!("WARNING: could not process a section under group '{name}': {e:?}\n");
+                    let err = e.root_cause();
+                    println!("WARNING: could not process a section under group '{name}': {err}");
                 }
             }
         }

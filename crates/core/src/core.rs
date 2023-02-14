@@ -313,7 +313,10 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
     match get_single_var("RUST_BACKTRACE") {
         Some(s) => {
             if s == "1" || s == "full" {
-                println!("WARNING: skipping backend '{section}': {error:?}\n");
+                eprintln!("WARNING: skipping backend '{section}':");
+                for err in error.chain() {
+                    eprintln!("  {err}");
+                }
             }
         }
         None => println!("WARNING: skipping backend '{section}': {error}"),

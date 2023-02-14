@@ -45,7 +45,7 @@ impl Section {
             }
         }
 
-        ensure!(!packages.is_empty());
+        ensure!(!packages.is_empty(), "[{name}] is empty");
 
         Ok(Self::new(name, packages))
     }
