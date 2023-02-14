@@ -30,7 +30,7 @@ pacdef_core = {path = "crates/pacdef_core", version = "1.0.0-beta4"}
 
 [[bin]]
 name = "pacdef"
-path = "crates/pacdef_main/main.rs"
+path = "crates/main/main.rs"
 
 [profile.release]
 lto = "off"

@@ -13,6 +13,7 @@ Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
     clippy::wildcard_dependencies,
     missing_docs
 )]
+
 use std::process::{ExitCode, Termination};
 
 use anyhow::{Context, Result};
