@@ -48,7 +48,7 @@ impl Pacdef {
     ///
     /// # Errors
     ///
-    /// This function will return an error if any of the underlying functions return an error.
+    /// This function propagates errors from the underlying functions.
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(mut self) -> Result<()> {
         match self.args.subcommand() {
