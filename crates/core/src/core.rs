@@ -235,7 +235,7 @@ impl Pacdef {
                 .context("filename is not valid UTF-8")?;
 
             if !target.exists() {
-                println!("file {target_name} does not exist, skipping");
+                eprintln!("file {target_name} does not exist, skipping");
                 continue;
             }
 
@@ -243,7 +243,7 @@ impl Pacdef {
             link.push(target_name);
 
             if link.exists() {
-                println!("group {target_name} already exists, skipping");
+                eprintln!("group {target_name} already exists, skipping");
             } else {
                 symlink(target, link)?;
             }
@@ -319,7 +319,7 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
                 }
             }
         }
-        None => println!("WARNING: skipping backend '{section}': {error}"),
+        None => eprintln!("WARNING: skipping backend '{section}': {error}"),
     }
 }
 

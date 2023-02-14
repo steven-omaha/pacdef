@@ -27,7 +27,7 @@ impl Group {
             let path = file.path();
 
             if config.warn_not_symlinks && !path.is_symlink() {
-                println!(
+                eprintln!(
                     "WARNING: group file {} is not a symlink",
                     path.to_string_lossy()
                 );
@@ -98,13 +98,13 @@ impl Group {
                 }
                 Err(e) => {
                     let err = e.root_cause();
-                    println!("WARNING: could not process a section under group '{name}': {err}");
+                    eprintln!("WARNING: could not process a section under group '{name}': {err}");
                 }
             }
         }
 
         if sections.is_empty() {
-            println!("WARNING: no sections found in group '{name}'");
+            eprintln!("WARNING: no sections found in group '{name}'");
         }
 
         let path = path.into();
