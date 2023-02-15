@@ -4,6 +4,7 @@ This library contains all logic that happens in `pacdef` under the hood.
 
 #![warn(
     clippy::as_conversions,
+    clippy::cognitive_complexity,
     clippy::option_if_let_else,
     clippy::redundant_pub_crate,
     clippy::semicolon_if_nothing_returned,
