@@ -29,6 +29,13 @@ impl Group {
     pub fn load(group_dir: &Path, warn_not_symlinks: bool) -> Result<HashSet<Self>> {
         let mut result = HashSet::new();
 
+        if !group_dir.is_dir() {
+            // we only need to create the innermost dir. The rest was already created from when
+            // we loaded the config
+            std::fs::create_dir(group_dir)
+                .with_context(|| format!("creating group dir {}", group_dir.to_string_lossy()))?;
+        }
+
         for entry in group_dir.read_dir().context("reading group dir")? {
             let file = entry.context("getting group file")?;
             let path = file.path();
@@ -44,6 +51,10 @@ impl Group {
                 Self::try_from(&path).with_context(|| format!("reading group file {path:?}"))?;
 
             result.insert(group);
+        }
+
+        if result.is_empty() {
+            eprintln!("WARNING: no group files found");
         }
 
         Ok(result)

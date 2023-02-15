@@ -46,6 +46,13 @@ impl Config {
         let result = Self::default();
 
         let content = serde_yaml::to_string(&result).context("converting Config to yaml")?;
+
+        let parent = file.parent().context("getting parent of config dir")?;
+        if !parent.is_dir() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("creating dir {}", parent.to_string_lossy()))?;
+        }
+
         let mut output = File::create(file).context("creating default config file")?;
         write!(output, "{content}").context("writing default config")?;
 
