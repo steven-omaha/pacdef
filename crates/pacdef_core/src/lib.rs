@@ -7,6 +7,7 @@ This library contains all logic that happens in `pacdef` under the hood.
     clippy::cognitive_complexity,
     clippy::explicit_iter_loop,
     clippy::explicit_into_iter_loop,
+    clippy::map_entry,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::option_if_let_else,

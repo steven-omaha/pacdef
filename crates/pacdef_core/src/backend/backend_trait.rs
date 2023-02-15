@@ -122,13 +122,7 @@ fn get_group_packages_map(
     let mut group_package_map = HashMap::new();
 
     for (p, group) in to_assign {
-        if !group_package_map.contains_key(&group) {
-            group_package_map.insert(group.clone(), vec![]);
-        }
-
-        let inner = group_package_map
-            .get_mut(&group)
-            .expect("either it was already there or we created it");
+        let inner = group_package_map.entry(group).or_insert(vec![]);
         inner.push(p);
     }
 
