@@ -9,8 +9,9 @@ use anyhow::{Context, Result};
 
 use super::{Package, Section};
 
-/// Representation of a group file, composed of a name (file name from which it was read), the
-/// sections in the file, and the absolute path of the original file.
+/// Representation of a group file, composed of a name (file name from which it
+/// was read), the sections in the file, and the absolute path of the original
+/// file.
 #[derive(Debug)]
 pub struct Group {
     pub(crate) name: String,
@@ -19,13 +20,16 @@ pub struct Group {
 }
 
 impl Group {
-    /// Load all group files from the pacdef group dir. If a group file is not a symlink and
-    /// `warn_not_symlinks` is true, a warning is printed.
+    /// Load all group files from the pacdef group dir.
+    ///
+    /// This method will print a warning if
+    /// - there are no files under `group_dir`, or
+    /// - `warn_not_symlinks` is true and a group file is not a symlink.
     ///
     /// # Errors
     ///
-    /// This function will return an error if any of the files under `group_dir` cannot be
-    /// accessed.
+    /// This function will return an error if any of the files under `group_dir` cannot
+    /// be accessed.
     pub fn load(group_dir: &Path, warn_not_symlinks: bool) -> Result<HashSet<Self>> {
         let mut result = HashSet::new();
 
