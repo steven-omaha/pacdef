@@ -5,6 +5,8 @@ Procedural macros for `pacdef`.
 #![warn(
     clippy::as_conversions,
     clippy::cognitive_complexity,
+    clippy::explicit_iter_loop,
+    clippy::explicit_into_iter_loop,
     clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::option_if_let_else,
