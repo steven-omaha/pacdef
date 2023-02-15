@@ -17,23 +17,27 @@ pub struct Config {
 }
 
 impl Config {
-    /// Load the config from the associated file. If the config does not exist, create a default
-    /// config.
+    /// Load the config from the associated file. If the file does not exist, create a default config.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the config file exists but cannot be read, its contents are not UTF-8, or the file is  malformed.
     pub fn load(config_file: &Path) -> Result<Self> {
         let from_file = read_to_string(config_file);
 
-        if let Err(e) = from_file {
-            if e.kind() == ErrorKind::NotFound {
-                println!(
-                    "creating default config under {}",
-                    config_file.to_string_lossy()
-                );
-                return Self::use_default_and_save_to(config_file);
+        let content = match from_file {
+            Ok(content) => content,
+            Err(e) => {
+                if e.kind() == ErrorKind::NotFound {
+                    println!(
+                        "creating default config under {}",
+                        config_file.to_string_lossy()
+                    );
+                    return Self::use_default_and_save_to(config_file);
+                }
+                bail!("unexpected error occured: {e:?}");
             }
-            bail!("unexpected error occured: {e:?}");
-        }
-
-        let content = from_file.expect("we already handled that error");
+        };
 
         serde_yaml::from_str(&content).context("parsing yaml config")
     }
