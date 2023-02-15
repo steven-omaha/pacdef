@@ -7,6 +7,10 @@ const CONFIG_FILE_NAME: &str = "pacdef.yaml";
 
 /// Get the group directory where all group files are located. This is
 /// `$XDG_CONFIG_HOME/pacdef/groups`, which defaults to `$HOME/.config/pacdef/groups`.
+///
+/// # Errors
+///
+/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are undefined.
 pub fn get_group_dir() -> Result<PathBuf> {
     let mut result = get_pacdef_base_dir().context("getting pacdef base dir")?;
     result.push("groups");
@@ -35,6 +39,10 @@ pub fn get_home_dir() -> Result<PathBuf> {
 
 /// Get the group directory where all group files are located. This is
 /// `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+///
+/// # Errors
+///
+/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are undefined.
 pub fn get_config_path() -> Result<PathBuf> {
     let mut file = get_pacdef_base_dir().context("getting pacdef base dir for config file")?;
     file.push(CONFIG_FILE_NAME);
