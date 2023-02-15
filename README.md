@@ -1,25 +1,32 @@
 # pacdef
 multi-backend declarative package manager for Linux
 
+
 ## Installation
 `pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git), and on [crates.io](https://crates.io/crates/pacdef).
 
+
 ## Use-case
 `pacdef` allows the user to have consistent packages among multiple Linux machines by managing packages in group files.
-The group files are maintained outside of `pacdef` by any VCS, like git.
+The group files are maintained outside of `pacdef` by any VCS, like git. 
+
+<!-- TODO There's something missing here. -->
 
 If you work with multiple Linux machines and have asked yourself "*Why do I have the program that I use every day on my other machine not installed here?*", then `pacdef` is the tool for you.
-
 
 
 ## Supported backends
 At the moment, supported backends are limited to the following.
 
-<!--- TODO make this consistent --->
-* `pacman` (Arch Linux) and pacman-wrapping AUR helpers
-* `cargo` (Rust package manager)
+<!-- TODO explain what sections are -->
+
+| Package Manager | Section   | Application |  Notes                                               |
+|-----------------|-----------|-------------|------------------------------------------------------|
+| `pacman`        | `arch`    | Arch Linux  |  includes pacman-wrapping AUR helpers (configurable) |
+| `cargo`         | `rust`    | Rust        |                                                      |
 
 Pull requests for additional backends are welcome!
+
 
 ### Example
 This tree shows my pacdef repository (not the `pacdef` config dir).
@@ -53,6 +60,7 @@ Usage on different machines:
 * home server: `base private hostname_a`
 * private PC: `audio base desktop private rust wayland hostname_b`
 * work PC: `base desktop rust work xorg hostname_c`
+
 
 ## How to use
 * import one or more groups: `pacdef import base desktop audio`
@@ -103,3 +111,9 @@ mycustomrepo/zsh-theme-powerlevel10k
 cargo-update
 topgrade
 ```
+
+## Naming
+
+`pacdef` combines the words "package" and "define".
+
+
