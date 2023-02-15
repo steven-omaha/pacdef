@@ -47,10 +47,12 @@ fn main_inner() -> Result<()> {
     let args = get_args();
 
     let config_file = get_config_path().context("getting config file")?;
-    let config = Config::load(&config_file).context("loading config file")?;
+    let config = Config::load(&config_file)
+        .with_context(|| format!("loading config file {}", config_file.to_string_lossy()))?;
 
     let group_dir = get_group_dir().context("resolving group dir")?;
-    let groups = Group::load(&group_dir, config.warn_not_symlinks).context("loading groups")?;
+    let groups = Group::load(&group_dir, config.warn_not_symlinks)
+        .with_context(|| format!("loading groups under {}", group_dir.to_string_lossy()))?;
 
     let pacdef = Pacdef::new(args, config, groups);
     pacdef.run_action_from_arg().context("running action")

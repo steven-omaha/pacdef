@@ -36,8 +36,7 @@ impl Group {
         if !group_dir.is_dir() {
             // we only need to create the innermost dir. The rest was already created from when
             // we loaded the config
-            create_dir(group_dir)
-                .with_context(|| format!("creating group dir {}", group_dir.to_string_lossy()))?;
+            create_dir(group_dir).context("group dir does not exist, creating")?;
         }
 
         for entry in group_dir.read_dir().context("reading group dir")? {
