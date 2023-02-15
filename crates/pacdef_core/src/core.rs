@@ -1,7 +1,7 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
-use std::path::PathBuf;
+use std::path::Path;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use clap::ArgMatches;
@@ -122,36 +122,9 @@ impl Pacdef {
         to_install.install_missing_packages()
     }
 
-    #[allow(clippy::unused_self)]
-    fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
-        let paths: Vec<_> = self
-            .groups
-            .iter()
-            .map(|g| {
-                g.path
-                    .file_name()
-                    .expect("group files do not terminate in `..`")
-            })
-            .collect();
-
-        let file_names: Vec<_> = groups
-            .get_many::<String>("group")
-            .context("getting group from args")?
-            .collect();
-
-        let mut filtered_groups = Vec::new();
-
-        'outer: for file_name in &file_names {
-            for group in &self.groups {
-                if **file_name == group.name {
-                    filtered_groups.push(group);
-                    break 'outer;
-                }
-            }
-            bail!("group file {} not found", file_name);
-        }
-
-        let group_files: Vec<_> = filtered_groups.into_iter().map(|g| &g.path).collect();
+    fn edit_group_files(&self, arg_matches: &ArgMatches) -> Result<()> {
+        let group_files = get_group_file_paths_matching_args(arg_matches, &self.groups)
+            .context("getting group files for args")?;
 
         let success = run_edit_command(&group_files)
             .context("running editor")?
@@ -284,13 +257,8 @@ impl Pacdef {
         Ok(())
     }
 
-    #[allow(clippy::unused_self)]
     fn remove_groups(&self, arg_match: &ArgMatches) -> Result<()> {
-        let paths = get_assumed_group_file_names(arg_match)?;
-
-        for file in &paths {
-            ensure!(file.exists(), "did not find the group under {file:?}");
-        }
+        let paths = get_group_file_paths_matching_args(arg_match, &self.groups)?;
 
         for file in paths {
             remove_file(file)?;
@@ -299,9 +267,8 @@ impl Pacdef {
         Ok(())
     }
 
-    #[allow(clippy::unused_self)]
-    fn new_groups(&self, arg: &ArgMatches) -> Result<()> {
-        let paths = get_assumed_group_file_names(arg)?;
+    fn new_groups(&self, arg_matches: &ArgMatches) -> Result<()> {
+        let paths = get_group_file_paths_matching_args(arg_matches, &self.groups)?;
 
         for file in &paths {
             ensure!(!file.exists(), "group already exists under {file:?}");
@@ -311,7 +278,7 @@ impl Pacdef {
             File::create(file)?;
         }
 
-        if arg.get_flag("edit") {
+        if arg_matches.get_flag("edit") {
             let success = run_edit_command(&paths)
                 .context("running editor")?
                 .success();
@@ -323,20 +290,35 @@ impl Pacdef {
     }
 }
 
-fn get_assumed_group_file_names(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
-    let groups_dir = get_group_dir()?;
-
-    let paths: Vec<_> = arg_match
-        .get_many::<String>("groups")
+/// For the provided CLI arguments, get the path to each corresponding group file.
+///
+/// # Errors
+///
+/// This function will return an error if any of the arguments do not match one of group names.
+fn get_group_file_paths_matching_args<'a>(
+    arg_match: &ArgMatches,
+    groups: &'a HashSet<Group>,
+) -> Result<Vec<&'a Path>> {
+    let file_names: Vec<_> = arg_match
+        .get_many::<String>("group")
         .context("getting groups from args")?
-        .map(|s| {
-            let mut possible_group_file = groups_dir.clone();
-            possible_group_file.push(s);
-            possible_group_file
-        })
         .collect();
 
-    Ok(paths)
+    let name_group_map: HashMap<&str, &Group> =
+        groups.iter().map(|g| (g.name.as_str(), g)).collect();
+
+    let mut result = Vec::new();
+
+    for file in file_names {
+        match name_group_map.get(file.as_str()) {
+            Some(group) => {
+                result.push(group.path.as_path());
+            }
+            None => bail!("group file {} not found", file),
+        }
+    }
+
+    Ok(result)
 }
 
 #[allow(clippy::option_if_let_else)]
