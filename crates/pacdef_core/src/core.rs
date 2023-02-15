@@ -3,7 +3,7 @@ use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
 use std::path::PathBuf;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{anyhow, bail, ensure, Context, Result};
 use clap::ArgMatches;
 
 use crate::action::*;
@@ -124,27 +124,36 @@ impl Pacdef {
 
     #[allow(clippy::unused_self)]
     fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
-        let group_dir = crate::path::get_group_dir()?;
-
-        let files: Vec<_> = groups
-            .get_many::<String>("group")
-            .context("getting group from args")?
-            .map(|file| {
-                let mut buf = group_dir.clone();
-                buf.push(file);
-                buf
+        let paths: Vec<_> = self
+            .groups
+            .iter()
+            .map(|g| {
+                g.path
+                    .file_name()
+                    .expect("group files do not terminate in `..`")
             })
             .collect();
 
-        for file in &files {
-            ensure!(
-                file.exists(),
-                "group file {} not found",
-                file.to_string_lossy()
-            );
+        let file_names: Vec<_> = groups
+            .get_many::<String>("group")
+            .context("getting group from args")?
+            .collect();
+
+        let mut filtered_groups = Vec::new();
+
+        'outer: for file_name in &file_names {
+            for group in &self.groups {
+                if **file_name == group.name {
+                    filtered_groups.push(group);
+                    break 'outer;
+                }
+            }
+            bail!("group file {} not found", file_name);
         }
 
-        let success = run_edit_command(&files)
+        let group_files: Vec<_> = filtered_groups.into_iter().map(|g| &g.path).collect();
+
+        let success = run_edit_command(&group_files)
             .context("running editor")?
             .success();
 
