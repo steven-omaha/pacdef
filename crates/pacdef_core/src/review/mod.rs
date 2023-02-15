@@ -44,8 +44,7 @@ pub fn review(
         return Ok(());
     }
 
-    let mut strategies: Vec<Strategy> = reviews.into();
-    strategies.retain(|s| !s.nothing_to_do());
+    let strategies: Vec<Strategy> = reviews.into_strategies();
 
     println!();
     let mut iter = strategies.iter().peekable();
