@@ -92,8 +92,8 @@ impl Pacdef {
     }
 
     fn overwrite_values_from_config(&mut self, backend: Box<dyn Backend>) -> Box<dyn Backend> {
-        if backend.get_section() == "pacman" {
-            Box::new(crate::backend::Pacman {
+        if backend.get_section() == "arch" {
+            Box::new(crate::backend::Arch {
                 binary: self.config.aur_helper.clone(),
                 aur_rm_args: self.config.aur_rm_args.take(),
                 packages: HashSet::new(),

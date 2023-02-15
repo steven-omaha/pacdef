@@ -9,21 +9,21 @@ use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
 
 #[derive(Debug)]
-pub struct Pacman {
+pub struct Arch {
     pub(crate) binary: String,
     pub(crate) aur_rm_args: Option<Vec<String>>,
     pub(crate) packages: HashSet<Package>,
 }
 
 const BINARY: Text = "paru";
-const SECTION: Text = "pacman";
+const SECTION: Text = "arch";
 
 const SWITCHES_INFO: Switches = &["--query", "--info"];
 const SWITCHES_INSTALL: Switches = &["--sync"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &["--database", "--asdeps"];
 const SWITCHES_REMOVE: Switches = &["--remove", "--recursive"];
 
-impl Backend for Pacman {
+impl Backend for Arch {
     impl_backend_constants!();
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
@@ -104,7 +104,7 @@ fn get_db_handle() -> Result<Alpm> {
     Alpm::new("/", "/var/lib/pacman").context("connecting to DB using expected default values")
 }
 
-impl Pacman {
+impl Arch {
     pub(crate) fn new() -> Self {
         Self {
             binary: BINARY.to_string(),

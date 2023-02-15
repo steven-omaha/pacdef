@@ -1,2 +1,2 @@
-pub mod pacman;
+pub mod arch;
 pub mod rust;

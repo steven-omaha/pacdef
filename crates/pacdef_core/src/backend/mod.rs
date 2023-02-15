@@ -12,6 +12,6 @@ use pacdef_macros::Register;
 
 #[derive(Debug, Register)]
 pub enum Backends {
-    Pacman,
+    Arch,
     Rust,
 }

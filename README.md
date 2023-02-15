@@ -6,13 +6,11 @@ multi-backend declarative package manager for Linux
 
 ## Use-case
 `pacdef` allows the user to have consistent packages among multiple Linux machines by managing packages in group files.
-The group files are maintained outside of `pacdef` by any VCS.
-
-`pacdef import`ing a package group file creates a symlink to that file in `pacdef`'s config dir, thereby letting `pacdef` know you want to have the packages in this file on your machine.
-Then installing all packages from all groups is as simple as `pacdef sync`.
-All package operations are executed by the respective package managers.
+The group files are maintained outside of `pacdef` by any VCS, like git.
 
 If you work with multiple Linux machines and have asked yourself "*Why do I have the program that I use every day on my other machine not installed here?*", then `pacdef` is the tool for you.
+
+
 
 ## Supported backends
 At the moment, supported backends are limited to the following.
@@ -67,6 +65,10 @@ Usage on different machines:
 * review all unmanaged packages interactively: `pacdef review`
 * search for the group that contains a package: `pacdef search firefox`
 * show packages of a group: `pacdef show desktop`
+
+`pacdef import`ing a package group file creates a symlink to that file in `pacdef`'s config dir, thereby letting `pacdef` know you want to have the packages in this file on your machine.
+Then installing all packages from all groups is as simple as `pacdef sync`.
+All package operations are executed by the respective package managers.
 
 
 ### Configuration
