@@ -1,4 +1,4 @@
-use std::fs::{read_to_string, File};
+use std::fs::{create_dir_all, read_to_string, File};
 use std::io::{ErrorKind, Write};
 use std::path::Path;
 
@@ -49,7 +49,7 @@ impl Config {
 
         let parent = file.parent().context("getting parent of config dir")?;
         if !parent.is_dir() {
-            std::fs::create_dir_all(parent)
+            create_dir_all(parent)
                 .with_context(|| format!("creating dir {}", parent.to_string_lossy()))?;
         }
 

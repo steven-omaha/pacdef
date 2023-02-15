@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::Display;
-use std::fs::{read_to_string, File};
+use std::fs::{create_dir, read_to_string, File};
 use std::hash::Hash;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -36,7 +36,7 @@ impl Group {
         if !group_dir.is_dir() {
             // we only need to create the innermost dir. The rest was already created from when
             // we loaded the config
-            std::fs::create_dir(group_dir)
+            create_dir(group_dir)
                 .with_context(|| format!("creating group dir {}", group_dir.to_string_lossy()))?;
         }
 
