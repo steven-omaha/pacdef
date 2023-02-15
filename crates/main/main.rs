@@ -6,6 +6,7 @@ Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
     clippy::as_conversions,
     clippy::option_if_let_else,
     clippy::redundant_pub_crate,
+    clippy::semicolon_if_nothing_returned,
     clippy::unused_self,
     clippy::unwrap_used,
     clippy::use_debug,
