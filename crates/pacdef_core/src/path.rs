@@ -7,7 +7,7 @@ const CONFIG_FILE_NAME: &str = "pacdef.yaml";
 
 /// Get the group directory where all group files are located. This is
 /// `$XDG_CONFIG_HOME/pacdef/groups`, which defaults to `$HOME/.config/pacdef/groups`.
-pub fn get_pacdef_group_dir() -> Result<PathBuf> {
+pub fn get_group_dir() -> Result<PathBuf> {
     let mut result = get_pacdef_base_dir().context("getting pacdef base dir")?;
     result.push("groups");
     Ok(result)

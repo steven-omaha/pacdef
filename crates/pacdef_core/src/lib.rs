@@ -33,7 +33,7 @@ pub use crate::config::Config;
 pub use crate::core::Pacdef;
 pub use crate::grouping::Group;
 pub(crate) use crate::grouping::Package;
-pub use crate::path::{get_config_path, get_pacdef_group_dir};
+pub use crate::path::{get_config_path, get_group_dir};
 pub use crate::search::NO_PACKAGES_FOUND;
 
 extern crate pacdef_macros;

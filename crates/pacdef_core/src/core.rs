@@ -11,7 +11,7 @@ use crate::args;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
-use crate::path::get_pacdef_group_dir;
+use crate::path::get_group_dir;
 use crate::review;
 use crate::search;
 use crate::ui::get_user_confirmation;
@@ -124,7 +124,7 @@ impl Pacdef {
 
     #[allow(clippy::unused_self)]
     fn edit_group_files(&self, groups: &ArgMatches) -> Result<()> {
-        let group_dir = crate::path::get_pacdef_group_dir()?;
+        let group_dir = crate::path::get_group_dir()?;
 
         let files: Vec<_> = groups
             .get_many::<String>("group")
@@ -248,7 +248,7 @@ impl Pacdef {
     #[allow(clippy::unused_self)]
     fn import_groups(&self, args: &ArgMatches) -> Result<()> {
         let files = args::get_absolutized_file_paths(args)?;
-        let groups_dir = get_pacdef_group_dir()?;
+        let groups_dir = get_group_dir()?;
 
         for target in files {
             let target_name = target
@@ -315,7 +315,7 @@ impl Pacdef {
 }
 
 fn get_assumed_group_file_names(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
-    let groups_dir = get_pacdef_group_dir()?;
+    let groups_dir = get_group_dir()?;
 
     let paths: Vec<_> = arg_match
         .get_many::<String>("groups")

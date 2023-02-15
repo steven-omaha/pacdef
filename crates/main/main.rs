@@ -20,7 +20,7 @@ use std::process::{ExitCode, Termination};
 use anyhow::{Context, Result};
 
 use pacdef_core as core;
-use pacdef_core::{get_args, get_config_path, get_pacdef_group_dir, Config, Group, Pacdef};
+use pacdef_core::{get_args, get_config_path, get_group_dir, Config, Group, Pacdef};
 
 fn main() -> ExitCode {
     handle_final_result(main_inner())
@@ -49,7 +49,7 @@ fn main_inner() -> Result<()> {
     let config_file = get_config_path().context("getting config file")?;
     let config = Config::load(&config_file).context("loading config file")?;
 
-    let group_dir = get_pacdef_group_dir().context("resolving group dir")?;
+    let group_dir = get_group_dir().context("resolving group dir")?;
     let groups = Group::load(&group_dir, config.warn_not_symlinks).context("loading groups")?;
 
     let pacdef = Pacdef::new(args, config, groups);
