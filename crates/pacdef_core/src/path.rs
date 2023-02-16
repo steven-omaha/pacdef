@@ -37,8 +37,7 @@ pub fn get_home_dir() -> Result<PathBuf> {
     Ok(env::var("HOME").context("getting $HOME variable")?.into())
 }
 
-/// Get the group directory where all group files are located. This is
-/// `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+/// Get the path to the pacdef config file. This is `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
 ///
 /// # Errors
 ///
