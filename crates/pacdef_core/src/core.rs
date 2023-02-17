@@ -5,6 +5,7 @@ use std::path::Path;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use clap::ArgMatches;
+use const_format::formatcp;
 
 use crate::action::*;
 use crate::args;
@@ -338,11 +339,12 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
 }
 
 pub const fn get_version_string() -> &'static str {
-    concat!(
-        "pacdef, version: ",
-        env!("CARGO_PKG_VERSION"),
-        " (",
-        env!("GIT_HASH"),
-        ")",
-    )
+    const VERSION: &str = concat!("pacdef, version: ", env!("CARGO_PKG_VERSION"));
+    const HASH: &str = env!("GIT_HASH");
+
+    if HASH.is_empty() {
+        VERSION
+    } else {
+        formatcp!("{VERSION} ({HASH})")
+    }
 }
