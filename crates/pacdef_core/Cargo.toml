@@ -1,6 +1,6 @@
 [package]
 name = "pacdef_core"
-version = "1.0.0-beta5"
+version = "1.0.0-beta6"
 edition = "2021"
 description = "pacdef core library"
 license = "GPLv3"
