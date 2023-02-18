@@ -113,17 +113,19 @@ Usage on different machines:
 
 ## Commands
 
-| Subcommand                        | description                                                           |
+| Subcommand                        | Description                                                           |
 |-----------------------------------|-----------------------------------------------------------------------|
-| `import <group> [<group>...]`     | import one or more groups, which creates managed packages             |
-| `remove <group>`                  | remove a previously imported group                                    |
-| `new [-e] <group> [<group>...]`   | create new groups, use `-e` to edit them immediately after creation   | 
-| `show <group> [<group>...]        | show contents of a group                                              |  
-| `sync`                            | install managed packages                                              |
-| `unmanaged`                       | show all unmanaged packages                                           |
-| `clean`                           | remove all unmanaged packages                                         |
-| `review`                          | for each unmanaged package interactively decide what to do            |
-| `search <regex>`                  | search for managed packages that match the search string              |
+| `group import [<group>...]`       | import one or more groups, which creates managed packages             |
+| `group remove [<group>...]`       | remove a previously imported group                                    |
+| `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
+| `group show [<group>...]`         | show contents of a group                                              |  
+| `group list`                      | list names of all groups                                              |  
+| `package sync`                    | install managed packages                                              |
+| `package unmanaged`               | show all unmanaged packages                                           |
+| `package clean`                   | remove all unmanaged packages                                         |
+| `package review`                  | for each unmanaged package interactively decide what to do            |
+| `package search <regex>`          | search for managed packages that match the search string              |
+| `version`                         | show version information                                              |
 
 
 ## Configuration
