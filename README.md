@@ -69,8 +69,8 @@ At the moment, supported backends are limited to the following.
 
 | Package Manager | Section   | Application |  Notes                                               |
 |-----------------|-----------|-------------|------------------------------------------------------|
-| `pacman`        | `arch`    | Arch Linux  |  includes pacman-wrapping AUR helpers (configurable) |
-| `cargo`         | `rust`    | Rust        |                                                      |
+| `pacman`        | [`arch`]  | Arch Linux  |  includes pacman-wrapping AUR helpers (configurable) |
+| `cargo`         | [`rust`]  | Rust        |                                                      |
 
 Pull requests for additional backends are welcome!
 
