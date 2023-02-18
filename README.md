@@ -13,7 +13,7 @@ If you use the `crates.io` version you will need to copy the completion file to 
 
 ## Use-case
 
-`pacdef` allows the user to have consistent packages among multiple Linux machines by managing packages in group files.
+`pacdef` allows the user to have consistent packages among multiple Linux machines and different backends by managing packages in group files.
 The idea is that (1) any package in the group files ("managed packages") will be installed explicitly, and (2) explicitly installed packages *not* found in any of the group files ("unmanaged packages") will be removed.
 The group files are maintained outside of `pacdef` by any VCS, like git. 
 
@@ -57,7 +57,7 @@ flamegraph
 
 Pacdef will make sure you have the following packages installed for each package manager:
 
-- Arch (`pacman`, AUR helpers): paru, zsh, rustup, rust-analyzero
+- Arch (`pacman`, AUR helpers): paru, zsh, rustup, rust-analyzer
 - Rust (`cargo`): pacdef, topgrade, cargo-tree, flamegraph
 
 Note that the name of the section corresponds to the ecosystem it relates to, rather than the package manager it uses.
@@ -109,6 +109,57 @@ Usage on different machines:
 - home server: `base private hostname_a`
 - private PC: `audio base desktop private rust wayland hostname_b`
 - work PC: `base desktop rust work xorg hostname_c`
+
+
+## Commands
+
+| Subcommand                        | description                                                           |
+|-----------------------------------|-----------------------------------------------------------------------|
+| `import <group> [<group>...]`     | import one or more groups, which creates managed packages             |
+| `remove <group>`                  | remove a previously imported group                                    |
+| `new [-e] <group> [<group>...]`   | create new groups, use `-e` to edit them immediately after creation   | 
+| `show <group> [<group>...]        | show contents of a group                                              |  
+| `sync`                            | install managed packages                                              |
+| `unmanaged`                       | show all unmanaged packages                                           |
+| `clean`                           | remove all unmanaged packages                                         |
+| `review`                          | for each unmanaged package interactively decide what to do            |
+| `search <regex>`                  | search for managed packages that match the search string              |
+
+
+## Configuration
+
+On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+
+```yaml
+aur_helper: paru  # AUR helper to use on Arch Linux (paru, yay, ...)
+aur_rm_args: null  # additional args to pass to AUR helper when removing packages (optional)
+warn_not_symlinks: true  # warn if a group file is not a symlink
+```
+
+
+## Group file syntax
+
+Group files loosely follow the syntax for `ini`-files.
+
+1. Sections begin by their name in brackets.
+2. One package per line. 
+3. Anything after a `#` is ignored.
+4. Empty lines are ignored.
+5. If a package exists in multiple repositories, the repo can be specified as prefix followed by a forward slash.
+   The package manager must understand this notation.
+
+Example:
+```ini
+[pacman]
+alacritty
+firefox  # this comment is ignored
+libreoffice-fresh
+mycustomrepo/zsh-theme-powerlevel10k
+
+[rust]
+cargo-update
+topgrade
+```
 
 
 ## Naming
