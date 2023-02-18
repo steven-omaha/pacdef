@@ -166,3 +166,7 @@ topgrade
 
 `pacdef` combines the words "package" and "define".
 
+
+## supported rust version
+
+latest stable
