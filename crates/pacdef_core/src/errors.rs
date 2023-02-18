@@ -1,3 +1,4 @@
+use std::error::Error as ErrorTrait;
 use std::fmt::Display;
 
 /// Error types for pacdef.
@@ -16,4 +17,4 @@ impl Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl ErrorTrait for Error {}
