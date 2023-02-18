@@ -58,6 +58,7 @@ fn get_group_cmd() -> Command {
     Command::new("group")
         .arg_required_else_help(true)
         .about("TODO????")
+        .visible_alias("g")
         .subcommand_required(true)
         .subcommands([edit, import, list, new, remove, show])
 }
@@ -76,6 +77,7 @@ fn get_package_cmd() -> Command {
     Command::new("package")
         .arg_required_else_help(true)
         .about("TODO????")
+        .visible_alias("p")
         .subcommand_required(true)
         .subcommands([clean, review, unmanaged, search, sync])
 }
