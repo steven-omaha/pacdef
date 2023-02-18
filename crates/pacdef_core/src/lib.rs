@@ -28,6 +28,7 @@ mod cmd;
 mod config;
 mod core;
 mod env;
+mod errors;
 mod grouping;
 mod path;
 mod review;
@@ -37,9 +38,9 @@ mod ui;
 pub use crate::args::get as get_args;
 pub use crate::config::Config;
 pub use crate::core::Pacdef;
+pub use crate::errors::Error;
 pub use crate::grouping::Group;
 pub(crate) use crate::grouping::Package;
 pub use crate::path::{get_config_path, get_group_dir};
-pub use crate::search::NO_PACKAGES_FOUND;
 
 extern crate pacdef_macros;

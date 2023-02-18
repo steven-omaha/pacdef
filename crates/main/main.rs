@@ -19,7 +19,6 @@ use std::process::{ExitCode, Termination};
 
 use anyhow::{Context, Result};
 
-use pacdef_core as core;
 use pacdef_core::{get_args, get_config_path, get_group_dir, Config, Group, Pacdef};
 
 fn main() -> ExitCode {
@@ -32,9 +31,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
     match result {
         Ok(_) => ExitCode::SUCCESS,
         Err(ref e) => {
-            let msg = e.root_cause().to_string();
-
-            if msg == core::NO_PACKAGES_FOUND {
+            if e.root_cause().to_string() == pacdef_core::Error::NoPackagesFound.to_string() {
                 ExitCode::FAILURE
             } else {
                 result.report()
