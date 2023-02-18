@@ -21,22 +21,17 @@ fn get_arg_parser() -> Command {
 }
 
 fn get_group_cmd() -> Command {
-    let remove = Command::new(REMOVE)
-        .about("remove one or more previously imported groups")
-        .arg_required_else_help(true)
-        .arg(Arg::new("groups").num_args(1..));
-
     let edit = Command::new(EDIT)
         .about("edit one or more existing group files")
         .arg_required_else_help(true)
         .arg(Arg::new("group").num_args(1..));
 
-    let list = Command::new(GROUPS).about("list names of imported groups");
-
     let import = Command::new(IMPORT)
         .about("import one or more group files")
         .arg_required_else_help(true)
         .arg(Arg::new("files").num_args(1..));
+
+    let list = Command::new(LIST).about("list names of imported groups");
 
     let new = Command::new(NEW)
         .about("create new group files")
@@ -48,6 +43,11 @@ fn get_group_cmd() -> Command {
                 .help("edit the new group files after creation")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(Arg::new("groups").num_args(1..));
+
+    let remove = Command::new(REMOVE)
+        .about("remove one or more previously imported groups")
+        .arg_required_else_help(true)
         .arg(Arg::new("groups").num_args(1..));
 
     let show = Command::new(SHOW)

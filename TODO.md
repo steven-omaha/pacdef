@@ -6,3 +6,4 @@
 - make table use section header with brackets
 - tutorial
 - remove "Arch" references
+- update README for subcommands "group", "package"

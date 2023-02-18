@@ -4,8 +4,8 @@ use pacdef_macros::Action;
 pub enum Actions {
     Clean,
     Edit,
-    Groups,
     Import,
+    List,
     New,
     Remove,
     Review,

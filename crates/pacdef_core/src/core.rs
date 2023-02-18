@@ -19,6 +19,9 @@ use crate::ui::get_user_confirmation;
 use crate::Config;
 use crate::Group;
 
+const UNREACHABLE_ARM: &str = "argument parser requires some subcommand to return an `ArgMatches`";
+const ACTION_NOT_MATCHED: &str = "could not match action";
+
 /// Most data that is required during runtime of the program.
 pub struct Pacdef {
     args: ArgMatches,
@@ -53,25 +56,36 @@ impl Pacdef {
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(mut self) -> Result<()> {
         match self.args.subcommand() {
-            Some((CLEAN, _)) => self.clean_packages(),
-            Some((EDIT, args)) => self.edit_group_files(args).context("editing group files"),
-            Some((GROUPS, _)) => Ok(self.show_groups()),
-            Some((IMPORT, args)) => self.import_groups(args).context("importing groups"),
-            Some((NEW, args)) => self.new_groups(args).context("creating new group files"),
-            Some((REMOVE, args)) => self.remove_groups(args).context("removing groups"),
-            Some((REVIEW, _)) => review::review(self.get_unmanaged_packages(), self.groups)
-                .context("review unmanaged packages"),
-            Some((SHOW, args)) => self.show_group_content(args).context("showing groups"),
-            Some((SEARCH, args)) => {
-                search::search_packages(args, &self.groups).context("searching packages")
-            }
-            Some((SYNC, _)) => self.install_packages(),
-            Some((UNMANAGED, _)) => self.show_unmanaged_packages(),
+            Some(("group", args)) => match args.subcommand() {
+                Some((EDIT, args)) => self.edit_group_files(args).context("editing group files"),
+                Some((IMPORT, args)) => self.import_groups(args).context("importing groups"),
+                Some((LIST, _)) => Ok(self.show_groups()),
+                Some((NEW, args)) => self.new_groups(args).context("creating new group files"),
+                Some((REMOVE, args)) => self.remove_groups(args).context("removing groups"),
+                Some((SHOW, args)) => self.show_group_content(args).context("showing groups"),
+
+                Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
+                None => unreachable!("{UNREACHABLE_ARM}"),
+            },
+
+            Some(("package", args)) => match args.subcommand() {
+                Some((CLEAN, _)) => self.clean_packages(),
+                Some((REVIEW, _)) => review::review(self.get_unmanaged_packages(), self.groups)
+                    .context("review unmanaged packages"),
+                Some((SEARCH, args)) => {
+                    search::search_packages(args, &self.groups).context("searching packages")
+                }
+                Some((SYNC, _)) => self.install_packages(),
+                Some((UNMANAGED, _)) => self.show_unmanaged_packages(),
+
+                Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
+                None => unreachable!("{UNREACHABLE_ARM}"),
+            },
+
             Some((VERSION, _)) => Ok(self.show_version()),
-            Some((_, _)) => panic!(),
-            None => {
-                unreachable!("argument parser requires some subcommand to return an `ArgMatches`")
-            }
+
+            Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
+            None => unreachable!("{UNREACHABLE_ARM}"),
         }
     }
 
