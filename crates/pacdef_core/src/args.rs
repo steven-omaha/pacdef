@@ -24,14 +24,18 @@ fn get_group_cmd() -> Command {
     let edit = Command::new(EDIT)
         .about("edit one or more existing group files")
         .arg_required_else_help(true)
-        .arg(Arg::new("group").num_args(1..));
+        .arg(Arg::new("group").num_args(1..))
+        .visible_alias("e");
 
     let import = Command::new(IMPORT)
         .about("import one or more group files")
         .arg_required_else_help(true)
-        .arg(Arg::new("files").num_args(1..));
+        .arg(Arg::new("files").num_args(1..))
+        .visible_alias("i");
 
-    let list = Command::new(LIST).about("list names of imported groups");
+    let list = Command::new(LIST)
+        .about("list names of imported groups")
+        .visible_alias("l");
 
     let new = Command::new(NEW)
         .about("create new group files")
@@ -43,17 +47,20 @@ fn get_group_cmd() -> Command {
                 .help("edit the new group files after creation")
                 .action(clap::ArgAction::SetTrue),
         )
-        .arg(Arg::new("groups").num_args(1..));
+        .arg(Arg::new("groups").num_args(1..))
+        .visible_alias("n");
 
     let remove = Command::new(REMOVE)
         .about("remove one or more previously imported groups")
         .arg_required_else_help(true)
-        .arg(Arg::new("groups").num_args(1..));
+        .arg(Arg::new("groups").num_args(1..))
+        .visible_alias("r");
 
     let show = Command::new(SHOW)
         .about("show packages under an imported group")
         .arg_required_else_help(true)
-        .arg(Arg::new("group").num_args(1..));
+        .arg(Arg::new("group").num_args(1..))
+        .visible_alias("s");
 
     Command::new("group")
         .arg_required_else_help(true)
@@ -64,12 +71,20 @@ fn get_group_cmd() -> Command {
 }
 
 fn get_package_cmd() -> Command {
-    let sync = Command::new(SYNC).about("install packages from all imported groups");
-    let clean = Command::new(CLEAN).about("remove unmanaged packages");
-    let unmanaged =
-        Command::new(UNMANAGED).about("show explicitly installed packages not managed by pacdef");
-    let review = Command::new(REVIEW).about("review unmanaged packages");
+    let sync = Command::new(SYNC)
+        .about("install packages from all imported groups")
+        .visible_alias("sy");
+    let clean = Command::new(CLEAN)
+        .about("remove unmanaged packages")
+        .visible_alias("c");
+    let unmanaged = Command::new(UNMANAGED)
+        .about("show explicitly installed packages not managed by pacdef")
+        .visible_alias("u");
+    let review = Command::new(REVIEW)
+        .about("review unmanaged packages")
+        .visible_alias("r");
     let search = Command::new(SEARCH)
+        .visible_alias("se")
         .about("search for packages which match a provided string literal or regex")
         .arg_required_else_help(true)
         .arg(Arg::new("string"));
