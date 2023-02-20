@@ -7,3 +7,4 @@
 - tutorial
 - remove "Arch" references
 - update README for subcommands "group", "package"
+- update completion for new subcommands
