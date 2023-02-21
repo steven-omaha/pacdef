@@ -3,28 +3,6 @@
 _pacdef() {
     integer ret=1
     local line
-    function _actions {
-        local -a actions
-        actions=(
-            'clean:uninstall packages not managed by pacdef'
-            'edit:edit an imported group file'
-            'groups:show names of imported groups'
-            'import:import a new group file'
-            'new:create a new group file'
-            'remove:remove a group file'
-            'review:review unmanaged packages'
-            'search:show the group containing a package'
-            'show:show packages under an imported group'
-            'sync:install all packages from imported groups'
-            'unmanaged:show explicitly installed packages not managed by pacdef'
-            'version:show version info'
-        )
-        _describe 'action' actions
-    }
-
-    _arguments \
-        "1: :_actions" \
-        "*::arg:->args"
 
     if [ -z "${XDG_CONFIG_HOME}" ]; then
         GROUPDIR="~/.config/pacdef/groups"
@@ -32,29 +10,97 @@ _pacdef() {
         GROUPDIR="${XDG_CONFIG_HOME}/pacdef/groups"
     fi
 
+    function _subcommands {
+        local -a subcommands
+        subcommands=(
+            'group:manage groups (alias: g)'
+            'package:manage packages (alias: p)'
+            'version:show version info (alias: v)'
+        )
+        _describe 'subcommand' subcommands
+    }
 
-    case $line[1] in
-        edit)
-            _arguments "1:group file:_files -W '$GROUPDIR'"
-        ;;
-        import)
-            _arguments "*:new group file(s):_files"
-        ;;
-        new)
-            _arguments "*:new group file(s):"
-        ;;
-        search)
-            _arguments "1:package:"
-        ;;
-        show)
-            _arguments "1:group file:_files -W '$GROUPDIR'"
-        ;;
-        remove)
-            _arguments "*:group file:_files -W '$GROUPDIR'"
-        ;;
-        "") ;;
-        *)
-            _message "no more arguments"
+    function _group_actions {
+        local -a group_actions
+        group_actions=(
+            'edit:edit an imported group file (alias: e)'
+            'list:show names of imported groups (alias: l)'
+            'import:import a new group file (alias: i)'
+            'new:create a new group file (alias: n)'
+            'remove:remove a group file (alias: r)'
+            'show:show packages under an imported group (alias: s)'
+        )
+        _describe 'group action' group_actions
+    }
+
+
+    function _package_actions {
+        local -a package_actions
+        package_actions=(
+            'clean:uninstall packages not managed by pacdef (alias: c)'
+            'review:review unmanaged packages (alias: r)'
+            'search:show the group containing a package (alias: se)'
+            'sync:install all packages from imported groups (alias: sy)'
+            'unmanaged:show explicitly installed packages not managed by pacdef (alias: u)'
+        )
+        _describe 'package action' package_actions
+    }
+
+    _arguments -C \
+        "1: :_subcommands" \
+        "*::arg:->args" \
+        && ret=0
+
+    case $state in
+        (args)
+            case $line[1] in
+                package)
+                    case $line[2] in
+                        search)
+                            _arguments \
+                                "2:regex:" && ret=0
+                        ;;
+                        (clean|review|sync|unmanaged|help)
+                            _message "no more arguments" && ret=0
+                        ;;
+                        *)
+                            _arguments \
+                                "1: :_package_actions" \
+                                "*::arg:->args" && ret=0
+                        ;;
+                    esac
+                ;;
+                group)
+                    case $line[2] in
+                        list)
+                            _message "no more arguments" && ret=0
+                        ;;
+                        (edit|remove|show)
+                            _arguments "*:group file:_files -W '$GROUPDIR'" && ret=0
+
+                        ;;
+                        import)
+                            _arguments "*:new group file(s):_files" && ret=0
+                        ;;
+                        new)
+                            _arguments \
+                                {-e,--edit}"[edit group file after creating them]" \
+                                "*:new group name(s):" \
+                                && ret=0
+                        ;;
+                        *) _arguments \
+                            "1: :_group_actions" \
+                            "*::arg:->args" && ret=0
+                        ;;
+                    esac
+                ;;
+                version)
+                    _message "no more arguments" && ret=0
+                ;;
+                *)
+                    _message "unknown subcommand" && ret=1
+                ;;
+            esac
         ;;
     esac
 
@@ -62,3 +108,5 @@ _pacdef() {
 }
 
 _pacdef
+
+
