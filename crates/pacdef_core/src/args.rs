@@ -45,7 +45,8 @@ fn get_group_cmd() -> Command {
                 .short('e')
                 .long("edit")
                 .help("edit the new group files after creation")
-                .action(clap::ArgAction::SetTrue),
+                .action(clap::ArgAction::SetTrue)
+                .num_args(0),
         )
         .arg(Arg::new("groups").num_args(1..))
         .visible_alias("n");

@@ -1,9 +1,6 @@
 # To Do
 
 - make transition for existing user easier
-- create an outer error type for main
 - change version names (1.0.0-beta.10)
 - tutorial
 - update completion for new subcommands (WIP)
-- outer error types:
-    - no group files provided (pacdef group new --edit)

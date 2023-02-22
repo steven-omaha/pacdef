@@ -27,11 +27,17 @@ fn main() -> ExitCode {
 
 /// Skip printing the error chain when searching packages yields no results, otherwise report error
 /// chain.
+#[allow(clippy::option_if_let_else)]
 fn handle_final_result(result: Result<()>) -> ExitCode {
     match result {
         Ok(_) => ExitCode::SUCCESS,
         Err(ref e) => {
-            if e.root_cause().to_string() == pacdef_core::Error::NoPackagesFound.to_string() {
+            if let Some(pacdef_err) = e.root_cause().downcast_ref::<pacdef_core::Error>() {
+                match pacdef_err {
+                    pacdef_core::Error::NoPackagesFound => (),
+                    pacdef_core::Error::NoGroupFilesInArguments => eprintln!("{pacdef_err}"),
+                    _ => eprintln!("unexpected error"),
+                };
                 ExitCode::FAILURE
             } else {
                 result.report()

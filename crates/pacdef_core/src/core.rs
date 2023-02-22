@@ -315,8 +315,9 @@ fn get_group_file_paths_matching_args<'a>(
     groups: &'a HashSet<Group>,
 ) -> Result<Vec<&'a Path>> {
     let file_names: Vec<_> = arg_match
-        .get_many::<String>("group")
-        .context("getting groups from args")?
+        .get_many::<String>("groups")
+        .context("getting groups from args")
+        .map_err(|_| crate::errors::Error::NoGroupFilesInArguments)?
         .collect();
 
     let name_group_map: HashMap<&str, &Group> =
