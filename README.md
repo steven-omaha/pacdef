@@ -152,7 +152,7 @@ Group files loosely follow the syntax for `ini`-files.
 
 Example:
 ```ini
-[pacman]
+[arch]
 alacritty
 firefox  # this comment is ignored
 libreoffice-fresh
