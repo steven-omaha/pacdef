@@ -24,13 +24,13 @@ fn get_group_cmd() -> Command {
     let edit = Command::new(EDIT)
         .about("edit one or more existing group files")
         .arg_required_else_help(true)
-        .arg(Arg::new("group").num_args(1..))
+        .arg(Arg::new("group").num_args(1..).required(true))
         .visible_alias("e");
 
     let import = Command::new(IMPORT)
         .about("import one or more group files")
         .arg_required_else_help(true)
-        .arg(Arg::new("files").num_args(1..))
+        .arg(Arg::new("files").num_args(1..).required(true))
         .visible_alias("i");
 
     let list = Command::new(LIST)
@@ -48,19 +48,19 @@ fn get_group_cmd() -> Command {
                 .action(clap::ArgAction::SetTrue)
                 .num_args(0),
         )
-        .arg(Arg::new("groups").num_args(1..))
+        .arg(Arg::new("groups").num_args(1..).required(true))
         .visible_alias("n");
 
     let remove = Command::new(REMOVE)
         .about("remove one or more previously imported groups")
         .arg_required_else_help(true)
-        .arg(Arg::new("groups").num_args(1..))
+        .arg(Arg::new("groups").num_args(1..).required(true))
         .visible_alias("r");
 
     let show = Command::new(SHOW)
         .about("show packages under an imported group")
         .arg_required_else_help(true)
-        .arg(Arg::new("group").num_args(1..))
+        .arg(Arg::new("group").num_args(1..).required(true))
         .visible_alias("s");
 
     Command::new("group")
@@ -88,7 +88,7 @@ fn get_package_cmd() -> Command {
         .visible_alias("se")
         .about("search for packages which match a provided string literal or regex")
         .arg_required_else_help(true)
-        .arg(Arg::new("string"));
+        .arg(Arg::new("string").required(true));
 
     Command::new("package")
         .arg_required_else_help(true)
