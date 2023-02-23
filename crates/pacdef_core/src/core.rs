@@ -107,7 +107,6 @@ impl Pacdef {
         to_install
     }
 
-    #[allow(clippy::as_conversions)]
     fn overwrite_values_from_config(&mut self, backend: &mut dyn Backend) {
         if let Some(arch) = backend.as_any_mut().downcast_mut::<Arch>() {
             arch.binary = self.config.aur_helper.clone();
