@@ -31,10 +31,11 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
     match result {
         Ok(_) => ExitCode::SUCCESS,
         Err(ref e) => {
-            if e.root_cause().to_string() == pacdef_core::Error::NoPackagesFound.to_string() {
-                ExitCode::FAILURE
-            } else {
-                result.report()
+            let root_e = e.root_cause().downcast_ref();
+            match root_e {
+                Some(pacdef_core::Error::NoPackagesFound) => ExitCode::FAILURE,
+                Some(_) => ExitCode::FAILURE,
+                None => result.report(),
             }
         }
     }
