@@ -5,6 +5,7 @@ use std::path::Path;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use clap::ArgMatches;
+use clap_complete::{generate, shells::Zsh};
 use const_format::formatcp;
 
 use crate::action::*;
@@ -84,6 +85,7 @@ impl Pacdef {
             },
 
             Some((VERSION, _)) => Ok(self.show_version()),
+            Some((COMPLETION, _)) => Ok(self.generate_shell_completion()),
 
             Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
             None => unreachable!("{UNREACHABLE_ARM}"),
@@ -298,6 +300,16 @@ impl Pacdef {
         }
 
         Ok(())
+    }
+
+    #[allow(clippy::unused_self)]
+    fn generate_shell_completion(&self) {
+        generate(
+            Zsh,
+            &mut crate::args::build_cli(),
+            "pacdef",
+            &mut std::io::stdout(),
+        );
     }
 }
 

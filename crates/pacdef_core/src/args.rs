@@ -9,17 +9,18 @@ use crate::core::get_version_string;
 
 /// Build the `pacdef` argument parser, with subcommands for `version`,
 /// `group` and `package`.
-fn get_arg_parser() -> Command {
+pub fn build_cli() -> Command {
     let package_cmd = get_package_cmd();
     let group_cmd = get_group_cmd();
     let version_cmd = Command::new(VERSION).about("show version info");
+    let completion_cmd = Command::new(COMPLETION).about("generate shell completion");
 
     Command::new("pacdef")
         .about("declarative package manager for Linux")
         .version(get_version_string())
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommands([package_cmd, group_cmd, version_cmd])
+        .subcommands([package_cmd, group_cmd, version_cmd, completion_cmd])
 }
 
 /// Build the `pacdef group` subcommand.
@@ -67,7 +68,7 @@ fn get_group_cmd() -> Command {
 
     Command::new("group")
         .arg_required_else_help(true)
-        .about("TODO????")
+        .about("manage groups")
         .visible_alias("g")
         .subcommand_required(true)
         .subcommands([edit, import, list, new, remove, show])
@@ -95,7 +96,7 @@ fn get_package_cmd() -> Command {
 
     Command::new("package")
         .arg_required_else_help(true)
-        .about("TODO????")
+        .about("manage packages")
         .visible_alias("p")
         .subcommand_required(true)
         .subcommands([clean, review, unmanaged, search, sync])
@@ -104,7 +105,7 @@ fn get_package_cmd() -> Command {
 /// Get and parse the CLI arguments.
 #[must_use]
 pub fn get() -> clap::ArgMatches {
-    get_arg_parser().get_matches()
+    build_cli().get_matches()
 }
 
 /// For each file argument, return the absolute path to the file.
