@@ -15,7 +15,7 @@ pub struct Arch {
     pub(crate) packages: HashSet<Package>,
 }
 
-const BINARY: Text = "paru";
+const BINARY: Text = "pacman";
 const SECTION: Text = "arch";
 
 const SWITCHES_INFO: Switches = &["--query", "--info"];
@@ -25,6 +25,11 @@ const SWITCHES_REMOVE: Switches = &["--remove", "--recursive"];
 
 impl Backend for Arch {
     impl_backend_constants!();
+
+    fn get_binary_inner(&self) -> Text {
+        let r#box = self.binary.clone().into_boxed_str();
+        Box::leak(r#box)
+    }
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let alpm_packages = get_all_installed_packages_from_alpm()
