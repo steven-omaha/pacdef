@@ -119,7 +119,7 @@ pub trait Backend: Debug {
         Ok(diff)
     }
 
-    fn as_any(&mut self) -> &mut dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
 fn get_group_packages_map(
