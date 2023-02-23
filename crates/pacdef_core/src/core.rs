@@ -147,7 +147,7 @@ impl Pacdef {
 
     #[allow(clippy::unused_self)]
     fn show_version(self) {
-        println!("{}", get_version_string());
+        println!("{}", get_name_and_version());
     }
 
     fn show_unmanaged_packages(mut self) -> Result<()> {
@@ -348,8 +348,16 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
     }
 }
 
+/// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
+/// Otherwise return `pacdef, <version>`.
+const fn get_name_and_version() -> &'static str {
+    formatcp!("pacdef, version {}", get_version_string())
+}
+
+/// If the crate was compiled from git, return `<version> (<hash>)`. Otherwise
+/// return `<version>`.
 pub const fn get_version_string() -> &'static str {
-    const VERSION: &str = concat!("pacdef, version: ", env!("CARGO_PKG_VERSION"));
+    const VERSION: &str = env!("CARGO_PKG_VERSION");
     const HASH: &str = env!("GIT_HASH");
 
     if HASH.is_empty() {
