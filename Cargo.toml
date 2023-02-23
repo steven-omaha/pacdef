@@ -17,7 +17,7 @@ anyhow = "1.0"
 
 [dependencies]
 anyhow = {workspace = true}
-pacdef_core = {path = "crates/pacdef_core", version = "1.0.0-beta.11" }
+pacdef_core = {path = "crates/pacdef_core", version = "=1.0.0-beta.11" }
 
 [[bin]]
 name = "pacdef"
