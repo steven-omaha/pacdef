@@ -55,12 +55,12 @@ impl ToDoPerBackend {
             }
 
             let exit_status = func(&**backend, packages).with_context(|| {
-                format!("{verb_continuous} packages for {}", backend.get_binary())
+                format!("{verb_continuous} packages for {}", backend.get_section())
             })?;
 
             match exit_status.code() {
                 Some(val) => ensure!(val == 0, "command returned with exit code {val}"),
-                None => bail!("could not {verb} packages for {}", backend.get_binary()),
+                None => bail!("could not {verb} packages for {}", backend.get_section()),
             }
         }
         Ok(())
