@@ -280,8 +280,23 @@ impl Pacdef {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn new_groups(&self, arg_matches: &ArgMatches) -> Result<()> {
-        let paths = get_group_file_paths_matching_args(arg_matches, &self.groups)?;
+        let group_path = get_group_dir()?;
+
+        let new_group_names: Vec<_> = arg_matches
+            .get_many::<String>("groups")
+            .context("getting groups from args")?
+            .collect();
+
+        let paths: Vec<_> = new_group_names
+            .into_iter()
+            .map(|name| {
+                let mut base = group_path.clone();
+                base.push(name);
+                base
+            })
+            .collect();
 
         for file in &paths {
             ensure!(!file.exists(), "group already exists under {file:?}");
@@ -323,7 +338,7 @@ fn get_group_file_paths_matching_args<'a>(
     groups: &'a HashSet<Group>,
 ) -> Result<Vec<&'a Path>> {
     let file_names: Vec<_> = arg_match
-        .get_many::<String>("group")
+        .get_many::<String>("groups")
         .context("getting groups from args")?
         .collect();
 
