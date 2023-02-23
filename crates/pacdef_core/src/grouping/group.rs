@@ -137,6 +137,9 @@ impl Group {
         })
     }
 
+    /// Add the new `packages` to the group file under the section `section_header`. If
+    /// the section header does not yet exist, it is created. The packages are written
+    /// in the provided order immediately after the header.
     pub(crate) fn save_packages(&self, section_header: &str, packages: &[Package]) -> Result<()> {
         let mut content = read_to_string(&self.path)
             .with_context(|| format!("reading existing file contents from {:?}", &self.path))?;

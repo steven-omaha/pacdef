@@ -5,6 +5,8 @@ use anyhow::{anyhow, Context, Result};
 
 use crate::env::get_editor;
 
+/// Run the editor and pass the provided files as arguments. The workdir is set
+/// to the parent of the first file.
 pub fn run_edit_command(files: &[&Path]) -> Result<ExitStatus> {
     let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
     cmd.current_dir(

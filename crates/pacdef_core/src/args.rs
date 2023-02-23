@@ -7,6 +7,8 @@ use path_absolutize::Absolutize;
 use crate::action::*;
 use crate::core::get_version_string;
 
+/// Build the `pacdef` argument parser, with subcommands for `version`,
+/// `group` and `package`.
 fn get_arg_parser() -> Command {
     let package_cmd = get_package_cmd();
     let group_cmd = get_group_cmd();
@@ -20,6 +22,7 @@ fn get_arg_parser() -> Command {
         .subcommands([package_cmd, group_cmd, version_cmd])
 }
 
+/// Build the `pacdef group` subcommand.
 fn get_group_cmd() -> Command {
     let edit = Command::new(EDIT)
         .about("edit one or more existing group files")
@@ -70,6 +73,7 @@ fn get_group_cmd() -> Command {
         .subcommands([edit, import, list, new, remove, show])
 }
 
+/// Build the `pacdef package` subcommand.
 fn get_package_cmd() -> Command {
     let sync = Command::new(SYNC)
         .about("install packages from all imported groups")
@@ -103,6 +107,7 @@ pub fn get() -> clap::ArgMatches {
     get_arg_parser().get_matches()
 }
 
+/// For each file argument, return the absolute path to the file.
 pub fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
     Ok(arg_match
         .get_many::<String>("files")

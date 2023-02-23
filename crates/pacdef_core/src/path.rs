@@ -53,11 +53,13 @@ pub fn get_config_path() -> Result<PathBuf> {
     Ok(file)
 }
 
-/// Get the path to the pacdef config file. This is `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+/// Get the path to the pacdef config file from version 0.x. This is
+/// `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
 ///
 /// # Errors
 ///
-/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are undefined.
+/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are
+/// undefined.
 pub fn get_config_path_old_version() -> Result<PathBuf> {
     let mut file = get_pacdef_base_dir().context("getting pacdef base dir for config file")?;
     file.push(CONFIG_FILE_NAME_OLD);
