@@ -25,8 +25,8 @@ fn main() -> ExitCode {
     handle_final_result(main_inner())
 }
 
-/// Skip printing the error chain when searching packages yields no results, otherwise report error
-/// chain.
+/// Skip printing the error chain when searching packages yields no results,
+/// otherwise report error chain.
 fn handle_final_result(result: Result<()>) -> ExitCode {
     match result {
         Ok(_) => ExitCode::SUCCESS,
