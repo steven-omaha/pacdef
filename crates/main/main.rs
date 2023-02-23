@@ -35,7 +35,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
             let root_e = e.root_cause().downcast_ref();
             match root_e {
                 Some(pacdef_core::Error::NoPackagesFound) => ExitCode::FAILURE,
-                Some(_) => ExitCode::FAILURE,
+                Some(_) => result.context("unknown pacdef error type").report(),
                 None => result.report(),
             }
         }
