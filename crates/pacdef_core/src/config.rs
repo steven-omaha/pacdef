@@ -29,11 +29,7 @@ impl Config {
             Ok(content) => content,
             Err(e) => {
                 if e.kind() == ErrorKind::NotFound {
-                    println!(
-                        "creating default config under {}",
-                        config_file.to_string_lossy()
-                    );
-                    return Self::use_default_and_save_to(config_file);
+                    bail!(crate::Error::ConfigFileNotFound)
                 }
                 bail!("unexpected error occured: {e:?}");
             }

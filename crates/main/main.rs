@@ -17,7 +17,7 @@ Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
 
 use std::process::{ExitCode, Termination};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 
 use pacdef_core::{get_args, get_config_path, get_group_dir, Config, Group, Pacdef};
 
@@ -45,8 +45,7 @@ fn main_inner() -> Result<()> {
     let args = get_args();
 
     let config_file = get_config_path().context("getting config file")?;
-    let config = Config::load(&config_file)
-        .with_context(|| format!("loading config file {}", config_file.to_string_lossy()))?;
+    let config = load_config(config_file)?;
 
     let group_dir = get_group_dir().context("resolving group dir")?;
     let groups = Group::load(&group_dir, config.warn_not_symlinks)
@@ -54,4 +53,20 @@ fn main_inner() -> Result<()> {
 
     let pacdef = Pacdef::new(args, config, groups);
     pacdef.run_action_from_arg().context("running action")
+}
+
+fn load_config(config_file: std::path::PathBuf) -> Result<Config> {
+    let config = match Config::load(&config_file)
+        .with_context(|| format!("loading config file {}", config_file.to_string_lossy()))
+    {
+        Ok(config) => config,
+        Err(e) => {
+            let e = e.root_cause().downcast_ref::<pacdef_core::Error>();
+            match e {
+                Some(pacdef_core::Error::ConfigFileNotFound) => Config::default(),
+                _ => bail!("huh"),
+            }
+        }
+    };
+    Ok(config)
 }
