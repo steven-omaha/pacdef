@@ -1,9 +1,14 @@
+/*!
+All functions related to `pacdef`'s internal paths.
+*/
+
 use std::env;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 
 const CONFIG_FILE_NAME: &str = "pacdef.yaml";
+const CONFIG_FILE_NAME_OLD: &str = "pacdef.conf";
 
 /// Get the group directory where all group files are located. This is
 /// `$XDG_CONFIG_HOME/pacdef/groups`, which defaults to `$HOME/.config/pacdef/groups`.
@@ -17,7 +22,7 @@ pub fn get_group_dir() -> Result<PathBuf> {
     Ok(result)
 }
 
-pub fn get_pacdef_base_dir() -> Result<PathBuf> {
+pub(crate) fn get_pacdef_base_dir() -> Result<PathBuf> {
     let mut dir = get_xdg_config_home().context("getting XDG_CONFIG_HOME")?;
     dir.push("pacdef");
     Ok(dir)
@@ -33,7 +38,7 @@ fn get_xdg_config_home() -> Result<PathBuf> {
     }
 }
 
-pub fn get_home_dir() -> Result<PathBuf> {
+pub(crate) fn get_home_dir() -> Result<PathBuf> {
     Ok(env::var("HOME").context("getting $HOME variable")?.into())
 }
 
@@ -45,5 +50,16 @@ pub fn get_home_dir() -> Result<PathBuf> {
 pub fn get_config_path() -> Result<PathBuf> {
     let mut file = get_pacdef_base_dir().context("getting pacdef base dir for config file")?;
     file.push(CONFIG_FILE_NAME);
+    Ok(file)
+}
+
+/// Get the path to the pacdef config file. This is `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+///
+/// # Errors
+///
+/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are undefined.
+pub fn get_config_path_old_version() -> Result<PathBuf> {
+    let mut file = get_pacdef_base_dir().context("getting pacdef base dir for config file")?;
+    file.push(CONFIG_FILE_NAME_OLD);
     Ok(file)
 }

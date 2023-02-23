@@ -30,7 +30,7 @@ mod core;
 mod env;
 mod errors;
 mod grouping;
-mod path;
+pub mod path;
 mod review;
 mod search;
 mod ui;
@@ -41,6 +41,5 @@ pub use crate::core::Pacdef;
 pub use crate::errors::Error;
 pub use crate::grouping::Group;
 pub(crate) use crate::grouping::Package;
-pub use crate::path::{get_config_path, get_group_dir};
 
 extern crate pacdef_macros;

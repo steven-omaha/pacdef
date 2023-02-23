@@ -17,9 +17,10 @@ Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
 
 use std::process::{ExitCode, Termination};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 
-use pacdef_core::{get_args, get_config_path, get_group_dir, Config, Group, Pacdef};
+use pacdef_core::path::{get_config_path, get_config_path_old_version, get_group_dir};
+use pacdef_core::{get_args, Config, Group, Pacdef};
 
 fn main() -> ExitCode {
     handle_final_result(main_inner())
@@ -45,7 +46,17 @@ fn main_inner() -> Result<()> {
     let args = get_args();
 
     let config_file = get_config_path().context("getting config file")?;
-    let config = load_config(config_file)?;
+
+    let config = Config::load(&config_file)
+        .or_else(|_| {
+            get_config_path_old_version()?
+                .exists()
+                .then(show_transition_link);
+            let default = Config::default();
+            default.save(&config_file)?;
+            Ok::<Config, anyhow::Error>(default)
+        })
+        .context("loading config")?;
 
     let group_dir = get_group_dir().context("resolving group dir")?;
     let groups = Group::load(&group_dir, config.warn_not_symlinks)
@@ -55,18 +66,11 @@ fn main_inner() -> Result<()> {
     pacdef.run_action_from_arg().context("running action")
 }
 
-fn load_config(config_file: std::path::PathBuf) -> Result<Config> {
-    let config = match Config::load(&config_file)
-        .with_context(|| format!("loading config file {}", config_file.to_string_lossy()))
-    {
-        Ok(config) => config,
-        Err(e) => {
-            let e = e.root_cause().downcast_ref::<pacdef_core::Error>();
-            match e {
-                Some(pacdef_core::Error::ConfigFileNotFound) => Config::default(),
-                _ => bail!("huh"),
-            }
-        }
-    };
-    Ok(config)
+fn show_transition_link() {
+    println!("VERSION UPGRADE");
+    println!("You seem to have used version 0.x of pacdef before.");
+    println!("Version 1.x changes the syntax of the config files and the command line arguments.");
+    println!("Check out https://github.com/steven-omaha/pacdef for new syntax information.");
+    println!("This message will not appear again.");
+    println!("------");
 }

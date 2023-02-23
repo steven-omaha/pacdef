@@ -38,10 +38,13 @@ impl Config {
         serde_yaml::from_str(&content).context("parsing yaml config")
     }
 
-    fn use_default_and_save_to(file: &Path) -> Result<Self> {
-        let result = Self::default();
-
-        let content = serde_yaml::to_string(&result).context("converting Config to yaml")?;
+    /// Save the instance of [`Config`] to disk.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the config file cannot be saved to disk.
+    pub fn save(&self, file: &Path) -> Result<()> {
+        let content = serde_yaml::to_string(&self).context("converting Config to yaml")?;
 
         let parent = file.parent().context("getting parent of config dir")?;
         if !parent.is_dir() {
@@ -52,7 +55,7 @@ impl Config {
         let mut output = File::create(file).context("creating default config file")?;
         write!(output, "{content}").context("writing default config")?;
 
-        Ok(result)
+        Ok(())
     }
 }
 
