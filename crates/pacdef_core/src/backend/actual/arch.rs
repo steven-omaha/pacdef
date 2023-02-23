@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Arch {
     pub(crate) binary: String,
     pub(crate) aur_rm_args: Option<Vec<String>>,

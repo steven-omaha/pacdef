@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
@@ -9,7 +10,7 @@ use const_format::formatcp;
 
 use crate::action::*;
 use crate::args;
-use crate::backend::{Backend, Backends, ToDoPerBackend};
+use crate::backend::{Arch, Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
 use crate::path::get_group_dir;
@@ -107,15 +108,17 @@ impl Pacdef {
         to_install
     }
 
+    #[allow(clippy::as_conversions)]
     fn overwrite_values_from_config(&mut self, backend: Box<dyn Backend>) -> Box<dyn Backend> {
-        if backend.get_section() == "arch" {
-            Box::new(crate::backend::Arch {
-                binary: self.config.aur_helper.clone(),
-                aur_rm_args: self.config.aur_rm_args.take(),
-                packages: HashSet::new(),
-            })
-        } else {
-            backend
+        let b = Box::new(&backend as &dyn Any);
+        match b.downcast_ref::<Arch>() {
+            Some(inner) => {
+                let mut arch = inner.clone();
+                arch.binary = self.config.aur_helper.clone();
+                arch.aur_rm_args = self.config.aur_rm_args.take();
+                Box::new(arch)
+            }
+            None => backend,
         }
     }
 
