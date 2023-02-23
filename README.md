@@ -8,7 +8,7 @@ multi-backend declarative package manager for Linux
 `pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git), and on [crates.io](https://crates.io/crates/pacdef).
 
 The AUR package will also provide completions for `zsh`.
-If you use the `crates.io` version you will need to copy the completion file to the right directory yourself.
+If you use the `crates.io` version you can use `pacdef completion` to generate the completion file yourself -- you would then need to copy it to the right directory.
 
 
 ## Use-case
@@ -125,6 +125,7 @@ Usage on different machines:
 | `package clean`                   | remove all unmanaged packages                                         |
 | `package review`                  | for each unmanaged package interactively decide what to do            |
 | `package search <regex>`          | search for managed packages that match the search string              |
+| `completion`                      | generate completion file for zsh                                      |
 | `version`                         | show version information                                              |
 
 
