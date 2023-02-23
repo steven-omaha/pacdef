@@ -5,7 +5,6 @@ use std::path::Path;
 
 use anyhow::{anyhow, bail, ensure, Context, Result};
 use clap::ArgMatches;
-use clap_complete::{generate, shells::Zsh};
 use const_format::formatcp;
 
 use crate::action::*;
@@ -85,7 +84,7 @@ impl Pacdef {
             },
 
             Some((VERSION, _)) => Ok(self.show_version()),
-            Some((COMPLETION, _)) => Ok(self.generate_shell_completion()),
+            Some((COMPLETION, _)) => generate_shell_completion(),
 
             Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
             None => unreachable!("{UNREACHABLE_ARM}"),
@@ -316,16 +315,6 @@ impl Pacdef {
 
         Ok(())
     }
-
-    #[allow(clippy::unused_self)]
-    fn generate_shell_completion(&self) {
-        generate(
-            Zsh,
-            &mut crate::args::build_cli(),
-            "pacdef",
-            &mut std::io::stdout(),
-        );
-    }
 }
 
 /// For the provided CLI arguments, get the path to each corresponding group file.
@@ -392,4 +381,16 @@ pub const fn get_version_string() -> &'static str {
     } else {
         formatcp!("{VERSION} ({HASH})")
     }
+}
+
+fn generate_shell_completion() -> Result<()> {
+    let mut output = File::create("_pacdef")?;
+    clap_complete::generate(
+        clap_complete::Shell::Zsh,
+        &mut crate::args::build_cli(),
+        "pacdef",
+        &mut output,
+    );
+    println!("completion written to _pacdef");
+    Ok(())
 }
