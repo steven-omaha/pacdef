@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::process::{Command, ExitStatus};
@@ -114,6 +115,8 @@ pub trait Backend: Debug {
         diff.sort_unstable();
         Ok(diff)
     }
+
+    fn as_any(&mut self) -> &mut dyn Any;
 }
 
 fn get_group_packages_map(

@@ -49,5 +49,9 @@ macro_rules! impl_backend_constants {
                 self.packages.insert(p);
             }
         }
+
+        fn as_any(&mut self) -> &mut dyn std::any::Any {
+            self
+        }
     };
 }

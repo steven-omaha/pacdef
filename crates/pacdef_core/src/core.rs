@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::collections::{HashMap, HashSet};
 use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
@@ -94,8 +93,8 @@ impl Pacdef {
     fn get_missing_packages(&mut self) -> ToDoPerBackend {
         let mut to_install = ToDoPerBackend::new();
 
-        for backend in Backends::iter() {
-            let mut backend = self.overwrite_values_from_config(backend);
+        for mut backend in Backends::iter() {
+            self.overwrite_values_from_config(&mut *backend);
 
             backend.load(&self.groups);
 
@@ -109,16 +108,10 @@ impl Pacdef {
     }
 
     #[allow(clippy::as_conversions)]
-    fn overwrite_values_from_config(&mut self, backend: Box<dyn Backend>) -> Box<dyn Backend> {
-        let b = Box::new(&backend as &dyn Any);
-        match b.downcast_ref::<Arch>() {
-            Some(inner) => {
-                let mut arch = inner.clone();
-                arch.binary = self.config.aur_helper.clone();
-                arch.aur_rm_args = self.config.aur_rm_args.take();
-                Box::new(arch)
-            }
-            None => backend,
+    fn overwrite_values_from_config(&mut self, backend: &mut dyn Backend) {
+        if let Some(arch) = backend.as_any().downcast_mut::<Arch>() {
+            arch.binary = self.config.aur_helper.clone();
+            arch.aur_rm_args = self.config.aur_rm_args.take();
         }
     }
 
@@ -173,8 +166,8 @@ impl Pacdef {
     fn get_unmanaged_packages(&mut self) -> ToDoPerBackend {
         let mut result = ToDoPerBackend::new();
 
-        for backend in Backends::iter() {
-            let mut backend = self.overwrite_values_from_config(backend);
+        for mut backend in Backends::iter() {
+            self.overwrite_values_from_config(&mut *backend);
 
             backend.load(&self.groups);
 
