@@ -1,6 +1,6 @@
 [package]
 name = "pacdef"
-version = "1.0.0-beta.13"
+version = "1.0.0-beta.14"
 edition = "2021"
 description = "declarative package manager for Linux"
 license = "GPL-3.0-or-later"
@@ -17,7 +17,7 @@ anyhow = "1.0"
 
 [dependencies]
 anyhow = {workspace = true}
-pacdef_core = {path = "crates/pacdef_core", version = "=1.0.0-beta.13" }
+pacdef_core = {path = "crates/pacdef_core", version = "=1.0.0-beta.14" }
 
 [[bin]]
 name = "pacdef"
