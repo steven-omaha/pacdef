@@ -91,7 +91,11 @@ fn get_package_cmd() -> Command {
         .visible_alias("se")
         .about("search for packages which match a provided string literal or regex")
         .arg_required_else_help(true)
-        .arg(Arg::new("string").required(true));
+        .arg(
+            Arg::new("regex")
+                .required(true)
+                .help("the regular expression the package must match"),
+        );
 
     Command::new("package")
         .arg_required_else_help(true)

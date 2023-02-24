@@ -13,37 +13,50 @@ _pacdef() {
     function _subcommands {
         local -a subcommands
         subcommands=(
-            'group:manage groups (alias: g)'
-            'package:manage packages (alias: p)'
-            'version:show version info (alias: v)'
+            'group:manage groups'
+            'g:manage groups'
+            'package:manage packages'
+            'p:manage packages'
+            'version:show version'
         )
-        _describe 'subcommand' subcommands
+        _describe 'pacdef subcommand' subcommands
     }
 
     function _group_actions {
         local -a group_actions
         group_actions=(
-            'edit:edit an imported group file (alias: e)'
-            'list:show names of imported groups (alias: l)'
-            'import:import a new group file (alias: i)'
-            'new:create a new group file (alias: n)'
-            'remove:remove a group file (alias: r)'
-            'show:show packages under an imported group (alias: s)'
+            'e:edit an imported group file'
+            'edit:edit an imported group file'
+            'l:show names of imported groups'
+            'list:show names of imported groups'
+            'i:import a new group file'
+            'import:import a new group file'
+            'n:create a new group file'
+            'new:create a new group file'
+            'r:remove a group file'
+            'remove:remove a group file'
+            's:show packages under an imported group'
+            'show:show packages under an imported group'
         )
-        _describe 'group action' group_actions
+        _describe 'pacdef group action' group_actions
     }
 
 
     function _package_actions {
         local -a package_actions
         package_actions=(
-            'clean:uninstall packages not managed by pacdef (alias: c)'
-            'review:review unmanaged packages (alias: r)'
-            'search:show the group containing a package (alias: se)'
-            'sync:install all packages from imported groups (alias: sy)'
-            'unmanaged:show explicitly installed packages not managed by pacdef (alias: u)'
+            'c:uninstall packages not managed by pacdef'
+            'clean:uninstall packages not managed by pacdef'
+            'r:review unmanaged packages'
+            'review:review unmanaged packages'
+            'se:show the group containing a package'
+            'search:show the group containing a package'
+            'sy:install all packages from imported groups'
+            'sync:install all packages from imported groups'
+            'u:show explicitly installed packages not managed by pacdef'
+            'unmanaged:show explicitly installed packages not managed by pacdef'
         )
-        _describe 'package action' package_actions
+        _describe 'pacdef package action' package_actions
     }
 
     _arguments -C \
@@ -54,13 +67,13 @@ _pacdef() {
     case $state in
         (args)
             case $line[1] in
-                package)
+                (p|package)
                     case $line[2] in
-                        search)
+                        (se|search)
                             _arguments \
                                 "2:regex:" && ret=0
                         ;;
-                        (clean|review|sync|unmanaged|help)
+                        (c|clean|r|review|sy|sync|u|unmanaged)
                             _message "no more arguments" && ret=0
                         ;;
                         *)
@@ -70,19 +83,19 @@ _pacdef() {
                         ;;
                     esac
                 ;;
-                group)
+                (g|group)
                     case $line[2] in
-                        list)
+                        (l|list)
                             _message "no more arguments" && ret=0
                         ;;
-                        (edit|remove|show)
-                            _arguments "*:group file:_files -W '$GROUPDIR'" && ret=0
+                        (e|edit|r|remove|s|show)
+                            _arguments "*:group file(s):_files -W '$GROUPDIR'" && ret=0
 
                         ;;
-                        import)
+                        (i|import)
                             _arguments "*:new group file(s):_files" && ret=0
                         ;;
-                        new)
+                        (n|new)
                             _arguments \
                                 {-e,--edit}"[edit group file after creating them]" \
                                 "*:new group name(s):" \

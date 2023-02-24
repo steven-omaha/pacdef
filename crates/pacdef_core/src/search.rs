@@ -10,7 +10,7 @@ use crate::grouping::{Group, Package, Section};
 
 pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {
     let search_string = args
-        .get_one::<String>("string")
+        .get_one::<String>("regex")
         .context("getting search string from arg")?;
 
     let re = Regex::new(search_string)?;
