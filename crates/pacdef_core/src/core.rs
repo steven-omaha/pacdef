@@ -367,7 +367,7 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
 /// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
 /// Otherwise return `pacdef, <version>`.
 const fn get_name_and_version() -> &'static str {
-    formatcp!("pacdef, version {}", get_version_string())
+    formatcp!("pacdef, version: {}", get_version_string())
 }
 
 /// If the crate was compiled from git, return `<version> (<hash>)`. Otherwise
