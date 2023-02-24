@@ -9,7 +9,7 @@ use crate::core::get_version_string;
 
 /// Build the `pacdef` argument parser, with subcommands for `version`,
 /// `group` and `package`.
-fn get_arg_parser() -> Command {
+fn build_cli() -> Command {
     let package_cmd = get_package_cmd();
     let group_cmd = get_group_cmd();
     let version_cmd = Command::new(VERSION).about("show version info");
@@ -17,23 +17,36 @@ fn get_arg_parser() -> Command {
     Command::new("pacdef")
         .about("declarative package manager for Linux")
         .version(get_version_string())
-        .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommands([package_cmd, group_cmd, version_cmd])
+        .subcommand_required(true)
+        .subcommands([group_cmd, package_cmd, version_cmd])
+        .subcommand_value_name("subcommand")
+        .disable_help_subcommand(true)
+        .disable_version_flag(true)
 }
 
 /// Build the `pacdef group` subcommand.
 fn get_group_cmd() -> Command {
     let edit = Command::new(EDIT)
-        .about("edit one or more existing group files")
+        .about("edit one or more existing group")
         .arg_required_else_help(true)
-        .arg(Arg::new("group").num_args(1..).required(true))
+        .arg(
+            Arg::new("groups")
+                .num_args(1..)
+                .required(true)
+                .help("a previously imported group"),
+        )
         .visible_alias("e");
 
     let import = Command::new(IMPORT)
         .about("import one or more group files")
         .arg_required_else_help(true)
-        .arg(Arg::new("files").num_args(1..).required(true))
+        .arg(
+            Arg::new("files")
+                .num_args(1..)
+                .required(true)
+                .help("the file to import as group"),
+        )
         .visible_alias("i");
 
     let list = Command::new(LIST)
@@ -56,18 +69,28 @@ fn get_group_cmd() -> Command {
     let remove = Command::new(REMOVE)
         .about("remove one or more previously imported groups")
         .arg_required_else_help(true)
-        .arg(Arg::new("groups").num_args(1..).required(true))
+        .arg(
+            Arg::new("groups")
+                .num_args(1..)
+                .required(true)
+                .help("a previously imported group that will be removed"),
+        )
         .visible_alias("r");
 
     let show = Command::new(SHOW)
         .about("show packages under an imported group")
         .arg_required_else_help(true)
-        .arg(Arg::new("group").num_args(1..).required(true))
+        .arg(
+            Arg::new("groups")
+                .num_args(1..)
+                .required(true)
+                .help("group file(s) to show"),
+        )
         .visible_alias("s");
 
     Command::new("group")
         .arg_required_else_help(true)
-        .about("TODO????")
+        .about("manage groups")
         .visible_alias("g")
         .subcommand_required(true)
         .subcommands([edit, import, list, new, remove, show])
@@ -89,7 +112,7 @@ fn get_package_cmd() -> Command {
         .visible_alias("r");
     let search = Command::new(SEARCH)
         .visible_alias("se")
-        .about("search for packages which match a provided string literal or regex")
+        .about("search for packages which match a provided regex")
         .arg_required_else_help(true)
         .arg(
             Arg::new("regex")
@@ -99,7 +122,7 @@ fn get_package_cmd() -> Command {
 
     Command::new("package")
         .arg_required_else_help(true)
-        .about("TODO????")
+        .about("manage packages")
         .visible_alias("p")
         .subcommand_required(true)
         .subcommands([clean, review, unmanaged, search, sync])
@@ -108,7 +131,7 @@ fn get_package_cmd() -> Command {
 /// Get and parse the CLI arguments.
 #[must_use]
 pub fn get() -> clap::ArgMatches {
-    get_arg_parser().get_matches()
+    build_cli().get_matches()
 }
 
 /// For each file argument, return the absolute path to the file.
