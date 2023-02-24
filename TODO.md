@@ -1,4 +1,4 @@
 # To Do
 
 - tutorial
-- update completion for new subcommands (WIP)
+- completion is broken (does not show group files)
