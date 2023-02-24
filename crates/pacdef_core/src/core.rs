@@ -381,15 +381,3 @@ pub const fn get_version_string() -> &'static str {
         formatcp!("{VERSION} ({HASH})")
     }
 }
-
-fn generate_shell_completion() -> Result<()> {
-    let mut output = File::create("_pacdef")?;
-    clap_complete::generate(
-        clap_complete::Shell::Zsh,
-        &mut crate::args::build_cli(),
-        "pacdef",
-        &mut output,
-    );
-    println!("completion written to _pacdef");
-    Ok(())
-}
