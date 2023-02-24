@@ -5,7 +5,6 @@ use pacdef_macros::Action;
 #[derive(Debug, Action)]
 pub enum Actions {
     Clean,
-    Completion,
     Edit,
     Import,
     List,

@@ -84,7 +84,6 @@ impl Pacdef {
             },
 
             Some((VERSION, _)) => Ok(self.show_version()),
-            Some((COMPLETION, _)) => generate_shell_completion(),
 
             Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
             None => unreachable!("{UNREACHABLE_ARM}"),

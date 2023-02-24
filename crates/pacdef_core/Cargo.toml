@@ -27,4 +27,3 @@ serde_derive = "1.0"
 serde = "1.0"
 
 pacdef_macros = { path = "../pacdef_macros", version = "0.1" }
-clap_complete = "4.1.3"
