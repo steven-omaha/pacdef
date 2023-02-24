@@ -207,7 +207,7 @@ impl Pacdef {
 
     fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
         let mut iter = groups
-            .get_many::<String>("group")
+            .get_many::<String>("groups")
             .context("getting groups from args")?
             .peekable();
 
@@ -218,7 +218,7 @@ impl Pacdef {
                 .groups
                 .iter()
                 .find(|g| g.name == *arg_group)
-                .ok_or_else(|| anyhow!("group {} not found", *arg_group))?;
+                .ok_or_else(|| anyhow!(crate::Error::GroupFileNotFound(g.name)))?;
 
             if show_more_than_one_group {
                 let name = &group.name;
@@ -297,7 +297,13 @@ impl Pacdef {
             .collect();
 
         for file in &paths {
-            ensure!(!file.exists(), "group already exists under {file:?}");
+            file.file_name()
+                .ok_or_else(|| crate::Error::InvalidGroupName("..".to_string()))?;
+
+            ensure!(
+                !file.exists(),
+                crate::Error::GroupAlreadyExists(file.clone())
+            );
         }
 
         for file in &paths {
