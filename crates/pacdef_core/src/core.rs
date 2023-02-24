@@ -340,7 +340,7 @@ fn get_group_file_paths_matching_args<'a>(
             Some(group) => {
                 result.push(group.path.as_path());
             }
-            None => bail!("group file {} not found", file),
+            None => bail!(crate::errors::Error::GroupFileNotFound(file.clone())),
         }
     }
 

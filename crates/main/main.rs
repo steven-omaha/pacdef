@@ -28,15 +28,16 @@ fn main() -> ExitCode {
 
 /// Skip printing the error chain when searching packages yields no results,
 /// otherwise report error chain.
+#[allow(clippy::option_if_let_else)]
 fn handle_final_result(result: Result<()>) -> ExitCode {
     match result {
         Ok(_) => ExitCode::SUCCESS,
         Err(ref e) => {
-            let root_e = e.root_cause().downcast_ref();
-            match root_e {
-                Some(pacdef_core::Error::NoPackagesFound) => ExitCode::FAILURE,
-                Some(_) => result.context("unknown pacdef error type").report(),
-                None => result.report(),
+            if let Some(root_error) = e.root_cause().downcast_ref::<pacdef_core::Error>() {
+                eprintln!("{root_error}");
+                ExitCode::FAILURE
+            } else {
+                result.report()
             }
         }
     }

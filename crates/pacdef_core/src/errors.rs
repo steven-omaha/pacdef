@@ -9,6 +9,8 @@ pub enum Error {
     NoPackagesFound,
     /// Config file not found.
     ConfigFileNotFound,
+    /// Group file not found.
+    GroupFileNotFound(String),
 }
 
 impl Display for Error {
@@ -16,6 +18,7 @@ impl Display for Error {
         match self {
             Self::NoPackagesFound => f.write_str("no packages matching query"),
             Self::ConfigFileNotFound => f.write_str("config file not found"),
+            Self::GroupFileNotFound(name) => f.write_str(&format!("group file '{name}' not found")),
         }
     }
 }
