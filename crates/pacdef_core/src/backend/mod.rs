@@ -14,5 +14,7 @@ use pacdef_macros::Register;
 pub enum Backends {
     #[cfg(feature = "arch")]
     Arch,
+    #[cfg(feature = "debian")]
+    Debian,
     Rust,
 }

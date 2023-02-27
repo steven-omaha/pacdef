@@ -432,7 +432,7 @@ pub const fn get_version_string() -> &'static str {
 fn get_included_backends() -> Vec<&'static str> {
     let mut result = vec![];
     for backend in Backends::iter() {
-        result.push(backend.get_section())
+        result.push(backend.get_section());
     }
     result.sort_unstable();
     result

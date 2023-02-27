@@ -13,7 +13,6 @@ categories = ["command-line-utilities"]
 features = ["alpm/docs-rs"]
 
 [dependencies]
-alpm = { version = "2.2", optional = true }
 anyhow = { workspace = true }
 clap = "4.1"
 const_format = { version = "0.2", default-features = false }
@@ -21,13 +20,18 @@ path-absolutize = "3.0"
 regex = "1.7"
 termios = "0.3"
 
+serde = "1.0"
+serde_derive = "1.0"
 serde_json = "1.0"
 serde_yaml = "0.9"
-serde_derive = "1.0"
-serde = "1.0"
 
 pacdef_macros = { path = "../pacdef_macros", version = "0.1" }
+
+# backends
+alpm = { version = "2.2", optional = true }
+rust-apt = { version = "0.5", optional = true }
 
 [features]
 default = ["arch"]
 arch = ["dep:alpm"]
+debian = ["dep:rust-apt"]
