@@ -3,7 +3,7 @@ use std::fs::{remove_file, File};
 use std::os::unix::fs::symlink;
 use std::path::Path;
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use clap::ArgMatches;
 use const_format::formatcp;
 
@@ -206,20 +206,40 @@ impl Pacdef {
     }
 
     fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
-        let mut iter = groups
+        let args: Vec<_> = groups
             .get_many::<String>("groups")
             .context("getting groups from args")?
-            .peekable();
+            .collect();
 
-        let show_more_than_one_group = iter.size_hint().0 > 1;
+        let mut errors = vec![];
+        let mut groups = vec![];
 
-        while let Some(arg_group) = iter.next() {
-            let group = self
-                .groups
-                .iter()
-                .find(|g| g.name == *arg_group)
-                .ok_or_else(|| anyhow!(crate::Error::GroupFileNotFound(g.name)))?;
+        // make sure all args exist before doing anything
+        for arg_group in &args {
+            let group = self.groups.iter().find(|g| g.name == **arg_group);
 
+            let group = match group {
+                Some(g) => g,
+                None => {
+                    errors.push((*arg_group).clone());
+                    continue;
+                }
+            };
+
+            groups.push(group);
+        }
+
+        // return an error if any arg was not found
+        ensure!(
+            errors.is_empty(),
+            crate::Error::MultipleGroupsNotFound(errors)
+        );
+
+        let show_more_than_one_group = args.len() > 1;
+
+        let mut iter = groups.into_iter().peekable();
+
+        while let Some(group) = iter.next() {
             if show_more_than_one_group {
                 let name = &group.name;
                 println!("{name}");

@@ -1,5 +1,5 @@
 use std::error::Error as ErrorTrait;
-use std::fmt::Display;
+use std::fmt::{Display, Write};
 use std::path::PathBuf;
 
 /// Error types for pacdef.
@@ -16,6 +16,8 @@ pub enum Error {
     GroupAlreadyExists(PathBuf),
     /// Invalid group name ('.' or '..')
     InvalidGroupName(String),
+    /// Multiple groups not found.
+    MultipleGroupsNotFound(Vec<String>),
 }
 
 impl Display for Error {
@@ -30,6 +32,17 @@ impl Display for Error {
             )),
             Self::InvalidGroupName(name) => {
                 f.write_str(&format!("group name '{name}' is not valid"))
+            }
+            Self::MultipleGroupsNotFound(vec) => {
+                f.write_str("could not find the following groups:\n")?;
+                let mut iter = vec.iter().peekable();
+                while let Some(group) = iter.next() {
+                    f.write_str(&format!("  {group}"))?;
+                    if iter.peek().is_some() {
+                        f.write_char('\n')?;
+                    }
+                }
+                Ok(())
             }
         }
     }
