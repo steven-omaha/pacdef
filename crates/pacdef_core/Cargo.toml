@@ -13,7 +13,7 @@ categories = ["command-line-utilities"]
 features = ["alpm/docs-rs"]
 
 [dependencies]
-alpm = "2.2"
+alpm = { version = "2.2", optional = true }
 anyhow = { workspace = true }
 clap = "4.1"
 const_format = { version = "0.2", default-features = false }
@@ -27,3 +27,7 @@ serde_derive = "1.0"
 serde = "1.0"
 
 pacdef_macros = { path = "../pacdef_macros", version = "0.1" }
+
+[features]
+default = ["arch"]
+arch = ["dep:alpm"]

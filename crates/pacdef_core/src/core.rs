@@ -9,7 +9,7 @@ use const_format::formatcp;
 
 use crate::action::*;
 use crate::args;
-use crate::backend::{Arch, Backend, Backends, ToDoPerBackend};
+use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
 use crate::path::get_group_dir;
@@ -23,6 +23,7 @@ const UNREACHABLE_ARM: &str = "argument parser requires some subcommand to retur
 const ACTION_NOT_MATCHED: &str = "could not match action";
 
 /// Most data that is required during runtime of the program.
+#[allow(dead_code)] // "`config` is only needed on Arch Linux"
 pub struct Pacdef {
     args: ArgMatches,
     config: Config,
@@ -94,6 +95,7 @@ impl Pacdef {
         let mut to_install = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
+            #[cfg(feature = "arch")]
             self.overwrite_values_from_config(&mut *backend);
 
             backend.load(&self.groups);
@@ -107,8 +109,9 @@ impl Pacdef {
         to_install
     }
 
+    #[cfg(feature = "arch")]
     fn overwrite_values_from_config(&mut self, backend: &mut dyn Backend) {
-        if let Some(arch) = backend.as_any_mut().downcast_mut::<Arch>() {
+        if let Some(arch) = backend.as_any_mut().downcast_mut::<crate::backend::Arch>() {
             arch.binary = self.config.aur_helper.clone();
             arch.aur_rm_args = self.config.aur_rm_args.take();
         }
@@ -166,6 +169,7 @@ impl Pacdef {
         let mut result = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
+            #[cfg(feature = "arch")]
             self.overwrite_values_from_config(&mut *backend);
 
             backend.load(&self.groups);

@@ -12,6 +12,7 @@ use pacdef_macros::Register;
 
 #[derive(Debug, Register)]
 pub enum Backends {
+    #[cfg(feature = "arch")]
     Arch,
     Rust,
 }
