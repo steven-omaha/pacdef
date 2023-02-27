@@ -120,6 +120,8 @@ pub trait Backend: Debug {
     }
 
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    fn supports_as_dependency(&self) -> bool;
 }
 
 fn get_group_packages_map(

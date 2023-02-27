@@ -76,8 +76,9 @@ fn get_action_for_package(
     backend: &dyn Backend,
 ) -> Result<ContinueWithReview> {
     loop {
-        match ask_user_action_for_package()? {
+        match ask_user_action_for_package(backend.supports_as_dependency())? {
             ReviewIntention::AsDependency => {
+                assert!(!backend.supports_as_dependency());
                 reviews.push(ReviewAction::AsDependency(package));
                 break;
             }
@@ -102,9 +103,15 @@ fn get_action_for_package(
     Ok(ContinueWithReview::Yes)
 }
 
-fn ask_user_action_for_package() -> Result<ReviewIntention> {
-    print!("assign to (g)roup, (d)elete, (s)kip, (i)nfo, (a)s dependency, (q)uit? ");
+fn ask_user_action_for_package(supports_as_dependency: bool) -> Result<ReviewIntention> {
+    print!("assign to (g)roup, (d)elete, (s)kip, (i)nfo, ");
+
+    if supports_as_dependency {
+        print!("(a)s dependency, ");
+    }
+    print!("(q)uit? ");
     stdout().lock().flush()?;
+
     match read_single_char_from_terminal()? {
         'a' => Ok(ReviewIntention::AsDependency),
         'd' => Ok(ReviewIntention::Delete),

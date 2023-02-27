@@ -22,6 +22,8 @@ const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &[]; // not needed
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
+const SUPPORTS_AS_DEPENDENCY: bool = false;
+
 impl Backend for Python {
     impl_backend_constants!();
 

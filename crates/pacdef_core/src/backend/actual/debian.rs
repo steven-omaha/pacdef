@@ -22,6 +22,8 @@ const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &[]; // not needed
 const SWITCHES_REMOVE: Switches = &["remove"];
 
+const SUPPORTS_AS_DEPENDENCY: bool = true;
+
 impl Backend for Debian {
     impl_backend_constants!();
 

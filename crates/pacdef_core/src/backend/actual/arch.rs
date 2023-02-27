@@ -23,6 +23,8 @@ const SWITCHES_INSTALL: Switches = &["--sync"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &["--database", "--asdeps"];
 const SWITCHES_REMOVE: Switches = &["--remove", "--recursive"];
 
+const SUPPORTS_AS_DEPENDENCY: bool = true;
+
 impl Backend for Arch {
     impl_backend_constants!();
 
