@@ -307,6 +307,18 @@ impl Pacdef {
             .context("getting groups from args")?
             .collect();
 
+        // prevent group names that resolve to directories
+        for name in &new_group_names {
+            ensure!(
+                *name != ".",
+                crate::Error::InvalidGroupName(".".to_string())
+            );
+            ensure!(
+                *name != "..",
+                crate::Error::InvalidGroupName("..".to_string())
+            );
+        }
+
         let paths: Vec<_> = new_group_names
             .into_iter()
             .map(|name| {
@@ -317,9 +329,6 @@ impl Pacdef {
             .collect();
 
         for file in &paths {
-            file.file_name()
-                .ok_or_else(|| crate::Error::InvalidGroupName("..".to_string()))?;
-
             ensure!(
                 !file.exists(),
                 crate::Error::GroupAlreadyExists(file.clone())
