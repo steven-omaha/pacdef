@@ -404,8 +404,16 @@ fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
 
 /// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
 /// Otherwise return `pacdef, <version>`.
-const fn get_name_and_version() -> &'static str {
-    formatcp!("pacdef, version: {}", get_version_string())
+fn get_name_and_version() -> String {
+    let backends = get_included_backends();
+    let mut result = format!("pacdef, version: {}\n", get_version_string());
+    result.push_str("supported backends:");
+    for b in backends {
+        result.push_str("\n  ");
+        result.push_str(b);
+    }
+
+    result
 }
 
 /// If the crate was compiled from git, return `<version> (<hash>)`. Otherwise
@@ -419,4 +427,13 @@ pub const fn get_version_string() -> &'static str {
     } else {
         formatcp!("{VERSION} ({HASH})")
     }
+}
+
+fn get_included_backends() -> Vec<&'static str> {
+    let mut result = vec![];
+    for backend in Backends::iter() {
+        result.push(backend.get_section())
+    }
+    result.sort_unstable();
+    result
 }
