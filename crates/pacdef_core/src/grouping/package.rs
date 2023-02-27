@@ -24,6 +24,12 @@ impl From<String> for Package {
     }
 }
 
+impl From<&str> for Package {
+    fn from(value: &str) -> Self {
+        Self::from(value.to_string())
+    }
+}
+
 impl Package {
     fn split_into_name_and_repo(s: &str) -> (String, Option<String>) {
         let mut iter = s.split('/').rev();
