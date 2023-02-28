@@ -12,7 +12,7 @@ use crate::args;
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
-use crate::path::get_group_dir;
+use crate::path::{binary_in_path, get_group_dir};
 use crate::review;
 use crate::search;
 use crate::ui::get_user_confirmation;
@@ -72,7 +72,7 @@ impl Pacdef {
 
             Some(("package", args)) => match args.subcommand() {
                 Some((CLEAN, _)) => self.clean_packages(),
-                Some((REVIEW, _)) => review::review(self.get_unmanaged_packages(), self.groups)
+                Some((REVIEW, _)) => review::review(self.get_unmanaged_packages()?, self.groups)
                     .context("review unmanaged packages"),
                 Some((SEARCH, args)) => {
                     search::search_packages(args, &self.groups).context("searching packages")
@@ -91,7 +91,7 @@ impl Pacdef {
         }
     }
 
-    fn get_missing_packages(&mut self) -> ToDoPerBackend {
+    fn get_missing_packages(&mut self) -> Result<ToDoPerBackend> {
         let mut to_install = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
@@ -100,6 +100,10 @@ impl Pacdef {
                 .disabled_backends
                 .contains(&backend.get_section().to_string())
             {
+                continue;
+            }
+
+            if !binary_in_path(backend.get_binary())? {
                 continue;
             }
 
@@ -112,7 +116,7 @@ impl Pacdef {
             };
         }
 
-        to_install
+        Ok(to_install)
     }
 
     #[allow(clippy::unused_self, unused_variables)]
@@ -127,7 +131,7 @@ impl Pacdef {
     }
 
     fn install_packages(&mut self) -> Result<()> {
-        let to_install = self.get_missing_packages();
+        let to_install = self.get_missing_packages()?;
 
         if to_install.nothing_to_do_for_all_backends() {
             println!("nothing to do");
@@ -163,7 +167,7 @@ impl Pacdef {
     }
 
     fn show_unmanaged_packages(mut self) -> Result<()> {
-        let unmanaged_per_backend = &self.get_unmanaged_packages();
+        let unmanaged_per_backend = &self.get_unmanaged_packages()?;
 
         if unmanaged_per_backend.nothing_to_do_for_all_backends() {
             return Ok(());
@@ -174,7 +178,7 @@ impl Pacdef {
             .context("printing things to do")
     }
 
-    fn get_unmanaged_packages(&mut self) -> ToDoPerBackend {
+    fn get_unmanaged_packages(&mut self) -> Result<ToDoPerBackend> {
         let mut result = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
@@ -186,6 +190,10 @@ impl Pacdef {
                 continue;
             }
 
+            if !binary_in_path(backend.get_binary())? {
+                continue;
+            }
+
             self.overwrite_values_from_config(&mut *backend);
             backend.load(&self.groups);
 
@@ -194,7 +202,7 @@ impl Pacdef {
                 Err(error) => show_error(&error, &*backend),
             };
         }
-        result
+        Ok(result)
     }
 
     fn show_groups(self) {
@@ -206,7 +214,7 @@ impl Pacdef {
     }
 
     fn clean_packages(mut self) -> Result<()> {
-        let to_remove = self.get_unmanaged_packages();
+        let to_remove = self.get_unmanaged_packages()?;
 
         if to_remove.nothing_to_do_for_all_backends() {
             println!("nothing to do");

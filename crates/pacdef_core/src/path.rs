@@ -65,3 +65,14 @@ pub fn get_config_path_old_version() -> Result<PathBuf> {
     file.push(CONFIG_FILE_NAME_OLD);
     Ok(file)
 }
+
+pub(crate) fn binary_in_path(name: &str) -> Result<bool> {
+    let paths = env::var_os("PATH").context("getting $PATH")?;
+    for dir in env::split_paths(&paths) {
+        let full_path = dir.join(name);
+        if full_path.is_file() {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
