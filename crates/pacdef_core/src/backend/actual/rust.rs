@@ -41,7 +41,7 @@ impl Backend for Rust {
     }
 
     fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
-        unreachable!("cargo does not have unmanaged packages")
+        panic!("not supported by {}", BINARY)
     }
 }
 

@@ -40,7 +40,7 @@ impl Backend for Python {
     }
 
     fn make_dependency(&self, _packages: &[Package]) -> Result<ExitStatus> {
-        todo!()
+        panic!("not supported by {}", BINARY)
     }
 }
 
