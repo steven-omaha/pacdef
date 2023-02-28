@@ -95,9 +95,15 @@ impl Pacdef {
         let mut to_install = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
-            #[cfg(feature = "arch")]
-            self.overwrite_values_from_config(&mut *backend);
+            if self
+                .config
+                .disabled_backends
+                .contains(&backend.get_section().to_string())
+            {
+                continue;
+            }
 
+            self.overwrite_values_from_config(&mut *backend);
             backend.load(&self.groups);
 
             match backend.get_missing_packages_sorted() {
@@ -172,9 +178,15 @@ impl Pacdef {
         let mut result = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
-            #[cfg(feature = "arch")]
-            self.overwrite_values_from_config(&mut *backend);
+            if self
+                .config
+                .disabled_backends
+                .contains(&backend.get_section().to_string())
+            {
+                continue;
+            }
 
+            self.overwrite_values_from_config(&mut *backend);
             backend.load(&self.groups);
 
             match backend.get_unmanaged_packages_sorted() {

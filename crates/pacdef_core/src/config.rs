@@ -14,6 +14,8 @@ pub struct Config {
     pub aur_rm_args: Option<Vec<String>>,
     /// Warn the user when a group is not a symlink.
     pub warn_not_symlinks: bool,
+    /// Backends the user does not want to use even though the binary exists.
+    pub disabled_backends: Vec<String>,
 }
 
 impl Config {
@@ -65,6 +67,7 @@ impl Default for Config {
             aur_helper: "paru".into(),
             aur_rm_args: None,
             warn_not_symlinks: true,
+            disabled_backends: vec![],
         }
     }
 }
