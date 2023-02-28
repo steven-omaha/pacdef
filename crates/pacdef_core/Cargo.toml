@@ -32,6 +32,6 @@ alpm = { version = "2.2", optional = true }
 rust-apt = { version = "0.5", optional = true }
 
 [features]
-default = ["arch"]
+default = []
 arch = ["dep:alpm"]
 debian = ["dep:rust-apt"]

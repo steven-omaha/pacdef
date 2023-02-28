@@ -109,11 +109,14 @@ impl Pacdef {
         to_install
     }
 
-    #[cfg(feature = "arch")]
+    #[allow(clippy::unused_self, unused_variables)]
     fn overwrite_values_from_config(&mut self, backend: &mut dyn Backend) {
-        if let Some(arch) = backend.as_any_mut().downcast_mut::<crate::backend::Arch>() {
-            arch.binary = self.config.aur_helper.clone();
-            arch.aur_rm_args = self.config.aur_rm_args.take();
+        #[cfg(feature = "arch")]
+        {
+            if let Some(arch) = backend.as_any_mut().downcast_mut::<crate::backend::Arch>() {
+                arch.binary = self.config.aur_helper.clone();
+                arch.aur_rm_args = self.config.aur_rm_args.take();
+            }
         }
     }
 
