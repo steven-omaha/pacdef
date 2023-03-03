@@ -12,10 +12,10 @@ pub(in crate::backend) type Switches = &'static [&'static str];
 pub(in crate::backend) type Text = &'static str;
 
 pub trait Backend: Debug {
-    fn get_binary(&self) -> Text;
-    fn get_binary_inner(&self) -> Text {
-        self.get_binary()
+    fn get_binary(&self) -> Text {
+        self.get_binary_default()
     }
+    fn get_binary_default(&self) -> Text;
     fn get_section(&self) -> Text;
 
     fn get_switches_info(&self) -> Switches;

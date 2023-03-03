@@ -28,7 +28,7 @@ const SUPPORTS_AS_DEPENDENCY: bool = true;
 impl Backend for Arch {
     impl_backend_constants!();
 
-    fn get_binary_inner(&self) -> Text {
+    fn get_binary(&self) -> Text {
         let r#box = self.binary.clone().into_boxed_str();
         Box::leak(r#box)
     }

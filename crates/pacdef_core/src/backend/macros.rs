@@ -3,7 +3,7 @@
 #[macro_export]
 macro_rules! impl_backend_constants {
     () => {
-        fn get_binary(&self) -> Text {
+        fn get_binary_default(&self) -> Text {
             BINARY
         }
 
