@@ -104,18 +104,6 @@ pub trait Backend: Debug {
             .with_context(|| format!("running command [{cmd:?}]"))
     }
 
-    /// TODO remove.
-    fn extract_packages_from_group_file_content(&self, content: &str) -> HashSet<Package> {
-        content
-            .lines()
-            .skip_while(|line| !line.starts_with(&format!("[{}]", self.get_section())))
-            .skip(1)
-            .filter(|line| !line.starts_with('['))
-            .fuse()
-            .filter_map(Package::try_from)
-            .collect()
-    }
-
     /// Get missing packages, sorted alphabetically.
     fn get_missing_packages_sorted(&self) -> Result<Vec<Package>> {
         let installed = self
@@ -126,9 +114,6 @@ pub trait Backend: Debug {
         diff.sort_unstable();
         Ok(diff)
     }
-
-    /// TODO remove
-    fn add_packages(&mut self, packages: HashSet<Package>);
 
     /// Show information from package manager for package.
     fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {

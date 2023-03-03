@@ -44,12 +44,6 @@ macro_rules! impl_backend_constants {
                 })
         }
 
-        fn add_packages(&mut self, packages: HashSet<Package>) {
-            for p in packages {
-                self.packages.insert(p);
-            }
-        }
-
         fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
             self
         }
