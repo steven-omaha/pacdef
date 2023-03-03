@@ -78,7 +78,10 @@ fn get_action_for_package(
     loop {
         match ask_user_action_for_package(backend.supports_as_dependency())? {
             ReviewIntention::AsDependency => {
-                assert!(!backend.supports_as_dependency());
+                assert!(
+                    backend.supports_as_dependency(),
+                    "backend does not support dependencies"
+                );
                 reviews.push(ReviewAction::AsDependency(package));
                 break;
             }
