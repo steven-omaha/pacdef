@@ -170,6 +170,6 @@ topgrade
 `pacdef` combines the words "package" and "define".
 
 
-## supported rust version
+## minimum supported rust version (MSRV)
 
-latest stable
+MSRV is 1.65.0. Development is conducted against the latest stable version.
