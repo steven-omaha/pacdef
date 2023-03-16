@@ -83,6 +83,10 @@ pub trait Backend: Debug {
 
     /// Mark the packages as non-explicit / dependency using the underlying
     /// package manager.
+    ///
+    /// # Panics
+    ///
+    /// This method shall panic when the backend does not support depedent packages.
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_make_dependency());
