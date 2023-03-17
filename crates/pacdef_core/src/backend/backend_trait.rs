@@ -1,6 +1,8 @@
 use std::any::Any;
+use std::cmp::{Eq, Ord};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+use std::hash::Hash;
 use std::process::{Command, ExitStatus};
 use std::rc::Rc;
 
@@ -60,7 +62,7 @@ pub trait Backend: Debug {
     /// Assign each of the packages to an individual group by editing the
     /// group files.
     fn assign_group(&self, to_assign: Vec<(Package, Rc<Group>)>) -> Result<()> {
-        let group_package_map = get_group_packages_map(to_assign);
+        let group_package_map = to_hashmap(to_assign);
         let section_header = format!("[{}]", self.get_section());
 
         for (group, packages) in group_package_map {
@@ -146,18 +148,23 @@ pub trait Backend: Debug {
     fn supports_as_dependency(&self) -> bool;
 }
 
-fn get_group_packages_map(
-    to_assign: Vec<(Package, Rc<Group>)>,
-) -> HashMap<Rc<Group>, Vec<Package>> {
-    let mut group_package_map = HashMap::new();
+/// For a vector of tuples containing a `V` and `K`, where a `K` may occur more than
+/// once and each `V` exactly once, create a `HashMap` that associates each `K` with
+/// a `Vec<V>`.
+fn to_hashmap<K, V>(to_assign: Vec<(V, K)>) -> HashMap<K, Vec<V>>
+where
+    K: Hash + Eq,
+    V: Ord,
+{
+    let mut map = HashMap::new();
 
-    for (p, group) in to_assign {
-        let inner = group_package_map.entry(group).or_insert(vec![]);
-        inner.push(p);
+    for (value, key) in to_assign {
+        let inner = map.entry(key).or_insert(vec![]);
+        inner.push(value);
     }
 
-    for vecs in group_package_map.values_mut() {
+    for vecs in map.values_mut() {
         vecs.sort();
     }
-    group_package_map
+    map
 }
