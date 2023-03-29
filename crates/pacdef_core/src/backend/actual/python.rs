@@ -65,7 +65,7 @@ fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
         .as_array()
         .context("getting inner json array")?
         .iter()
-        .map(|node| node["name"].as_str().unwrap())
+        .map(|node| node["name"].as_str().expect("should always be a string"))
         .map(Package::from)
         .collect();
     Ok(result)
