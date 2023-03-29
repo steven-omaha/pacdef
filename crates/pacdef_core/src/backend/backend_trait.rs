@@ -164,7 +164,7 @@ where
     }
 
     for vecs in map.values_mut() {
-        vecs.sort();
+        vecs.sort_unstable();
     }
     map
 }
