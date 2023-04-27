@@ -127,9 +127,16 @@ fn ask_user_action_for_package(supports_as_dependency: bool) -> Result<ReviewInt
 }
 
 fn print_enumerated_groups(groups: &[Rc<Group>]) {
+    let number_digits = get_amount_of_digits_for_number(groups.len());
+
     for (i, group) in groups.iter().enumerate() {
-        println!("{i}: {}", group.name);
+        println!("{i:>number_digits$}: {}", group.name);
     }
+}
+
+#[allow(clippy::as_conversions)] // this cannot introduce errors for any reasonably sized numbers.
+fn get_amount_of_digits_for_number(number: usize) -> usize {
+    (number as f64).log10().trunc() as usize + 1
 }
 
 fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
