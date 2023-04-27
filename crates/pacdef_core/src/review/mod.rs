@@ -115,7 +115,7 @@ fn ask_user_action_for_package(supports_as_dependency: bool) -> Result<ReviewInt
     print!("(q)uit? ");
     stdout().lock().flush()?;
 
-    match read_single_char_from_terminal()? {
+    match read_single_char_from_terminal()?.to_ascii_lowercase() {
         'a' => Ok(ReviewIntention::AsDependency),
         'd' => Ok(ReviewIntention::Delete),
         'g' => Ok(ReviewIntention::AssignGroup),
