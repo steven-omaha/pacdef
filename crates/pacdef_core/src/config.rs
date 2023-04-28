@@ -19,11 +19,12 @@ pub struct Config {
 }
 
 impl Config {
-    /// Load the config from the associated file. If the file does not exist, create a default config.
+    /// Load the config from the associated file.
     ///
     /// # Errors
     ///
-    /// This function will return an error if the config file exists but cannot be read, its contents are not UTF-8, or the file is  malformed.
+    /// This function will return an error if the config file exists but cannot be read, its
+    /// contents are not UTF-8, or the file is malformed.
     pub fn load(config_file: &Path) -> Result<Self> {
         let from_file = read_to_string(config_file);
 
