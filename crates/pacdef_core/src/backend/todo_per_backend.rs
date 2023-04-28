@@ -6,6 +6,11 @@ use anyhow::{bail, ensure, Context, Result};
 use super::Backend;
 use crate::Package;
 
+/// A vector of tuples containing a `dyn Backend` and a vector of unmanaged packages
+/// for that backend.
+///
+/// This struct is used to store a list of unmanaged packages or missing packages
+/// for all backends.
 #[derive(Debug)]
 pub struct ToDoPerBackend(Vec<(Box<dyn Backend>, Vec<Package>)>);
 

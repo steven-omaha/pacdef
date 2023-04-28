@@ -178,6 +178,13 @@ impl Pacdef {
             .context("printing things to do")
     }
 
+    /// Get a list of unmanaged packages per backend.
+    ///
+    /// This method loops through all enabled `Backend`s whose binary is in `PATH`.
+    ///
+    /// # Errors
+    ///
+    /// This function will propagate errors.
     fn get_unmanaged_packages(&mut self) -> Result<ToDoPerBackend> {
         let mut result = ToDoPerBackend::new();
 
