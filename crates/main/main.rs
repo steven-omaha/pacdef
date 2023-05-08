@@ -15,6 +15,7 @@ Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
     missing_docs
 )]
 
+use std::path::Path;
 use std::process::{ExitCode, Termination};
 
 use anyhow::{Context, Result};
@@ -49,14 +50,7 @@ fn main_inner() -> Result<()> {
     let config_file = get_config_path().context("getting config file")?;
 
     let config = Config::load(&config_file)
-        .or_else(|_| {
-            get_config_path_old_version()?
-                .exists()
-                .then(show_transition_link);
-            let default = Config::default();
-            default.save(&config_file)?;
-            Ok::<Config, anyhow::Error>(default)
-        })
+        .or_else(|_| load_default_config(&config_file))
         .context("loading config")?;
 
     let group_dir = get_group_dir().context("resolving group dir")?;
@@ -65,6 +59,17 @@ fn main_inner() -> Result<()> {
 
     let pacdef = Pacdef::new(args, config, groups);
     pacdef.run_action_from_arg().context("running action")
+}
+
+fn load_default_config(config_file: &Path) -> Result<Config> {
+    if get_config_path_old_version()?.exists() {
+        show_transition_link();
+    }
+
+    let default = Config::default();
+    default.save(config_file)?;
+
+    Ok(default)
 }
 
 fn show_transition_link() {
