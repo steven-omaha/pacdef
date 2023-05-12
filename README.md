@@ -120,12 +120,11 @@ Usage on different machines:
 | `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
 | `group show [<group>...]`         | show contents of a group                                              |  
 | `group list`                      | list names of all groups                                              |  
-| `package sync`                    | install managed packages                                              |
+| `package sync [--noconfirm]`      | install managed packages                                              |
 | `package unmanaged`               | show all unmanaged packages                                           |
-| `package clean`                   | remove all unmanaged packages                                         |
+| `package clean [--noconfirm]`     | remove all unmanaged packages                                         |
 | `package review`                  | for each unmanaged package interactively decide what to do            |
 | `package search <regex>`          | search for managed packages that match the search string              |
-| `completion`                      | generate completion file for zsh                                      |
 | `version`                         | show version information                                              |
 
 
