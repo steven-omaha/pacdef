@@ -127,6 +127,13 @@ Usage on different machines:
 | `package search <regex>`          | search for managed packages that match the search string              |
 | `version`                         | show version information                                              |
 
+### Aliases
+
+Most subcommands have aliases. 
+For example, instead of `pacdef package sync` you can write `pacdef p sy`, and `pacdef group show` would become `pacdef g s`.
+
+Use `--help` or the zsh completion to find the right aliases.
+
 
 ## Configuration
 
