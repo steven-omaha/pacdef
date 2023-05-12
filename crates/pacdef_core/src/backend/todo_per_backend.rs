@@ -35,31 +35,37 @@ impl ToDoPerBackend {
         self.0.iter().all(|(_, diff)| diff.is_empty())
     }
 
-    pub(crate) fn install_missing_packages(&self) -> Result<()> {
-        self.handle_backend_command(Backend::install_packages, "install", "installing")
-            .context("installing packages")
+    pub(crate) fn install_missing_packages(&self, noconfirm: bool) -> Result<()> {
+        self.handle_backend_command(
+            Backend::install_packages,
+            noconfirm,
+            "install",
+            "installing",
+        )
+        .context("installing packages")
     }
 
-    pub(crate) fn remove_unmanaged_packages(&self) -> Result<()> {
-        self.handle_backend_command(Backend::remove_packages, "remove", "removing")
+    pub(crate) fn remove_unmanaged_packages(&self, noconfirm: bool) -> Result<()> {
+        self.handle_backend_command(Backend::remove_packages, noconfirm, "remove", "removing")
             .context("removing packages")
     }
 
     fn handle_backend_command<'a, F>(
         &'a self,
         func: F,
+        noconfirm: bool,
         verb: &'_ str,
         verb_continuous: &'_ str,
     ) -> Result<()>
     where
-        F: Fn(&'a dyn Backend, &'a [Package]) -> Result<ExitStatus>,
+        F: Fn(&'a dyn Backend, &'a [Package], bool) -> Result<ExitStatus>,
     {
         for (backend, packages) in &self.0 {
             if packages.is_empty() {
                 continue;
             }
 
-            let exit_status = func(&**backend, packages).with_context(|| {
+            let exit_status = func(&**backend, packages, noconfirm).with_context(|| {
                 format!("{verb_continuous} packages for {}", backend.get_section())
             })?;
 

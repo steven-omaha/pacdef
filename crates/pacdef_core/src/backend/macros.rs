@@ -19,6 +19,10 @@ macro_rules! impl_backend_constants {
             SWITCHES_INSTALL
         }
 
+        fn get_switches_noconfirm(&self) -> Switches {
+            SWITCHES_NOCONFIRM
+        }
+
         fn get_switches_remove(&self) -> Switches {
             SWITCHES_REMOVE
         }

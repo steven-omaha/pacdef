@@ -20,6 +20,7 @@ const SECTION: Text = "python";
 const SWITCHES_INFO: Switches = &["show"];
 const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &[]; // not needed
+const SWITCHES_NOCONFIRM: Switches = &[]; // not needed
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = false;

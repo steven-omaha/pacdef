@@ -30,7 +30,7 @@ impl Strategy {
 
     pub(super) fn execute(self) -> Result<()> {
         if !self.delete.is_empty() {
-            ensure!(self.backend.remove_packages(&self.delete)?.success());
+            ensure!(self.backend.remove_packages(&self.delete, false)?.success());
         }
 
         if !self.as_dependency.is_empty() {

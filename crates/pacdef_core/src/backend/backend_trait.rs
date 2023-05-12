@@ -37,6 +37,10 @@ pub trait Backend: Debug {
     /// Get CLI switches for the package manager to install packages.
     fn get_switches_install(&self) -> Switches;
 
+    /// Get CLI switches for the package manager to perform `sync` and `clean` without
+    /// confirmation.
+    fn get_switches_noconfirm(&self) -> Switches;
+
     /// Get CLI switches for the package manager to remove packages.
     fn get_switches_remove(&self) -> Switches;
 
@@ -73,12 +77,18 @@ pub trait Backend: Debug {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
+
         for p in packages {
             cmd.arg(format!("{p}"));
         }
+
         cmd.status()
             .with_context(|| format!("running command {cmd:?}"))
     }
@@ -92,20 +102,28 @@ pub trait Backend: Debug {
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_make_dependency());
+
         for p in packages {
             cmd.arg(format!("{p}"));
         }
+
         cmd.status()
             .with_context(|| format!("running command [{cmd:?}]"))
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_remove());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
+
         for p in packages {
             cmd.arg(format!("{p}"));
         }
+
         cmd.status()
             .with_context(|| format!("running command [{cmd:?}]"))
     }

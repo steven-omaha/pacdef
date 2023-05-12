@@ -21,6 +21,7 @@ const SECTION: Text = "arch";
 const SWITCHES_INFO: Switches = &["--query", "--info"];
 const SWITCHES_INSTALL: Switches = &["--sync"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &["--database", "--asdeps"];
+const SWITCHES_NOCONFIRM: Switches = &["--noconfirm"];
 const SWITCHES_REMOVE: Switches = &["--remove", "--recursive"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = true;
@@ -49,10 +50,14 @@ impl Backend for Arch {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(&self.binary);
 
         cmd.args(self.get_switches_install());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
 
         for p in packages {
             cmd.arg(format!("{p}"));
@@ -63,12 +68,16 @@ impl Backend for Arch {
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(&self.binary);
 
         cmd.args(self.get_switches_remove());
         if let Some(rm_args) = &self.aur_rm_args {
             cmd.args(rm_args);
+        }
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
         }
 
         for p in packages {

@@ -71,13 +71,13 @@ impl Pacdef {
             },
 
             Some(("package", args)) => match args.subcommand() {
-                Some((CLEAN, _)) => self.clean_packages(),
+                Some((CLEAN, args)) => self.clean_packages(&args.clone()),
                 Some((REVIEW, _)) => review::review(self.get_unmanaged_packages()?, self.groups)
                     .context("review unmanaged packages"),
                 Some((SEARCH, args)) => {
                     search::search_packages(args, &self.groups).context("searching packages")
                 }
-                Some((SYNC, _)) => self.install_packages(),
+                Some((SYNC, args)) => self.install_packages(&args.clone()), // TODO fix cloning
                 Some((UNMANAGED, _)) => self.show_unmanaged_packages(),
 
                 Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
@@ -130,7 +130,7 @@ impl Pacdef {
         }
     }
 
-    fn install_packages(&mut self) -> Result<()> {
+    fn install_packages(&mut self, args: &ArgMatches) -> Result<()> {
         let to_install = self.get_missing_packages()?;
 
         if to_install.nothing_to_do_for_all_backends() {
@@ -141,12 +141,18 @@ impl Pacdef {
         println!("Would install the following packages:\n");
         to_install.show().context("printing things to do")?;
 
-        println!();
-        if !get_user_confirmation()? {
-            return Ok(());
-        };
+        let noconfirm = *args
+            .get_one::<bool>("noconfirm")
+            .expect("has a default value");
 
-        to_install.install_missing_packages()
+        println!();
+        if noconfirm {
+            println!("proceeding without confirmation");
+        } else if !get_user_confirmation()? {
+            return Ok(());
+        }
+
+        to_install.install_missing_packages(noconfirm)
     }
 
     fn edit_group_files(&self, arg_matches: &ArgMatches) -> Result<()> {
@@ -220,7 +226,7 @@ impl Pacdef {
         }
     }
 
-    fn clean_packages(mut self) -> Result<()> {
+    fn clean_packages(&mut self, args: &ArgMatches) -> Result<()> {
         let to_remove = self.get_unmanaged_packages()?;
 
         if to_remove.nothing_to_do_for_all_backends() {
@@ -231,12 +237,18 @@ impl Pacdef {
         println!("Would remove the following packages:\n");
         to_remove.show().context("printing things to do")?;
 
-        println!();
-        if !get_user_confirmation()? {
-            return Ok(());
-        };
+        let noconfirm = *args
+            .get_one::<bool>("noconfirm")
+            .expect("has a default value");
 
-        to_remove.remove_unmanaged_packages()
+        println!();
+        if noconfirm {
+            println!("proceeding without confirmation");
+        } else if !get_user_confirmation()? {
+            return Ok(());
+        }
+
+        to_remove.remove_unmanaged_packages(noconfirm)
     }
 
     fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
-use clap::{Arg, ArgMatches, Command};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use path_absolutize::Absolutize;
 
 use crate::action::*;
@@ -100,16 +100,22 @@ fn get_group_cmd() -> Command {
 fn get_package_cmd() -> Command {
     let sync = Command::new(SYNC)
         .about("install packages from all imported groups")
-        .visible_alias("sy");
+        .visible_alias("sy")
+        .arg(build_noconfirm_arg());
+
     let clean = Command::new(CLEAN)
         .about("remove unmanaged packages")
-        .visible_alias("c");
+        .visible_alias("c")
+        .arg(build_noconfirm_arg());
+
     let unmanaged = Command::new(UNMANAGED)
         .about("show explicitly installed packages not managed by pacdef")
         .visible_alias("u");
+
     let review = Command::new(REVIEW)
         .about("review unmanaged packages")
         .visible_alias("r");
+
     let search = Command::new(SEARCH)
         .visible_alias("se")
         .about("search for packages which match a provided regex")
@@ -126,6 +132,13 @@ fn get_package_cmd() -> Command {
         .visible_alias("p")
         .subcommand_required(true)
         .subcommands([clean, review, unmanaged, search, sync])
+}
+
+fn build_noconfirm_arg() -> Arg {
+    Arg::new("noconfirm")
+        .long("noconfirm")
+        .help("do not ask for any confirmation")
+        .action(ArgAction::SetTrue)
 }
 
 /// Get and parse the CLI arguments.
