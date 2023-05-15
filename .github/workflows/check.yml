@@ -1,0 +1,46 @@
+name: pacdef
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'rust'
+    paths:
+      - 'crates/**.rs'
+      - 'crates/**/Cargo.toml'
+      - 'Cargo.*'
+      - "clippy.toml"
+  pull_request:
+    branches:
+      - 'main'
+      - 'rust'
+    paths:
+      - 'crates/**.rs'
+      - 'crates/**/Cargo.toml'
+      - 'Cargo.*'
+      - "clippy.toml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+    steps:
+      - name: Install Packages
+        run: pacman -Syu rust clang gcc libarchive pkgconf --noconfirm --needed
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Format
+        run: cargo fmt -- --check
+
+      - name: Build
+        run: cargo build --locked --features arch
+
+      - name: Clippy
+        run: cargo clippy
+
