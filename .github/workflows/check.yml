@@ -1,4 +1,4 @@
-name: pacdef
+name: check
 
 on:
   workflow_dispatch:
