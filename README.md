@@ -116,16 +116,16 @@ Usage on different machines:
 | Subcommand                        | Description                                                           |
 |-----------------------------------|-----------------------------------------------------------------------|
 | `group import [<group>...]`       | import one or more groups, which creates managed packages             |
-| `group remove [<group>...]`       | remove a previously imported group                                    |
-| `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
-| `group show [<group>...]`         | show contents of a group                                              |  
 | `group list`                      | list names of all groups                                              |  
-| `package sync [--noconfirm]`      | install managed packages                                              |
-| `package unmanaged`               | show all unmanaged packages                                           |
+| `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
+| `group remove [<group>...]`       | remove a previously imported group                                    |
+| `group show [<group>...]`         | show contents of a group                                              |  
 | `package clean [--noconfirm]`     | remove all unmanaged packages                                         |
 | `package review`                  | for each unmanaged package interactively decide what to do            |
 | `package search <regex>`          | search for managed packages that match the search string              |
-| `version`                         | show version information                                              |
+| `package sync [--noconfirm]`      | install managed packages                                              |
+| `package unmanaged`               | show all unmanaged packages                                           |
+| `version`                         | show version information, supported backends                          |
 
 ### Aliases
 
