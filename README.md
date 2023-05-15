@@ -5,11 +5,19 @@ multi-backend declarative package manager for Linux
 
 ## Installation
 
-`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git), and on [crates.io](https://crates.io/crates/pacdef).
-
+### Arch Linux
+`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git)
 The AUR package will also provide completions for `zsh`.
-If you use the `crates.io` version you can use `pacdef completion` to generate the completion file yourself -- you would then need to copy it to the right directory.
 
+### other
+Install it from [crates.io](https://crates.io/crates/pacdef) using this command.
+```bash
+$ cargo install [-F <backend>[,...]] pacdef
+```
+
+See below ("supported backends") for the feature flags you will need for your distribution.
+
+To get zsh completion to work you must copy the `_completion.zsh` file to the right folder manually and rename it to `_pacdef`.
 
 ## Use-case
 
@@ -20,11 +28,18 @@ The group files are maintained outside of `pacdef` by any VCS, like git.
 If you work with multiple Linux machines and have asked yourself "*Why do I have the program that I use every day on my other machine not installed here?*", then `pacdef` is the tool for you.
 
 
-## Of groups, sections, and packages
+### Of groups, sections, and packages
 
 `pacdef` manages multiple package groups (group files) that, e.g., may be tied to a specific use-case.
 Each group has one or more section(s) which correspond to a specific backend, like your system's package manager (`pacman`, `apt`, ...), or your programming languages package manger (`cargo`, `pip`, ...).
 Each section contains one or more packages that can be installed respective package manager.
+
+This image illustrates the relationship.
+```
+       1   n       1   n         1   n      
+pacdef ----> group ----> section ----> package 
+```
+
 
 
 ### Example
@@ -65,15 +80,24 @@ Note that the name of the section corresponds to the ecosystem it relates to, ra
 
 ## Supported backends
 
-At the moment, supported backends are limited to the following.
-
-| Package Manager | Section   | Application |  Notes                                               |
-|-----------------|-----------|-------------|------------------------------------------------------|
-| `pacman`        | [`arch`]  | Arch Linux  |  includes pacman-wrapping AUR helpers (configurable) |
-| `cargo`         | [`rust`]  | Rust        |                                                      |
-
+At the moment, supported backends are the following.
 Pull requests for additional backends are welcome!
 
+| Application | Package Manager | Section   | feature flag | Notes                                                                                                     |
+|-------------|-----------------|-----------|--------------|-----------------------------------------------------------------------------------------------------------|
+| Arch Linux  | `pacman`        | `[arch]`  | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                                       |
+| Debian      | `apt`           | `[debian]`| `debian`     | minimum supported apt-version unknown ([upstream issue](https://gitlab.com/volian/rust-apt/-/issues/20))  |
+| Python      | `pip`           | `[python]`| built-in     |                                                                                                           |
+| Rust        | `cargo`         | `[rust]`  | built-in     |                                                                                                           |
+
+Backends that have a `feature flag` require setting the respective flag for the build process.
+The appropriate system libraries and their header files must be present on the machine and be detectable by `pkg-config`.
+For backends that state "built-in", they are always supported during compile time.
+Any backend can be disabled during runtime (see below, "Configuration").
+
+For example, to build `pacdef` with support for Debian Linux, you can run one of the two commands.
+* (recommended) `cargo install -F debian pacdef`, this downloads and builds it from [https://crates.io](https://crates.io)
+* in a clone of this repository, `cargo install --path . -F debian`
 
 ### Example
 
@@ -94,7 +118,7 @@ This tree shows my pacdef repository (not the `pacdef` config dir).
 │   ├── hostname_a
 │   ├── hostname_b
 │   └── hostname_c
-└── pacdef.conf
+└── pacdef.yaml
 ```
 
 - The `base` group holds all packages I need unconditionally, and includes things like zfs,
@@ -144,7 +168,7 @@ aur_helper: paru  # AUR helper to use on Arch Linux (paru, yay, ...)
 aur_rm_args: null  # additional args to pass to AUR helper when removing packages (optional)
 warn_not_symlinks: true  # warn if a group file is not a symlink
 
-disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"]
+disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"], this can reduce runtime if the package manager is notoriously slow (like pip)
 ```
 
 
@@ -172,12 +196,13 @@ cargo-update
 topgrade
 ```
 
+## Misc.
 
-## Naming
+### Naming
 
 `pacdef` combines the words "package" and "define".
 
 
-## minimum supported rust version (MSRV)
+### minimum supported rust version (MSRV)
 
 MSRV is 1.65.0. Development is conducted against the latest stable version.
