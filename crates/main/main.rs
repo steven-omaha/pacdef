@@ -23,6 +23,13 @@ use anyhow::{Context, Result};
 use pacdef_core::path::{get_config_path, get_config_path_old_version, get_group_dir};
 use pacdef_core::{get_args, Config, Group, Pacdef};
 
+const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
+You seem to have used version 0.x of pacdef before.
+Version 1.x changes the syntax of the config files and the command line arguments.
+Check out https://github.com/steven-omaha/pacdef for new syntax information.
+This message will not appear again.
+------";
+
 fn main() -> ExitCode {
     handle_final_result(main_inner())
 }
@@ -63,20 +70,11 @@ fn main_inner() -> Result<()> {
 
 fn load_default_config(config_file: &Path) -> Result<Config> {
     if get_config_path_old_version()?.exists() {
-        show_transition_link();
+        println!("{MAJOR_UPDATE_MESSAGE}");
     }
 
     let default = Config::default();
     default.save(config_file)?;
 
     Ok(default)
-}
-
-fn show_transition_link() {
-    println!("VERSION UPGRADE");
-    println!("You seem to have used version 0.x of pacdef before.");
-    println!("Version 1.x changes the syntax of the config files and the command line arguments.");
-    println!("Check out https://github.com/steven-omaha/pacdef for new syntax information.");
-    println!("This message will not appear again.");
-    println!("------");
 }
