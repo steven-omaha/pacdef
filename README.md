@@ -143,6 +143,8 @@ On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/p
 aur_helper: paru  # AUR helper to use on Arch Linux (paru, yay, ...)
 aur_rm_args: null  # additional args to pass to AUR helper when removing packages (optional)
 warn_not_symlinks: true  # warn if a group file is not a symlink
+
+disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"]
 ```
 
 
