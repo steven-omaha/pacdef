@@ -1,3 +1,5 @@
+[![check](https://github.com/steven-omaha/pacdef/actions/workflows/check.yml/badge.svg)](https://github.com/steven-omaha/pacdef/actions/workflows/check.yml)
+
 # pacdef
 
 multi-backend declarative package manager for Linux
