@@ -131,7 +131,7 @@ fn get_package_cmd() -> Command {
         .about("manage packages")
         .visible_alias("p")
         .subcommand_required(true)
-        .subcommands([clean, review, unmanaged, search, sync])
+        .subcommands([clean, review, search, sync, unmanaged])
 }
 
 fn build_noconfirm_arg() -> Arg {
