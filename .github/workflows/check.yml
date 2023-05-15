@@ -30,7 +30,7 @@ jobs:
       image: archlinux
     steps:
       - name: Install Packages
-        run: pacman -Syu rust clang gcc libarchive pkgconf --noconfirm --needed
+        run: pacman -Syu git rust clang gcc libarchive pkgconf --noconfirm --needed
 
       - name: Checkout
         uses: actions/checkout@v2
