@@ -10,6 +10,7 @@ use crate::{impl_backend_constants, Group, Package};
 #[derive(Debug, Clone)]
 pub struct Flatpak {
     pub(crate) packages: HashSet<Package>,
+    pub(crate) systemwide: bool,
 }
 
 const BINARY: Text = "flatpak";
@@ -43,6 +44,7 @@ impl Flatpak {
     pub(crate) fn new() -> Self {
         Self {
             packages: HashSet::new(),
+            systemwide: true,
         }
     }
 

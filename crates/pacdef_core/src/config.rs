@@ -13,6 +13,8 @@ pub struct Config {
     pub aur_helper: String,
     /// Additional arguments to pass to `aur_helper` when removing a package.
     pub aur_rm_args: Option<Vec<String>>,
+    /// Install Flatpak packages system-wide
+    pub flatpak_systemwide: bool,
     /// Warn the user when a group is not a symlink.
     pub warn_not_symlinks: bool,
     /// Backends the user does not want to use even though the binary exists.
@@ -68,6 +70,7 @@ impl Default for Config {
         Self {
             aur_helper: "paru".into(),
             aur_rm_args: None,
+            flatpak_systemwide: true,
             warn_not_symlinks: true,
             disabled_backends: vec![],
         }
