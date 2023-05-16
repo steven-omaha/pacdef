@@ -22,12 +22,23 @@ pub fn get_group_dir() -> Result<PathBuf> {
     Ok(result)
 }
 
+/// Get the base directory for `pacdef`'s config files.
+///
+/// # Errors
+///
+/// This function will return an error if `$XDG_CONFIG_HOME` cannot be determined.
 pub(crate) fn get_pacdef_base_dir() -> Result<PathBuf> {
     let mut dir = get_xdg_config_home().context("getting XDG_CONFIG_HOME")?;
     dir.push("pacdef");
     Ok(dir)
 }
 
+/// Get the path to the XDG config directory.
+///
+/// # Errors
+///
+/// This function will return an error if neither the `$XDG_CONFIG_HOME` nor
+/// the `$HOME` environment variables are set.
 fn get_xdg_config_home() -> Result<PathBuf> {
     if let Ok(config) = env::var("XDG_CONFIG_HOME") {
         Ok(config.into())
@@ -38,6 +49,12 @@ fn get_xdg_config_home() -> Result<PathBuf> {
     }
 }
 
+/// Get the home directory of the current user from the `$HOME` environment
+/// variable.
+///
+/// # Errors
+///
+/// This function will return an error if the `$HOME` variable is not set.
 pub(crate) fn get_home_dir() -> Result<PathBuf> {
     Ok(env::var("HOME").context("getting $HOME variable")?.into())
 }
@@ -46,7 +63,8 @@ pub(crate) fn get_home_dir() -> Result<PathBuf> {
 ///
 /// # Errors
 ///
-/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are undefined.
+/// This function returns an error if both `$XDG_CONFIG_HOME` and `$HOME` are
+/// undefined.
 pub fn get_config_path() -> Result<PathBuf> {
     let mut file = get_pacdef_base_dir().context("getting pacdef base dir for config file")?;
     file.push(CONFIG_FILE_NAME);
@@ -54,7 +72,7 @@ pub fn get_config_path() -> Result<PathBuf> {
 }
 
 /// Get the path to the pacdef config file from version 0.x. This is
-/// `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+/// `$XDG_CONFIG_HOME/pacdef/pacdef.conf`.
 ///
 /// # Errors
 ///
@@ -66,6 +84,11 @@ pub fn get_config_path_old_version() -> Result<PathBuf> {
     Ok(file)
 }
 
+/// Determine if a program `name` exists in the folders in the `$PATH` variable.
+///
+/// # Errors
+///
+/// This function returns an error if `$PATH` is not set.
 pub(crate) fn binary_in_path(name: &str) -> Result<bool> {
     let paths = env::var_os("PATH").context("getting $PATH")?;
     for dir in env::split_paths(&paths) {
