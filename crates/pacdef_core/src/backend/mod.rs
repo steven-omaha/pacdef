@@ -18,6 +18,5 @@ pub enum Backends {
     Debian,
     Python,
     Rust,
-    #[cfg(feature = "flatpak")]
     Flatpak,
 }

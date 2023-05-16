@@ -129,11 +129,8 @@ impl Pacdef {
             }
         }
 
-        #[cfg(feature = "flatpak")]
-        {
-            if let Some(flatpak) = backend.as_any_mut().downcast_mut::<crate::backend::Flatpak>() {
-                flatpak.systemwide = self.config.flatpak_systemwide;
-            }
+        if let Some(flatpak) = backend.as_any_mut().downcast_mut::<crate::backend::Flatpak>() {
+            flatpak.systemwide = self.config.flatpak_systemwide;
         }
     }
 
