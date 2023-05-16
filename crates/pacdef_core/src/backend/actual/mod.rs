@@ -2,5 +2,6 @@
 pub mod arch;
 #[cfg(feature = "debian")]
 pub mod debian;
+pub mod flatpak;
 pub mod python;
 pub mod rust;

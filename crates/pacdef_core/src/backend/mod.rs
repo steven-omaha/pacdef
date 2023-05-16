@@ -16,6 +16,7 @@ pub enum Backends {
     Arch,
     #[cfg(feature = "debian")]
     Debian,
+    Flatpak,
     Python,
     Rust,
 }

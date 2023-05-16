@@ -177,7 +177,7 @@ where
     let mut map = HashMap::new();
 
     for (value, key) in to_assign {
-        let inner = map.entry(key).or_insert(vec![]);
+        let inner: &mut Vec<V> = map.entry(key).or_default();
         inner.push(value);
     }
 

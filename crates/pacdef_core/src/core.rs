@@ -128,6 +128,13 @@ impl Pacdef {
                 arch.aur_rm_args = self.config.aur_rm_args.take();
             }
         }
+
+        if let Some(flatpak) = backend
+            .as_any_mut()
+            .downcast_mut::<crate::backend::Flatpak>()
+        {
+            flatpak.systemwide = self.config.flatpak_systemwide;
+        }
     }
 
     fn install_packages(&mut self, args: &ArgMatches) -> Result<()> {
