@@ -15,7 +15,7 @@ pub fn get_user_confirmation() -> Result<bool> {
     Ok(reply.trim().is_empty() || reply.to_lowercase().contains('y'))
 }
 
-/// Read a single byte from the stdin and interpret it as `char`. Use the
+/// Read a single byte from stdin and interpret it as `char`. Use the
 /// `termios` library to switch the terminal to raw mode before reading,
 /// and restore the original terminal mode afterwards.
 ///
