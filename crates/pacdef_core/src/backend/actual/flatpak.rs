@@ -56,7 +56,6 @@ impl Flatpak {
         let output = String::from_utf8(cmd.output()?.stdout)?;
         Ok(
             output.lines()
-                  .skip(1)
                   .map(|pkg| Package::from(pkg))
                   .collect::<HashSet<Package>>()
         )
