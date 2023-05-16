@@ -49,11 +49,6 @@ pub trait Backend: Debug {
     /// [`Backend::supports_as_dependency`].
     fn get_switches_make_dependency(&self) -> Switches;
 
-    /// Get CLI switches evaluated at runtime
-    fn get_switches_runtime(&self) -> Switches {
-        &[]
-    }
-
     /// Load all packages from a set of groups. The backend will visit all groups,
     /// find its own section, and clone all packages into its own struct.
     fn load(&mut self, groups: &HashSet<Group>);
@@ -85,7 +80,6 @@ pub trait Backend: Debug {
     fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
-        cmd.args(self.get_switches_runtime());
 
         if noconfirm {
             cmd.args(self.get_switches_noconfirm());
@@ -108,7 +102,6 @@ pub trait Backend: Debug {
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_make_dependency());
-        cmd.args(self.get_switches_runtime());
 
         for p in packages {
             cmd.arg(format!("{p}"));
@@ -122,7 +115,6 @@ pub trait Backend: Debug {
     fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_remove());
-        cmd.args(self.get_switches_runtime());
 
         if noconfirm {
             cmd.args(self.get_switches_noconfirm());
@@ -151,7 +143,6 @@ pub trait Backend: Debug {
     fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_info());
-        cmd.args(self.get_switches_runtime());
         cmd.arg(format!("{package}"));
         cmd.status()
             .with_context(|| format!("running command {cmd:?}"))

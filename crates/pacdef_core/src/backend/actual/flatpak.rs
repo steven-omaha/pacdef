@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::process::Command;
 use std::process::ExitStatus;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
@@ -27,14 +27,6 @@ const SUPPORTS_AS_DEPENDENCY: bool = false;
 impl Backend for Flatpak {
     impl_backend_constants!();
 
-    fn get_switches_runtime(&self) -> Switches {
-        if self.systemwide {
-            &[]
-        } else {
-            &["--user"]
-        }
-    }
-
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         self.get_installed_packages(true)
     }
@@ -43,8 +35,54 @@ impl Backend for Flatpak {
         self.get_installed_packages(false)
     }
 
+    /// Install the specified packages.
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+        let mut cmd = Command::new(self.get_binary());
+        cmd.args(self.get_switches_install());
+        cmd.args(self.get_switches_runtime());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
+
+        for p in packages {
+            cmd.arg(format!("{p}"));
+        }
+
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
+    }
+
     fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
         panic!("not supported by {}", BINARY)
+    }
+
+    /// Remove the specified packages.
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+        let mut cmd = Command::new(self.get_binary());
+        cmd.args(self.get_switches_remove());
+        cmd.args(self.get_switches_runtime());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
+
+        for p in packages {
+            cmd.arg(format!("{p}"));
+        }
+
+        cmd.status()
+            .with_context(|| format!("running command [{cmd:?}]"))
+    }
+
+    /// Show information from package manager for package.
+    fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
+        let mut cmd = Command::new(self.get_binary());
+        cmd.args(self.get_switches_info());
+        cmd.args(self.get_switches_runtime());
+        cmd.arg(format!("{package}"));
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
     }
 }
 
@@ -53,6 +91,14 @@ impl Flatpak {
         Self {
             packages: HashSet::new(),
             systemwide: true,
+        }
+    }
+
+    fn get_switches_runtime(&self) -> Switches {
+        if self.systemwide {
+            &[]
+        } else {
+            &["--user"]
         }
     }
 
