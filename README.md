@@ -17,7 +17,7 @@ Install it from [crates.io](https://crates.io/crates/pacdef) using this command.
 $ cargo install [-F <backend>[,...]] pacdef
 ```
 
-See below ("supported backends") for the feature flags you will need for your distribution.
+See below ("[supported backends](#supported-backends)") for the feature flags you will need for your distribution.
 
 To get zsh completion to work you must copy the `_completion.zsh` file to the right folder manually and rename it to `_pacdef`.
 
@@ -95,7 +95,7 @@ Pull requests for additional backends are welcome!
 Backends that have a `feature flag` require setting the respective flag for the build process.
 The appropriate system libraries and their header files must be present on the machine and be detectable by `pkg-config`.
 For backends that state "built-in", they are always supported during compile time.
-Any backend can be disabled during runtime (see below, "Configuration").
+Any backend can be disabled during runtime (see below, "[Configuration](#configuration)").
 
 For example, to build `pacdef` with support for Debian Linux, you can run one of the two commands.
 * (recommended) `cargo install -F debian pacdef`, this downloads and builds it from [https://crates.io](https://crates.io)
