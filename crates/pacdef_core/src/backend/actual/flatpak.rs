@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::process::Command;
 use std::process::ExitStatus;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::{impl_backend_constants, Group, Package};
@@ -16,7 +16,7 @@ const BINARY: Text = "flatpak";
 const SECTION: Text = "flatpak";
 
 const SWITCHES_INSTALL: Switches = &["install"];
-const SWITCHES_INFO: Switches = &[];
+const SWITCHES_INFO: Switches = &["info"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
 const SWITCHES_NOCONFIRM: Switches = &["--assumeyes"];
 const SWITCHES_REMOVE: Switches = &["uninstall"];
