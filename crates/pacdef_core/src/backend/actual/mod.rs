@@ -4,3 +4,5 @@ pub mod arch;
 pub mod debian;
 pub mod python;
 pub mod rust;
+#[cfg(feature = "flatpak")]
+pub mod flatpak;

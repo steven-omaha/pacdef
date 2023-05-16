@@ -35,3 +35,4 @@ rust-apt = { version = "0.5", optional = true }
 default = []
 arch = ["dep:alpm"]
 debian = ["dep:rust-apt"]
+flatpak = []
