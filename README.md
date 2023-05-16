@@ -89,9 +89,9 @@ Pull requests for additional backends are welcome!
 |-------------|-----------------|-------------|--------------|-----------------------------------------------------------------------------------------------------------|
 | Arch Linux  | `pacman`        | `[arch]`    | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                                       |
 | Debian      | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version unknown ([upstream issue](https://gitlab.com/volian/rust-apt/-/issues/20))  |
+| Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                                     |
 | Python      | `pip`           | `[python]`  | built-in     |                                                                                                           |
 | Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                                           |
-| Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                                     |
 
 Backends that have a `feature flag` require setting the respective flag for the build process.
 The appropriate system libraries and their header files must be present on the machine and be detectable by `pkg-config`.
