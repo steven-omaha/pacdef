@@ -58,7 +58,7 @@ impl Flatpak {
 
     fn get_installed_packages(&self, include_implicit: bool) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(BINARY);
-        cmd.args(&["list", "--columns=application"]);
+        cmd.args(["list", "--columns=application"]);
         if !include_implicit {
             cmd.arg("--app");
         }
@@ -67,10 +67,9 @@ impl Flatpak {
         }
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
-        Ok(
-            output.lines()
-                  .map(|pkg| Package::from(pkg))
-                  .collect::<HashSet<Package>>()
-        )
+        Ok(output
+            .lines()
+            .map(Package::from)
+            .collect::<HashSet<Package>>())
     }
 }
