@@ -15,6 +15,14 @@ pub fn get_user_confirmation() -> Result<bool> {
     Ok(reply.trim().is_empty() || reply.to_lowercase().contains('y'))
 }
 
+/// Read a single byte from the stdin and interpret it as `char`. Use the
+/// `termios` library to switch the terminal to raw mode before reading,
+/// and restore the original terminal mode afterwards.
+///
+/// # Errors
+///
+/// This function will return an error if the data cannot be read or the
+/// terminal settings cannot be changed.
 pub fn read_single_char_from_terminal() -> Result<char> {
     // 0 is the file descriptor for stdin
     let fd = 0;
@@ -32,6 +40,7 @@ pub fn read_single_char_from_terminal() -> Result<char> {
     let result: char = input[0]
         .try_into()
         .context("reading a single byte from stdin")?;
+
     // stdin is not echoed automatically in this terminal mode
     println!("{result}");
 
