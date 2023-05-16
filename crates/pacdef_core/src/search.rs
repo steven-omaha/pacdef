@@ -8,12 +8,17 @@ use regex::Regex;
 
 use crate::grouping::{Group, Package, Section};
 
+/// Find all packages in all groups whose name match the regex from the
+/// command-line arguments. Print the name of the packages per group and
+/// section.
+///
+/// # Errors
+///
+/// This function will return an error if
+/// - an invalid regex was provided, or
+/// - no matching packages could be found.
 pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {
-    let search_string = args
-        .get_one::<String>("regex")
-        .context("getting search string from arg")?;
-
-    let re = Regex::new(search_string)?;
+    let re = get_regex_from_args(args)?;
 
     let mut vec = vec![];
 
@@ -34,6 +39,21 @@ pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()>
     print_triples(vec);
 
     Ok(())
+}
+
+/// Extract the user-provided regex from the command-line args.
+///
+/// # Errors
+///
+/// This function will return an error if an invalid regex was provided.
+fn get_regex_from_args(args: &ArgMatches) -> Result<Regex, anyhow::Error> {
+    let search_string = args
+        .get_one::<String>("regex")
+        .context("getting search string from arg")?;
+
+    let re = Regex::new(search_string)?;
+
+    Ok(re)
 }
 
 fn print_triples(mut vec: Vec<(&Group, &Section, &Package)>) {
@@ -69,19 +89,23 @@ fn print_separator_unless_exhausted(
     }
 }
 
-fn print_section_if_changed(s: &Section, s0: &String) {
-    if s.name != *s0 {
-        println!("[{}]", s.name);
+fn print_section_if_changed(current: &Section, previous_name: &String) {
+    if current.name != *previous_name {
+        println!("[{}]", current.name);
     }
 }
 
-fn print_group_if_changed(g: &Group, g0: &String, s0: &mut String) {
-    if g.name != *g0 {
-        println!("{}", g.name);
-        for _ in 0..g.name.len() {
+fn print_group_if_changed(
+    current_group: &Group,
+    previous_group_name: &String,
+    previous_section_name: &mut String,
+) {
+    if current_group.name != *previous_group_name {
+        println!("{}", current_group.name);
+        for _ in 0..current_group.name.len() {
             print!("-");
         }
         println!();
-        s0.clear();
+        previous_section_name.clear();
     }
 }
