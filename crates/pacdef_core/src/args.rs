@@ -15,7 +15,7 @@ fn build_cli() -> Command {
     let version_cmd = Command::new(VERSION).about("show version info");
 
     Command::new("pacdef")
-        .about("declarative package manager for Linux")
+        .about("multi-backend declarative package manager for Linux")
         .version(get_version_string())
         .arg_required_else_help(true)
         .subcommand_required(true)

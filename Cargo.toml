@@ -2,7 +2,7 @@
 name = "pacdef"
 version = "1.0.1"
 edition = "2021"
-description = "declarative package manager for Linux"
+description = "multi-backend declarative package manager for Linux"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/steven-omaha/pacdef"
 readme = "README.md"
