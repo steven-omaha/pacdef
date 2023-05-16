@@ -106,17 +106,17 @@ fn get_action_for_package(
     Ok(ContinueWithReview::Yes)
 }
 
+/// Ask the user for the desired action, and return the associated
+/// [`ReviewIntention`]. The query depends on the capabilities of the backend.
+///
+/// # Errors
+///
+/// This function will return an error if stdin or stdout cannot be accessed.
 fn ask_user_action_for_package(supports_as_dependency: bool) -> Result<ReviewIntention> {
-    print!("assign to (g)roup, (d)elete, (s)kip, (i)nfo, ");
-
-    if supports_as_dependency {
-        print!("(a)s dependency, ");
-    }
-    print!("(q)uit? ");
-    stdout().lock().flush()?;
+    print_query(supports_as_dependency)?;
 
     match read_single_char_from_terminal()?.to_ascii_lowercase() {
-        'a' => Ok(ReviewIntention::AsDependency),
+        'a' if supports_as_dependency => Ok(ReviewIntention::AsDependency),
         'd' => Ok(ReviewIntention::Delete),
         'g' => Ok(ReviewIntention::AssignGroup),
         'i' => Ok(ReviewIntention::Info),
@@ -124,6 +124,27 @@ fn ask_user_action_for_package(supports_as_dependency: bool) -> Result<ReviewInt
         's' => Ok(ReviewIntention::Skip),
         _ => Ok(ReviewIntention::Invalid),
     }
+}
+
+/// Print a space-terminated string that asks the user for the desired action.
+/// The items of the string depend on whether the backend supports dependent
+/// packages.
+///
+/// # Errors
+///
+/// This function will return an error if stdout cannot be flushed.
+fn print_query(supports_as_dependency: bool) -> Result<()> {
+    let mut query = String::from("assign to (g)roup, (d)elete, (s)kip, (i)nfo, ");
+
+    if supports_as_dependency {
+        query.push_str("(a)s dependency, ");
+    }
+
+    query.push_str("(q)uit? ");
+
+    print!("{query}");
+    stdout().lock().flush()?;
+    Ok(())
 }
 
 fn print_enumerated_groups(groups: &[Rc<Group>]) {
