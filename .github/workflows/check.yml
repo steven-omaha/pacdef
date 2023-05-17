@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - 'main'
-      - 'rust'
+      - 'devel'
     paths:
       - 'crates/**.rs'
       - 'crates/**/Cargo.toml'
@@ -14,7 +14,7 @@ on:
   pull_request:
     branches:
       - 'main'
-      - 'rust'
+      - 'devel'
     paths:
       - 'crates/**.rs'
       - 'crates/**/Cargo.toml'
