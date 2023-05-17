@@ -30,6 +30,6 @@ opt-level = "z"
 strip = true
 
 [features]
-default = ["debian"]
+default = []
 debian = ["pacdef_core/debian"]
 arch = ["pacdef_core/arch"]
