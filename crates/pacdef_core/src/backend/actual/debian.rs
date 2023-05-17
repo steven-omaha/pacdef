@@ -51,11 +51,46 @@ impl Backend for Debian {
     }
 
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
-        let mut cmd = Command::new("apt-mark");
+        let mut cmd = build_base_command_with_privileges("apt-mark");
         cmd.arg("auto");
         for p in packages {
             cmd.arg(format!("{p}"));
         }
+        cmd.status()
+            .with_context(|| format!("running command [{cmd:?}]"))
+    }
+
+    /// Install the specified packages.
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+        let mut cmd = build_base_command_with_privileges(self.get_binary());
+
+        cmd.args(self.get_switches_install());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
+
+        for p in packages {
+            cmd.arg(format!("{p}"));
+        }
+
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
+    }
+
+    /// Remove the specified packages.
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+        let mut cmd = build_base_command_with_privileges(self.get_binary());
+        cmd.args(self.get_switches_remove());
+
+        if noconfirm {
+            cmd.args(self.get_switches_noconfirm());
+        }
+
+        for p in packages {
+            cmd.arg(format!("{p}"));
+        }
+
         cmd.status()
             .with_context(|| format!("running command [{cmd:?}]"))
     }
@@ -67,4 +102,20 @@ impl Debian {
             packages: HashSet::new(),
         }
     }
+}
+
+fn we_are_root() -> bool {
+    let uid = unsafe { libc::geteuid() };
+    uid == 0
+}
+
+fn build_base_command_with_privileges(binary: &str) -> Command {
+    let cmd = if we_are_root() {
+        Command::new(binary)
+    } else {
+        let mut cmd = Command::new("sudo");
+        cmd.arg(binary);
+        cmd
+    };
+    cmd
 }

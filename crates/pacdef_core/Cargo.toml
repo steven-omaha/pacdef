@@ -31,7 +31,9 @@ pacdef_macros = { path = "../pacdef_macros", version = "0.1" }
 alpm = { version = "2.2", optional = true }
 rust-apt = { version = "0.5", optional = true }
 
+libc = { version = "*", optional = true }
+
 [features]
 default = []
 arch = ["dep:alpm"]
-debian = ["dep:rust-apt"]
+debian = ["dep:rust-apt", "dep:libc"]
