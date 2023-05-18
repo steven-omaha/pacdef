@@ -2,8 +2,8 @@
 All functions related to `pacdef`'s internal paths.
 */
 
-use std::env;
 use std::path::PathBuf;
+use std::{env, path::Path};
 
 use anyhow::{Context, Result};
 
@@ -98,4 +98,47 @@ pub(crate) fn binary_in_path(name: &str) -> Result<bool> {
         }
     }
     Ok(false)
+}
+
+/// Determine the relative path of `full_path` in relation to `base_path`.
+///
+/// # Panics
+///
+/// Panics if at least one element in `base_path` does not match the corresponding
+/// element in `full_path`.
+pub(crate) fn get_relative_path<P>(full_path: P, base_path: P) -> PathBuf
+where
+    P: AsRef<Path>,
+{
+    let mut file_iter = full_path.as_ref().iter();
+    base_path
+        .as_ref()
+        .iter()
+        .zip(&mut file_iter)
+        .for_each(|(a, b)| assert_eq!(a, b));
+    let relative_path: PathBuf = file_iter.collect();
+    relative_path
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::get_relative_path;
+
+    #[test]
+    fn relative_path() {
+        let full = PathBuf::from("/a/b/c/d/e");
+        let base = PathBuf::from("/a/b/c");
+        let relative = get_relative_path(full, base);
+        assert_eq!(relative, PathBuf::from("d/e"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn relative_path_panic() {
+        let full = PathBuf::from("/a/b/z/d/e");
+        let base = PathBuf::from("/a/b/c");
+        get_relative_path(full, base);
+    }
 }

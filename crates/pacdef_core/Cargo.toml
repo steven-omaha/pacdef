@@ -19,6 +19,7 @@ const_format = { version = "0.2", default-features = false }
 path-absolutize = "3.0"
 regex = { version = "1.7", default-features = false, features = ["std"] }
 termios = "0.3"
+walkdir = "2.3"
 
 serde = "1.0"
 serde_derive = "1.0"
