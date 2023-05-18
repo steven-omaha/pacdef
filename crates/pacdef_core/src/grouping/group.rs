@@ -6,6 +6,9 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
+use walkdir::WalkDir;
+
+use crate::path::get_relative_path;
 
 use super::{Package, Section};
 
@@ -20,7 +23,7 @@ pub struct Group {
 }
 
 impl Group {
-    /// Load all group files from the pacdef group dir.
+    /// Load all group files from the pacdef group dir by recursing through the group dir.
     ///
     /// This method will print a warning if
     /// - there are no files under `group_dir`, or
@@ -39,19 +42,25 @@ impl Group {
             create_dir(group_dir).context("group dir does not exist, creating")?;
         }
 
-        for entry in group_dir.read_dir().context("reading group dir")? {
-            let file = entry.context("getting group file")?;
+        for entry in WalkDir::new(group_dir).follow_links(true).min_depth(1) {
+            let file = entry?;
             let path = file.path();
 
+            if path.is_dir() {
+                continue;
+            }
+
             if warn_not_symlinks && !path.is_symlink() {
+                // TODO is there an efficient way to make sure *any* of the elements in the path
+                // is a symlink?
                 eprintln!(
                     "WARNING: group file {} is not a symlink",
                     path.to_string_lossy()
                 );
             }
 
-            let group =
-                Self::try_from(&path).with_context(|| format!("reading group file {path:?}"))?;
+            let group = Self::try_from(path, group_dir)
+                .with_context(|| format!("reading group file {path:?}"))?;
 
             result.insert(group);
         }
@@ -96,17 +105,14 @@ impl Eq for Group {
 }
 
 impl Group {
-    fn try_from<P>(p: P) -> Result<Self>
+    fn try_from<P>(path: P, group_dir: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
-        let path = p.as_ref();
+        let path = path.as_ref();
         let content = read_to_string(path).context("reading file content")?;
-        let name = path
-            .file_name()
-            .context("getting file name")?
-            .to_string_lossy()
-            .to_string();
+
+        let name = extract_group_name(path, group_dir.as_ref());
 
         let mut lines = content.lines().peekable();
         let mut sections = HashSet::new();
@@ -156,6 +162,30 @@ impl Group {
 
         write!(file, "{content}").with_context(|| format!("writing file {:?}", &self.path))
     }
+}
+
+/// Extract the group name from its path relative to the group path.
+/// All subdirectories are concatenated using `'/'`.
+///
+/// # Example
+///
+/// If the group dir is `~/.config/pacdef/groups`, and the group file is
+/// `~/.config/pacdef/groups/generic/base`, then the group name is
+/// `"generic/base"`.
+///
+/// # Panics
+///
+/// Panics if `path` and `group_path` are identical.
+fn extract_group_name(path: &Path, group_path: &Path) -> String {
+    get_relative_path(path, group_path)
+        .iter()
+        .map(|p| p.to_string_lossy().to_string())
+        .reduce(|mut a, b| {
+            a.push('/');
+            a.push_str(&b);
+            a
+        })
+        .expect("must have at least one element")
 }
 
 impl Display for Group {
@@ -218,5 +248,20 @@ fn add_new_section_with_packages(
     group_file_content.push('\n');
     for p in packages {
         group_file_content.push_str(&format!("{p}\n"));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    #[test]
+    fn extract_group_name() {
+        let path = PathBuf::from("/a/b/c/d/e");
+        let group_path = PathBuf::from("/a/b/c");
+        let expected = String::from("d/e");
+
+        let result = super::extract_group_name(&path, &group_path);
+        assert_eq!(result, expected);
     }
 }
