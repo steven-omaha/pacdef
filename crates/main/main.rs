@@ -70,10 +70,6 @@ fn main_inner() -> Result<()> {
         }
     };
 
-    dbg!(&config);
-    // .or_else(|_| load_default_config(&config_file))
-    // .context("loading config")?;
-
     let group_dir = get_group_dir().context("resolving group dir")?;
     let groups = Group::load(&group_dir, config.warn_not_symlinks)
         .with_context(|| format!("loading groups under {}", group_dir.to_string_lossy()))?;
