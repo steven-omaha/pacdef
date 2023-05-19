@@ -10,15 +10,28 @@ use serde_derive::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     /// The AUR helper to use for Arch Linux.
+    #[serde(default = "aur_helper")]
     pub aur_helper: String,
     /// Additional arguments to pass to `aur_helper` when removing a package.
-    pub aur_rm_args: Option<Vec<String>>,
+    #[serde(default)]
+    pub aur_rm_args: Vec<String>,
     /// Install Flatpak packages system-wide
+    #[serde(default = "yes")]
     pub flatpak_systemwide: bool,
     /// Warn the user when a group is not a symlink.
+    #[serde(default = "yes")]
     pub warn_not_symlinks: bool,
     /// Backends the user does not want to use even though the binary exists.
+    #[serde(default)]
     pub disabled_backends: Vec<String>,
+}
+
+fn yes() -> bool {
+    true
+}
+
+fn aur_helper() -> String {
+    "paru".into()
 }
 
 impl Config {
@@ -69,7 +82,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             aur_helper: "paru".into(),
-            aur_rm_args: None,
+            aur_rm_args: vec![],
             flatpak_systemwide: true,
             warn_not_symlinks: true,
             disabled_backends: vec![],

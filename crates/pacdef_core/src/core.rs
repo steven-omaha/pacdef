@@ -125,7 +125,7 @@ impl Pacdef {
         {
             if let Some(arch) = backend.as_any_mut().downcast_mut::<crate::backend::Arch>() {
                 arch.binary = self.config.aur_helper.clone();
-                arch.aur_rm_args = self.config.aur_rm_args.take();
+                arch.aur_rm_args = self.config.aur_rm_args.clone();
             }
         }
 

@@ -18,10 +18,10 @@ Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
 use std::path::Path;
 use std::process::{ExitCode, Termination};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 
 use pacdef_core::path::{get_config_path, get_config_path_old_version, get_group_dir};
-use pacdef_core::{get_args, Config, Group, Pacdef};
+use pacdef_core::{get_args, Config, Error as PacdefError, Group, Pacdef};
 
 const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
 You seem to have used version 0.x of pacdef before.
@@ -41,7 +41,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
     match result {
         Ok(_) => ExitCode::SUCCESS,
         Err(ref e) => {
-            if let Some(root_error) = e.root_cause().downcast_ref::<pacdef_core::Error>() {
+            if let Some(root_error) = e.root_cause().downcast_ref::<PacdefError>() {
                 eprintln!("{root_error}");
                 ExitCode::FAILURE
             } else {
@@ -56,9 +56,23 @@ fn main_inner() -> Result<()> {
 
     let config_file = get_config_path().context("getting config file")?;
 
-    let config = Config::load(&config_file)
-        .or_else(|_| load_default_config(&config_file))
-        .context("loading config")?;
+    let config = match Config::load(&config_file).context("loading config file") {
+        Ok(config) => config,
+        Err(e) => {
+            if let Some(crate_error) = e.downcast_ref::<PacdefError>() {
+                match crate_error {
+                    PacdefError::ConfigFileNotFound => load_default_config(&config_file)?,
+                    _ => bail!("unexpected error: {crate_error}"),
+                }
+            } else {
+                bail!("unexpected error: {e:?}");
+            }
+        }
+    };
+
+    dbg!(&config);
+    // .or_else(|_| load_default_config(&config_file))
+    // .context("loading config")?;
 
     let group_dir = get_group_dir().context("resolving group dir")?;
     let groups = Group::load(&group_dir, config.warn_not_symlinks)
@@ -73,8 +87,14 @@ fn load_default_config(config_file: &Path) -> Result<Config> {
         println!("{MAJOR_UPDATE_MESSAGE}");
     }
 
-    let default = Config::default();
-    default.save(config_file)?;
+    if !config_file.exists() {
+        create_empty_config_file(config_file)?;
+    }
 
-    Ok(default)
+    Ok(Config::default())
+}
+
+fn create_empty_config_file(config_file: &Path) -> Result<()> {
+    std::fs::File::create(config_file).context("creating empty config file")?;
+    Ok(())
 }

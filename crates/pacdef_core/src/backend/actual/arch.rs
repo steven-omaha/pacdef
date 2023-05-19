@@ -11,7 +11,7 @@ use crate::{impl_backend_constants, Group, Package};
 #[derive(Debug, Clone)]
 pub struct Arch {
     pub(crate) binary: String,
-    pub(crate) aur_rm_args: Option<Vec<String>>,
+    pub(crate) aur_rm_args: Vec<String>,
     pub(crate) packages: HashSet<Package>,
 }
 
@@ -72,9 +72,7 @@ impl Backend for Arch {
         let mut cmd = Command::new(&self.binary);
 
         cmd.args(self.get_switches_remove());
-        if let Some(rm_args) = &self.aur_rm_args {
-            cmd.args(rm_args);
-        }
+        cmd.args(&self.aur_rm_args);
 
         if noconfirm {
             cmd.args(self.get_switches_noconfirm());
@@ -124,7 +122,7 @@ impl Arch {
     pub(crate) fn new() -> Self {
         Self {
             binary: BINARY.to_string(),
-            aur_rm_args: None,
+            aur_rm_args: vec![],
             packages: HashSet::new(),
         }
     }
