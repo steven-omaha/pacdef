@@ -172,6 +172,7 @@ aur_rm_args: null  # additional args to pass to AUR helper when removing package
 warn_not_symlinks: true  # warn if a group file is not a symlink
 
 disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"], this can reduce runtime if the package manager is notoriously slow (like pip)
+flatpak_systemwide: true  # whether flatpak packages should be installed system-wide or per user
 ```
 
 
