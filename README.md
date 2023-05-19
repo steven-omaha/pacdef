@@ -164,14 +164,16 @@ Use `--help` or the zsh completion to find the right aliases.
 
 ## Configuration
 
-On first execution, it will create a basic config file under `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+On first execution, it will create an empty config file under `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+The following key-value pairs can be set.
+The listed values are the defaults.
 
 ```yaml
 aur_helper: paru  # AUR helper to use on Arch Linux (paru, yay, ...)
-aur_rm_args: null  # additional args to pass to AUR helper when removing packages (optional)
-warn_not_symlinks: true  # warn if a group file is not a symlink
-
+aur_rm_args: []  # additional args to pass to AUR helper when removing packages (optional)
 disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"], this can reduce runtime if the package manager is notoriously slow (like pip)
+
+warn_not_symlinks: true  # warn if a group file is not a symlink
 flatpak_systemwide: true  # whether flatpak packages should be installed system-wide or per user
 ```
 
