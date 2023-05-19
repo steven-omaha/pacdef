@@ -1,13 +1,15 @@
 use std::fmt::{Display, Write};
 use std::hash::Hash;
 
+/// A struct to represent a single package, consiting of a `name`, and
+/// optionally a `repo`.
 #[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
     pub(crate) name: String,
     repo: Option<String>,
 }
 
-fn remove_all_but_package_name(s: &str) -> &str {
+fn remove_comment_and_trim_whitespace(s: &str) -> &str {
     s.split('#') // remove comment
         .next()
         .expect("line contains something")
@@ -16,7 +18,7 @@ fn remove_all_but_package_name(s: &str) -> &str {
 
 impl From<String> for Package {
     fn from(value: String) -> Self {
-        let trimmed = remove_all_but_package_name(&value);
+        let trimmed = remove_comment_and_trim_whitespace(&value);
         debug_assert!(!trimmed.is_empty(), "empty package names are not allowed");
 
         let (name, repo) = Self::split_into_name_and_repo(trimmed);
@@ -31,18 +33,28 @@ impl From<&str> for Package {
 }
 
 impl Package {
-    fn split_into_name_and_repo(s: &str) -> (String, Option<String>) {
-        let mut iter = s.split('/').rev();
+    /// From a string that contains a package name, optionally prefixed by a
+    /// repository, return the package name as well as the repository if it
+    /// exists.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `string` is empty.
+    fn split_into_name_and_repo(string: &str) -> (String, Option<String>) {
+        let mut iter = string.split('/').rev();
         let name = iter.next().expect("we checked that earlier").to_string();
         let repo = iter.next().map(|s| s.to_string());
         (name, repo)
     }
 
+    /// Try to parse a string (from a line in a group file) and return a package.
+    /// From the string, any possible comment is removed and whitespace is trimmed.
+    /// Returns `None` if there is nothing left after trimming.
     pub(crate) fn try_from<S>(s: S) -> Option<Self>
     where
         S: AsRef<str>,
     {
-        let trimmed = remove_all_but_package_name(s.as_ref());
+        let trimmed = remove_comment_and_trim_whitespace(s.as_ref());
         if trimmed.is_empty() {
             return None;
         }

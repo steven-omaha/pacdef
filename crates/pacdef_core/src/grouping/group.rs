@@ -23,7 +23,7 @@ pub struct Group {
 }
 
 impl Group {
-    /// Load all group files from the pacdef group dir by recursing through the group dir.
+    /// Load all group files from the pacdef group dir by traversing through the group dir.
     ///
     /// This method will print a warning if
     /// - there are no files under `group_dir`, or
@@ -105,6 +105,17 @@ impl Eq for Group {
 }
 
 impl Group {
+    /// Load the group from `path`. Determine the name from the path relative to the
+    /// `group_dir`.
+    ///
+    /// # Warnings
+    ///
+    /// This function will print a warning if any section in the group file cannot
+    /// be processed, or the file contains no sections.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the group file cannot be read.
     fn try_from<P>(path: P, group_dir: P) -> Result<Self>
     where
         P: AsRef<Path>,
@@ -146,6 +157,11 @@ impl Group {
     /// Add the new `packages` to the group file under the section `section_header`. If
     /// the section header does not yet exist, it is created. The packages are written
     /// in the provided order immediately after the header.
+    ///
+    /// # Errors
+    ///
+    /// This function returns an error if the group file cannot be read, or if the
+    /// file cannot be written to.
     pub(crate) fn save_packages(&self, section_header: &str, packages: &[Package]) -> Result<()> {
         let mut content = read_to_string(&self.path)
             .with_context(|| format!("reading existing file contents from {:?}", &self.path))?;
@@ -205,6 +221,12 @@ impl Display for Group {
     }
 }
 
+/// Add some packages to an existing section in the content of a group file.
+///
+/// # Errors
+///
+/// This function will return an error if the header cannot be found in
+/// the file content.
 fn write_packages_to_existing_section(
     group_file_content: &mut String,
     section_header: &str,
@@ -223,6 +245,14 @@ fn write_packages_to_existing_section(
     Ok(())
 }
 
+/// Find the index to the first line in `group_file_content` after the
+/// given `section_header`.
+///
+/// # Errors
+///
+/// This function will return an error if the `section_header` does not
+/// exist in `group_file_content`, or if the line containing the
+/// `section_header` is not newline-terminated.
 fn find_first_package_line_in_section(
     group_file_content: &str,
     section_header: &str,
@@ -238,6 +268,7 @@ fn find_first_package_line_in_section(
     Ok(section_start + distance_to_next_newline + 1) // + 1 to be after the newline
 }
 
+/// Append a new section with some packages to the content of a group file.
 fn add_new_section_with_packages(
     group_file_content: &mut String,
     section_header: &str,

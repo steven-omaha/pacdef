@@ -58,9 +58,19 @@ pub trait Backend: Debug {
     fn get_managed_packages(&self) -> &HashSet<Package>;
 
     /// Get all packages that are installed in the system.
+    ///
+    /// # Errors
+    ///
+    /// This function shall return an error if the installed packages cannot be
+    /// determined.
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>>;
 
     /// Get all packages that were installed in the system explicitly.
+    ///
+    /// # Errors
+    ///
+    /// This function shall return an error if the explicitly installed packages
+    /// cannot be determined.
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>>;
 
     /// Assign each of the packages to an individual group by editing the
@@ -76,7 +86,13 @@ pub trait Backend: Debug {
         Ok(())
     }
 
-    /// Install the specified packages.
+    /// Install the specified packages. If `noconfirm` is `true`, pass the corresponding
+    /// switch to the package manager. Return the [`ExitStatus`] from the package manager.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the package manager cannot be run or it
+    /// returns an error.
     fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
