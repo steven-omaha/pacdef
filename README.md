@@ -142,7 +142,7 @@ Usage on different machines:
 
 | Subcommand                        | Description                                                           |
 |-----------------------------------|-----------------------------------------------------------------------|
-| `group import [<group>...]`       | import one or more groups, which creates managed packages             |
+| `group import [<path>...]`        | create a symlink to the specified group file(s) in your groups folder | 
 | `group list`                      | list names of all groups                                              |  
 | `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
 | `group remove [<group>...]`       | remove a previously imported group                                    |
