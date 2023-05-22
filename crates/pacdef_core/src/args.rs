@@ -141,7 +141,7 @@ fn build_noconfirm_arg() -> Arg {
         .action(ArgAction::SetTrue)
 }
 
-/// Get and parse the CLI arguments.
+/// Get and parse the CLI arguments. Returns an instance of [`clap::ArgMatches`].
 #[must_use]
 pub fn get() -> clap::ArgMatches {
     build_cli().get_matches()
