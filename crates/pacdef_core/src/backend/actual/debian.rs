@@ -7,7 +7,8 @@ use rust_apt::cache::PackageSort;
 use rust_apt::new_cache;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
-use crate::{impl_backend_constants, Group, Package};
+use crate::backend::macros::impl_backend_constants;
+use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Debian {
