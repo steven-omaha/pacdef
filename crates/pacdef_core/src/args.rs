@@ -7,6 +7,8 @@ use path_absolutize::Absolutize;
 use crate::action::*;
 use crate::core::get_version_string;
 
+const ACTION_NOT_MATCHED: &str = "could not match action";
+
 /// Build the `pacdef` argument parser, with subcommands for `version`,
 /// `group` and `package`.
 fn build_cli() -> Command {
@@ -159,4 +161,37 @@ pub fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>
                 .into_owned()
         })
         .collect())
+}
+
+#[derive(Debug)]
+pub struct Arguments {
+    pub(crate) action: Actions,
+    edit: bool,
+    noconfirm: bool,
+    regex: Option<String>,
+    groups: Option<String>,
+}
+
+impl Arguments {
+    fn new(action: Actions) -> Self {
+        Self {
+            action,
+            edit: false,
+            noconfirm: false,
+            regex: None,
+            groups: None,
+        }
+    }
+}
+
+impl From<ArgMatches> for Arguments {
+    fn from(value: ArgMatches) -> Self {
+        let (action, args) = match value.subcommand() {
+            Some((variant, args)) => (Actions::from(variant), args),
+            None => unreachable!(),
+        };
+        let result = Self::new(action);
+
+        result
+    }
 }

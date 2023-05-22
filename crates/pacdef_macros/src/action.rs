@@ -13,10 +13,25 @@ pub fn action(input: TokenStream) -> TokenStream {
 
     let variant_description = generate_variant_description(enum_data);
     let variant_constants = generate_variant_constants(name, enum_data);
+    let variant_from = generate_variant_from(name, enum_data);
 
-    let expanded = compile_output(name, variant_description, variant_constants);
+    let expanded = compile_output(name, variant_description, variant_constants, variant_from);
 
     TokenStream::from(expanded)
+}
+
+fn generate_variant_from<'a>(
+    name: &'a syn::Ident,
+    enum_data: &'a syn::DataEnum,
+) -> impl Iterator<Item = TokenStream2> + 'a {
+    let result = enum_data.variants.iter().map(move |variant| {
+        let variant_name = &variant.ident;
+
+        quote! {
+            "#variant_name" => #name::#variant_name,
+        }
+    });
+    result
 }
 
 fn generate_variant_description(
@@ -52,14 +67,16 @@ fn generate_variant_constants<'a>(
     result
 }
 
-fn compile_output<T, U>(
+fn compile_output<T, U, V>(
     name: &syn::Ident,
     variant_description: T,
     variant_constants: U,
+    variant_from: V,
 ) -> TokenStream2
 where
     T: Iterator<Item = TokenStream2>,
     U: Iterator<Item = TokenStream2>,
+    V: Iterator<Item = TokenStream2>,
 {
     let expanded = quote! {
         impl #name {
@@ -67,6 +84,15 @@ where
             const fn name(&self) -> &'static str {
                 match self {
                     #(#variant_description)*
+                }
+            }
+        }
+
+        impl From<&str> for #name {
+            fn from(value: &str) -> Self {
+                match value {
+                    #(#variant_from)*
+                    _ => panic!("unmatched &str to build Actions enum"),
                 }
             }
         }

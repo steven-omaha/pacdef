@@ -17,3 +17,11 @@ pub enum Actions {
     Unmanaged,
     Version,
 }
+
+// impl From<&str> for Actions {
+//     fn from(value: &str) -> Self {
+//         match value {
+
+//         }
+//     }
+// }
