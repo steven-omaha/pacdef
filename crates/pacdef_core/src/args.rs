@@ -187,9 +187,12 @@ impl Arguments {
 impl From<ArgMatches> for Arguments {
     fn from(value: ArgMatches) -> Self {
         let (action, args) = match value.subcommand() {
-            Some((variant, args)) => (Actions::from(variant), args),
+            Some(("group", args)) => match args.subcommand() {
+                Some((EDIT, args)) => MainActions::Group(GroupAction::Edit),
+            },
             None => unreachable!(),
         };
+        args.
         let result = Self::new(action);
 
         result

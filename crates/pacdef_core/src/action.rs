@@ -18,10 +18,25 @@ pub enum Actions {
     Version,
 }
 
-// impl From<&str> for Actions {
-//     fn from(value: &str) -> Self {
-//         match value {
+pub enum MainActions {
+    Group(GroupAction),
+    Package(PackageAction),
+    Version,
+}
 
-//         }
-//     }
-// }
+pub enum GroupAction {
+    Edit,
+    Import,
+    List,
+    New,
+    Remove,
+    Show,
+}
+
+pub enum PackageAction {
+    Clean,
+    Review,
+    Search,
+    Sync,
+    Unmanaged,
+}
