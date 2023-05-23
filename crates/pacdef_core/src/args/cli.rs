@@ -35,7 +35,7 @@ fn get_group_cmd() -> Command {
         .about("import one or more group files")
         .arg_required_else_help(true)
         .arg(
-            Arg::new("files")
+            Arg::new("groups")
                 .num_args(1..)
                 .required(true)
                 .help("the file to import as group"),

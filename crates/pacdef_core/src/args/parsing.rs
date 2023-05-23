@@ -61,6 +61,7 @@ fn get_edit(args: &clap::ArgMatches) -> Edit {
 }
 
 fn get_groups(args: &clap::ArgMatches) -> Groups {
+    dbg!(&args);
     Groups(
         args.get_many::<String>("groups")
             .expect(ARGS_CONSISTENT)
