@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::{env, path::Path};
 
 use anyhow::{Context, Result};
+use path_absolutize::Absolutize;
 
 const CONFIG_FILE_NAME: &str = "pacdef.yaml";
 const CONFIG_FILE_NAME_OLD: &str = "pacdef.conf";
@@ -118,6 +119,19 @@ where
         .for_each(|(a, b)| assert_eq!(a, b));
     let relative_path: PathBuf = file_iter.collect();
     relative_path
+}
+
+/// For each file argument, return the absolute path to the file.
+pub(crate) fn get_absolutized_file_paths(arg_match: &[String]) -> Result<Vec<PathBuf>> {
+    Ok(arg_match
+        .iter()
+        .map(PathBuf::from)
+        .map(|path| {
+            path.absolutize()
+                .expect("absolute path should exist")
+                .into_owned()
+        })
+        .collect())
 }
 
 #[cfg(test)]

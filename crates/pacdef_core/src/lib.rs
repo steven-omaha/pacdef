@@ -21,7 +21,6 @@ This library contains all logic that happens in `pacdef` under the hood.
     missing_docs
 )]
 
-mod action;
 mod args;
 mod backend;
 mod cmd;

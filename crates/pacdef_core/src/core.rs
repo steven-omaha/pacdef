@@ -4,28 +4,24 @@ use std::os::unix::fs::symlink;
 use std::path::Path;
 
 use anyhow::{bail, ensure, Context, Result};
-use clap::ArgMatches;
 use const_format::formatcp;
 
-use crate::action::*;
-use crate::args::{self, Arguments, GroupArguments, PackageArguments};
+use crate::args::{self, PackageAction};
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
-use crate::path::{binary_in_path, get_group_dir};
+use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
 use crate::review;
 use crate::search;
 use crate::ui::get_user_confirmation;
 use crate::Config;
 use crate::Group;
 
-const UNREACHABLE_ARM: &str = "argument parser requires some subcommand to return an `ArgMatches`";
-const ACTION_NOT_MATCHED: &str = "could not match action";
-
 /// Most data that is required during runtime of the program.
+/// `args` is an `Option` so that we can take ownership later without cloning.
 #[allow(dead_code)] // "`config` is only needed on Arch Linux"
 pub struct Pacdef {
-    args: Option<Arguments>,
+    args: Option<args::Arguments>,
     config: Config,
     groups: HashSet<Group>,
 }
@@ -34,7 +30,7 @@ impl Pacdef {
     /// Creates a new [`Pacdef`]. `config` should be passed from [`Config::load`], and `args` from
     /// [`args::get`].
     #[must_use]
-    pub const fn new(args: Arguments, config: Config, groups: HashSet<Group>) -> Self {
+    pub const fn new(args: args::Arguments, config: Config, groups: HashSet<Group>) -> Self {
         Self {
             args: Some(args),
             config,
@@ -57,60 +53,39 @@ impl Pacdef {
     /// This function propagates errors from the underlying functions.
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(mut self) -> Result<()> {
-        match self.args.take().unwrap() {
-            Arguments::Group(group_args) => self.run_group_subcommand(&group_args),
-            Arguments::Package(package_args) => self.run_package_subcommand(&package_args),
-            Arguments::Version => Ok(self.show_version()),
-            // Some(("group", args)) => match args.subcommand() {
-            //     Some((EDIT, args)) => self.edit_group_files(args).context("editing group files"),
-            //     Some((IMPORT, args)) => self.import_groups(args).context("importing groups"),
-            //     Some((LIST, _)) => Ok(self.show_groups()),
-            //     Some((NEW, args)) => self.new_groups(args).context("creating new group files"),
-            //     Some((REMOVE, args)) => self.remove_groups(args).context("removing groups"),
-            //     Some((SHOW, args)) => self.show_group_content(args).context("showing groups"),
-
-            //     Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
-            //     None => unreachable!("{UNREACHABLE_ARM}"),
-
-            // Some(("package", args)) => match args.subcommand() {
-            //     Some((CLEAN, args)) => self.clean_packages(&args.clone()),
-            //     Some((REVIEW, _)) => review::review(self.get_unmanaged_packages()?, self.groups)
-            //         .context("review unmanaged packages"),
-            //     Some((SEARCH, args)) => {
-            //         search::search_packages(args, &self.groups).context("searching packages")
-            //     }
-            //     Some((SYNC, args)) => self.install_packages(&args.clone()), // TODO fix cloning
-            //     Some((UNMANAGED, _)) => self.show_unmanaged_packages(),
-
-            //     Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
-            //     None => unreachable!("{UNREACHABLE_ARM}"),
-            // },
-
-            // Some((VERSION, _)) => Ok(self.show_version()),
-
-            // Some((_, _)) => panic!("{ACTION_NOT_MATCHED}"),
-            // None => unreachable!("{UNREACHABLE_ARM}"),
+        match self
+            .args
+            .take()
+            .expect("if there were no args we would not get to here")
+        {
+            args::Arguments::Group(group_args) => self.run_group_subcommand(&group_args),
+            args::Arguments::Package(package_args) => self.run_package_subcommand(&package_args),
+            args::Arguments::Version => Ok(self.show_version()),
         }
     }
 
-    fn run_group_subcommand(self, args: &GroupArguments) -> Result<()> {
-        match args.action {
-            GroupAction::Edit => self.edit_group_files(&args.groups),
-            GroupAction::Import => self.import_groups(&args.groups),
-            GroupAction::List => Ok(self.show_groups()),
-            GroupAction::New => self.new_groups(&args.groups, args.edit),
-            GroupAction::Remove => self.remove_groups(&args.groups),
-            GroupAction::Show => Ok(self.show_groups()),
+    fn run_group_subcommand(self, args: &args::GroupAction) -> Result<()> {
+        use args::GroupAction::*;
+
+        match args {
+            Edit(groups) => self.edit_groups(&groups.0),
+            Import(groups) => self.import_groups(&groups.0),
+            List => self.show_groups(),
+            New(groups, args::Edit(edit)) => self.new_groups(&groups.0, *edit),
+            Remove(groups) => self.remove_groups(&groups.0),
+            Show(groups) => self.show_group_content(&groups.0),
         }
     }
 
-    fn run_package_subcommand(mut self, args: &PackageArguments) -> Result<()> {
-        match args.action {
-            PackageAction::Clean => self.clean_packages(args.noconfirm),
-            PackageAction::Review => review::review(self.get_unmanaged_packages()?, self.groups),
-            PackageAction::Search => search::search_packages(&args.regex, &self.groups),
-            PackageAction::Sync => self.install_packages(args.noconfirm),
-            PackageAction::Unmanaged => self.show_unmanaged_packages(),
+    fn run_package_subcommand(mut self, args: &PackageAction) -> Result<()> {
+        use args::PackageAction::*;
+
+        match args {
+            Clean(noconfirm) => self.clean_packages(noconfirm.0),
+            Review => review::review(self.get_unmanaged_packages()?, self.groups),
+            Search(regex) => search::search_packages(&regex.0, &self.groups),
+            Sync(noconfirm) => self.install_packages(noconfirm.0),
+            Unmanaged => self.show_unmanaged_packages(),
         }
     }
 
@@ -181,7 +156,7 @@ impl Pacdef {
         to_install.install_missing_packages(noconfirm)
     }
 
-    fn edit_group_files(&self, groups: &[String]) -> Result<()> {
+    fn edit_groups(&self, groups: &[String]) -> Result<()> {
         let group_files = get_group_file_paths_matching_args(&groups, &self.groups)
             .context("getting group files for args")?;
 
@@ -244,12 +219,13 @@ impl Pacdef {
         Ok(result)
     }
 
-    fn show_groups(self) {
+    fn show_groups(self) -> Result<()> {
         let mut vec: Vec<_> = self.groups.iter().collect();
         vec.sort_unstable();
         for g in vec {
             println!("{}", g.name);
         }
+        Ok(())
     }
 
     fn clean_packages(&mut self, noconfirm: bool) -> Result<()> {
@@ -273,17 +249,12 @@ impl Pacdef {
         to_remove.remove_unmanaged_packages(noconfirm)
     }
 
-    fn show_group_content(&self, groups: &ArgMatches) -> Result<()> {
-        let args: Vec<_> = groups
-            .get_many::<String>("groups")
-            .context("getting groups from args")?
-            .collect();
-
+    fn show_group_content(&self, args: &[String]) -> Result<()> {
         let mut errors = vec![];
         let mut groups = vec![];
 
         // make sure all args exist before doing anything
-        for arg_group in &args {
+        for arg_group in args {
             let group = self.groups.iter().find(|g| g.name == **arg_group);
 
             let group = match group {
@@ -328,7 +299,7 @@ impl Pacdef {
 
     #[allow(clippy::unused_self)]
     fn import_groups(&self, file_names: &[String]) -> Result<()> {
-        let files = args::get_absolutized_file_paths(file_names)?;
+        let files = get_absolutized_file_paths(file_names)?;
         let groups_dir = get_group_dir()?;
 
         for target in files {
@@ -367,11 +338,11 @@ impl Pacdef {
     }
 
     #[allow(clippy::unused_self)]
-    fn new_groups(&self, new_group_names: &[String], edit: bool) -> Result<()> {
+    fn new_groups(&self, new_groups: &[String], edit: bool) -> Result<()> {
         let group_path = get_group_dir()?;
 
         // prevent group names that resolve to directories
-        for name in new_group_names {
+        for name in new_groups {
             ensure!(
                 *name != ".",
                 crate::Error::InvalidGroupName(".".to_string())
@@ -382,8 +353,8 @@ impl Pacdef {
             );
         }
 
-        let paths: Vec<_> = new_group_names
-            .into_iter()
+        let paths: Vec<_> = new_groups
+            .iter()
             .map(|name| {
                 let mut base = group_path.clone();
                 base.push(name);
