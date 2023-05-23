@@ -38,7 +38,3 @@ pub struct Edit(pub bool);
 
 #[derive(Debug)]
 pub struct Noconfirm(pub bool);
-
-pub fn get() -> Arguments {
-    todo!()
-}

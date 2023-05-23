@@ -157,7 +157,7 @@ impl Pacdef {
     }
 
     fn edit_groups(&self, groups: &[String]) -> Result<()> {
-        let group_files = get_group_file_paths_matching_args(&groups, &self.groups)
+        let group_files = get_group_file_paths_matching_args(groups, &self.groups)
             .context("getting group files for args")?;
 
         let success = run_edit_command(&group_files)

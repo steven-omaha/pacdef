@@ -2,8 +2,7 @@ use std::collections::HashSet;
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
-use anyhow::{bail, Context, Result};
-use clap::ArgMatches;
+use anyhow::{bail, Result};
 use regex::Regex;
 
 use crate::grouping::{Group, Package, Section};

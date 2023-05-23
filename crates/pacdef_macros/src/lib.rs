@@ -21,7 +21,6 @@ Procedural macros for `pacdef`.
     missing_docs
 )]
 
-mod action;
 mod register;
 
 use proc_macro::TokenStream;
@@ -31,11 +30,4 @@ use proc_macro::TokenStream;
 #[proc_macro_derive(Register)]
 pub fn register(input: TokenStream) -> TokenStream {
     register::register(input)
-}
-
-/// Derive public constants from each variant of the enum, such that the name of the constant is
-/// the name of the variant in all caps, and the value is the name of the variant in lowercase.
-#[proc_macro_derive(Action)]
-pub fn action(input: TokenStream) -> TokenStream {
-    action::action(input)
 }
