@@ -17,6 +17,11 @@ use crate::grouping::{Group, Package, Section};
 /// - an invalid regex was provided, or
 /// - no matching packages could be found.
 pub fn search_packages(regex_str: &str, groups: &HashSet<Group>) -> Result<()> {
+    if groups.is_empty() {
+        eprintln!("WARNING: no group files found");
+        bail!(crate::errors::Error::NoPackagesFound);
+    }
+
     let re = Regex::new(regex_str)?;
 
     let mut vec = vec![];

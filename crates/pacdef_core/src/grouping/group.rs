@@ -25,9 +25,8 @@ pub struct Group {
 impl Group {
     /// Load all group files from the pacdef group dir by traversing through the group dir.
     ///
-    /// This method will print a warning if
-    /// - there are no files under `group_dir`, or
-    /// - `warn_not_symlinks` is true and a group file is not a symlink.
+    /// This method will print a warning if `warn_not_symlinks` is true and a group
+    /// file is not a symlink.
     ///
     /// # Errors
     ///
@@ -63,10 +62,6 @@ impl Group {
                 .with_context(|| format!("reading group file {path:?}"))?;
 
             result.insert(group);
-        }
-
-        if result.is_empty() {
-            eprintln!("WARNING: no group files found");
         }
 
         Ok(result)

@@ -92,6 +92,10 @@ impl Pacdef {
     fn get_missing_packages(&mut self) -> Result<ToDoPerBackend> {
         let mut to_install = ToDoPerBackend::new();
 
+        if self.groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
         for mut backend in Backends::iter() {
             if self
                 .config
@@ -157,6 +161,10 @@ impl Pacdef {
     }
 
     fn edit_groups(&self, groups: &[String]) -> Result<()> {
+        if self.groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
         let group_files = get_group_file_paths_matching_args(groups, &self.groups)
             .context("getting group files for args")?;
 
@@ -193,6 +201,10 @@ impl Pacdef {
     ///
     /// This function will propagate errors.
     fn get_unmanaged_packages(&mut self) -> Result<ToDoPerBackend> {
+        if self.groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
         let mut result = ToDoPerBackend::new();
 
         for mut backend in Backends::iter() {
@@ -220,6 +232,10 @@ impl Pacdef {
     }
 
     fn show_groups(self) -> Result<()> {
+        if self.groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
         let mut vec: Vec<_> = self.groups.iter().collect();
         vec.sort_unstable();
         for g in vec {
@@ -250,6 +266,10 @@ impl Pacdef {
     }
 
     fn show_group_content(&self, args: &[String]) -> Result<()> {
+        if self.groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
         let mut errors = vec![];
         let mut groups = vec![];
 
@@ -328,6 +348,10 @@ impl Pacdef {
     }
 
     fn remove_groups(&self, groups: &[String]) -> Result<()> {
+        if self.groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
         let paths = get_group_file_paths_matching_args(groups, &self.groups)?;
 
         for file in paths {
