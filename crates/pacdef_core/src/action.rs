@@ -1,6 +1,6 @@
 use pacdef_macros::Action;
 
-/// All actions the program can perform. Variants of the enum relate to
+/// All main actions the program can perform. Variants of the enum relate to
 /// the different subcommands.
 #[derive(Debug, Action)]
 pub enum Actions {

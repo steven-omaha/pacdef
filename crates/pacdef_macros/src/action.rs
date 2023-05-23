@@ -63,7 +63,8 @@ where
 {
     let expanded = quote! {
         impl #name {
-            pub const fn name(&self) -> &'static str {
+            /// Return the lowercase name of the enum variant as `&str`.
+            const fn name(&self) -> &'static str {
                 match self {
                     #(#variant_description)*
                 }
