@@ -17,8 +17,8 @@ use crate::grouping::{Group, Package, Section};
 /// This function will return an error if
 /// - an invalid regex was provided, or
 /// - no matching packages could be found.
-pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()> {
-    let re = get_regex_from_args(args)?;
+pub fn search_packages(regex_str: &str, groups: &HashSet<Group>) -> Result<()> {
+    let re = Regex::new(regex_str)?;
 
     let mut vec = vec![];
 
@@ -39,21 +39,6 @@ pub fn search_packages(args: &ArgMatches, groups: &HashSet<Group>) -> Result<()>
     print_triples(vec);
 
     Ok(())
-}
-
-/// Extract the user-provided regex from the command-line args.
-///
-/// # Errors
-///
-/// This function will return an error if an invalid regex was provided.
-fn get_regex_from_args(args: &ArgMatches) -> Result<Regex, anyhow::Error> {
-    let search_string = args
-        .get_one::<String>("regex")
-        .context("getting search string from arg")?;
-
-    let re = Regex::new(search_string)?;
-
-    Ok(re)
 }
 
 fn print_triples(mut vec: Vec<(&Group, &Section, &Package)>) {

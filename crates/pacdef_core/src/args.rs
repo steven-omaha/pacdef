@@ -145,15 +145,14 @@ fn build_noconfirm_arg() -> Arg {
 
 /// Get and parse the CLI arguments. Returns an instance of [`clap::ArgMatches`].
 #[must_use]
-pub fn get() -> clap::ArgMatches {
-    build_cli().get_matches()
+pub fn get() -> Arguments {
+    Arguments::from(build_cli().get_matches())
 }
 
 /// For each file argument, return the absolute path to the file.
-pub fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>> {
-    Ok(arg_match
-        .get_many::<String>("files")
-        .context("getting files from args")?
+pub fn get_absolutized_file_paths(file_names: &[String]) -> Result<Vec<PathBuf>> {
+    Ok(file_names
+        .iter()
         .map(PathBuf::from)
         .map(|path| {
             path.absolutize()
@@ -164,37 +163,70 @@ pub fn get_absolutized_file_paths(arg_match: &ArgMatches) -> Result<Vec<PathBuf>
 }
 
 #[derive(Debug)]
-pub struct Arguments {
-    pub(crate) action: Actions,
-    edit: bool,
-    noconfirm: bool,
-    regex: Option<String>,
-    groups: Option<String>,
+pub enum Arguments {
+    Group(GroupArguments),
+    Package(PackageArguments),
+    Version,
 }
 
-impl Arguments {
-    fn new(action: Actions) -> Self {
+#[derive(Debug, Clone)]
+pub struct GroupArguments {
+    pub(crate) action: GroupAction,
+    pub(crate) edit: bool,
+    pub(crate) groups: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct PackageArguments {
+    pub(crate) action: PackageAction,
+    pub(crate) noconfirm: bool,
+    pub(crate) regex: String,
+}
+
+impl GroupArguments {
+    fn parse_args(args: &ArgMatches) -> Self {
+        let action = GroupAction::try_from(args.subcommand_name().unwrap()).unwrap();
+        let edit = args.get_one::<bool>("edit").cloned().unwrap_or_default();
+        let groups = args
+            .get_many::<String>("groups")
+            .unwrap()
+            .cloned()
+            .collect();
         Self {
             action,
-            edit: false,
-            noconfirm: false,
-            regex: None,
-            groups: None,
+            edit,
+            groups,
+        }
+    }
+}
+
+impl PackageArguments {
+    fn parse_args(args: &ArgMatches) -> Self {
+        dbg!(&args.subcommand_name().unwrap());
+        let action = PackageAction::try_from(args.subcommand_name().unwrap()).unwrap();
+        let noconfirm = args
+            .try_get_one::<bool>("noconfirm")
+            .map_or(false, |value| value.cloned().unwrap_or_default());
+        let regex = args
+            .try_get_one::<String>("regex")
+            .map_or(String::default, |value| value.cloned().unwrap());
+
+        Self {
+            action,
+            noconfirm,
+            regex,
         }
     }
 }
 
 impl From<ArgMatches> for Arguments {
     fn from(value: ArgMatches) -> Self {
-        let (action, args) = match value.subcommand() {
-            Some(("group", args)) => match args.subcommand() {
-                Some((EDIT, args)) => MainActions::Group(GroupAction::Edit),
-            },
-            None => unreachable!(),
+        let result = match value.subcommand() {
+            Some(("group", args)) => Self::Group(GroupArguments::parse_args(args)),
+            Some(("package", args)) => Self::Package(PackageArguments::parse_args(args)),
+            Some(("version", _)) => Self::Version,
+            _ => panic!("inconsistent argument definition"),
         };
-        args.
-        let result = Self::new(action);
-
         result
     }
 }
