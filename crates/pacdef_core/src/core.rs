@@ -68,12 +68,12 @@ impl Pacdef {
         use args::GroupAction::*;
 
         match args {
-            Edit(groups) => self.edit_groups(&groups.0),
-            Import(groups) => self.import_groups(&groups.0),
+            Edit(args::Groups(groups)) => self.edit_groups(groups),
+            Import(args::Groups(groups)) => self.import_groups(groups),
             List => self.show_groups(),
-            New(groups, args::Edit(edit)) => self.new_groups(&groups.0, *edit),
-            Remove(groups) => self.remove_groups(&groups.0),
-            Show(groups) => self.show_group_content(&groups.0),
+            New(args::Groups(groups), args::Edit(edit)) => self.new_groups(groups, *edit),
+            Remove(args::Groups(groups)) => self.remove_groups(groups),
+            Show(args::Groups(groups)) => self.show_group_content(groups),
         }
     }
 
@@ -81,10 +81,10 @@ impl Pacdef {
         use args::PackageAction::*;
 
         match args {
-            Clean(noconfirm) => self.clean_packages(noconfirm.0),
+            Clean(args::Noconfirm(noconfirm)) => self.clean_packages(*noconfirm),
             Review => review::review(self.get_unmanaged_packages()?, self.groups),
-            Search(regex) => search::search_packages(&regex.0, &self.groups),
-            Sync(noconfirm) => self.install_packages(noconfirm.0),
+            Search(args::Regex(regex)) => search::search_packages(regex, &self.groups),
+            Sync(args::Noconfirm(noconfirm)) => self.install_packages(*noconfirm),
             Unmanaged => self.show_unmanaged_packages(),
         }
     }
