@@ -6,6 +6,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
+use path_absolutize::Absolutize;
 use walkdir::WalkDir;
 
 use crate::path::get_relative_path;
@@ -41,24 +42,28 @@ impl Group {
             create_dir(group_dir).context("group dir does not exist, creating")?;
         }
 
+        let mut symlink_dirs = Vec::new();
+
         for entry in WalkDir::new(group_dir).follow_links(true).min_depth(1) {
             let file = entry?;
-            let path = file.path();
+            let path = file.path().absolutize_from(group_dir)?.to_path_buf();
 
             if path.is_dir() {
+                if warn_not_symlinks && path.is_symlink() {
+                    symlink_dirs.push(path.to_owned());
+                }
                 continue;
             }
 
-            if warn_not_symlinks && !path.is_symlink() {
-                // TODO is there an efficient way to make sure *any* of the elements in the path
-                // is a symlink?
+            if warn_not_symlinks && !path.is_symlink() && !is_child_of_any_dir(&path, &symlink_dirs)
+            {
                 eprintln!(
                     "WARNING: group file {} is not a symlink",
                     path.to_string_lossy()
                 );
             }
 
-            let group = Self::try_from(path, group_dir)
+            let group = Self::try_from(path.as_path(), group_dir)
                 .with_context(|| format!("reading group file {path:?}"))?;
 
             result.insert(group);
@@ -66,6 +71,23 @@ impl Group {
 
         Ok(result)
     }
+}
+
+/// Check if `path` is a child of any of the [`PathBuf`] in `dirs`. All paths should be
+/// absolute.
+fn is_child_of_any_dir(path: &Path, dirs: &[PathBuf]) -> bool {
+    dirs.iter()
+        // pair `path` with every item from `symlink_dirs`
+        .zip([path].iter().cycle())
+        // for every pair, test if all path elements of the dir are present in the file path
+        .map(|(dir, file)| {
+            dir.iter()
+                .zip(file.iter())
+                .map(|(dir_elem, file_elem)| dir_elem == file_elem)
+                .all(|path_element_equal| path_element_equal)
+        })
+        // it suffices if that holds for any of the generated pairs
+        .any(|is_child| is_child)
 }
 
 impl PartialOrd for Group {
@@ -289,5 +311,20 @@ mod tests {
 
         let result = super::extract_group_name(&path, &group_path);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn is_child_of_any_symlink_dir() {
+        let path = PathBuf::from("/a/b/c/d/e");
+        let dir = PathBuf::from("/z");
+        let mut symlink_dirs = vec![dir];
+
+        let result = super::is_child_of_any_dir(&path, &symlink_dirs);
+        assert!(!result);
+
+        symlink_dirs.push(PathBuf::from("/a/b/c"));
+
+        let result = super::is_child_of_any_dir(&path, &symlink_dirs);
+        assert!(result);
     }
 }
