@@ -199,7 +199,7 @@ impl Pacdef {
     ///
     /// # Errors
     ///
-    /// This function will propagate errors.
+    /// This function will propagate errors from the individual backends.
     fn get_unmanaged_packages(&mut self) -> Result<ToDoPerBackend> {
         if self.groups.is_empty() {
             eprintln!("WARNING: no group files found");
