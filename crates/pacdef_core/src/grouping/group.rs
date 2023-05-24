@@ -27,7 +27,7 @@ impl Group {
     /// Load all group files from the pacdef group dir by traversing through the group dir.
     ///
     /// This method will print a warning if `warn_not_symlinks` is true and a group
-    /// file is not a symlink.
+    /// file is not a symlink or does not reside under a symlink dir.
     ///
     /// # Errors
     ///
