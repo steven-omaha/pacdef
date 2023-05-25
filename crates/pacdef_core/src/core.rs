@@ -121,7 +121,6 @@ impl Pacdef {
         Ok(to_install)
     }
 
-    #[allow(clippy::unused_self, unused_variables)]
     fn overwrite_values_from_config(&mut self, backend: &mut dyn Backend) {
         #[cfg(feature = "arch")]
         {
