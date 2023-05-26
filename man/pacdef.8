@@ -1,22 +1,124 @@
 .TH "PACDEF" "8" "2023\-05\-26" "pacdef v1\&.2\&.1" "Pacdef Manual"
 
-.SH "NAME"
-pacdef — multi-backend declarative package manager
+.SH NAME
+pacdef \(em multi-backend declarative package manager
 .SH SYNOPSIS
-.sp
-\fIpacdef\fR group <subcommand>
-.sp
-\fIpacdef\fR package <subcommand>
-.sp
-\fIpacdef\fR version
+\fIpacdef\fR <subcommand> ...
+.
 .SH DESCRIPTION
 Pacdef ...
 
 .SH CONFIGURATION
+Configure pacdef in its config file. See
+.BR pacdef.yaml(5).
+
 .SH SUBCOMMANDS
+The main subcommands are 'group', 'package' and 'version'.
+
+<g|group> <subcommand> ...
+.RS 4
+All actions related to managing groups.
+.sp
+<e|edit> <group> [...]
+.RS 4
+edit the content of an existing group
+.RE
+.
+.sp
+<i|import> <file> [...]
+.RS 4
+import a new group file or group dir structure
+.RE
+.sp
+<l|list>
+.RS 4
+show the sorted names of all imported groups
+.RE
+.sp
+<n|new> [args] <group> [...]
+.RS 4
+create a new group file
+.sp
+-e|--edit
+.RS 4
+After creating the files, open them in your configured editor as configured in
+$EDITOR or $VISUAL.
+.RE
+.RE
+.sp
+<r|remove> <group> [...]
+.RS 4
+remove group file.
+\fBWARNING\fR: If the group file is not a symlink, you wil loose the file!
+.
+.RE
+.sp
+<s|show> <group> [...]
+.RS 4
+show content of a group file
+.RE
+
+.RE
+
+
+<p|package> <subcommand> ...
+.RS 4
+All actions related to packages.
+
+.sp
+<c|clean> [args]
+.RS 4
+remove unmanaged packages
+.sp
+--noconfirm
+.RS 4
+do not ask for confirmation
+.RE
+.RE
+.
+.sp
+<r|review>
+.RS 4
+for each unmanaged package interactively decide what to do
+.RE
+.sp
+<se|search> <regex>
+.RS 4
+show packages that match the regular expression.
+.RE
+.sp
+<sy|sync> [args]
+.RS 4
+install managed packages
+
+--noconfirm
+.RS 4
+see 'clean'
+.RE
+.RE
+.sp
+<u|unmanaged>
+.RS 4
+show unmanaged packages
+.RE
+.RE
+.sp
+version
+.RS 4
+Show version information (including git revision if it was build from git) and supported backends.
+.RE
+
+
 .SH EXIT STATUS
-.SH FILES
+Pacdef exits with status 0 on success, 1 if an error occurs (e.g. package search did not yield any package), and 2 if invalid command line options were specified.
+
 .SH BUGS
+File bugs and feature requests under https://github.com/steven-omaha/pacdef/issues.
+
 .SH AUTHORS
+Mostly 'steven-omaha'.
+Contributors under https://github.com/steven-omaha/pacdef/graphs/contributors.
+
 .SH SEE ALSO
+.BR pacdef.yaml(5)
 
