@@ -1,0 +1,53 @@
+.TH "PACDEF.YAML" "5" "2023\-05\-26" "pacdef v1\&.2\&.1" "Pacdef Manual"
+
+.SH NAME
+pacdef.yaml \(em pacdef configuration file
+.SH SYNOPSIS
+$XDG_CONFIG_HOME/pacdef/pacdef.yaml
+.br
+$HOME/.config/pacdef/pacdef.yaml
+.
+.SH DESCRIPTION
+This is the config file for
+.BR pacdef(8).
+During startup, pacdef will try to load the config file as specified in the order in synopsis.
+If both $XDG_CONFIG_HOME and $HOME are unset, pacdef will exit with an error.
+
+The necessary directories are created during first startup.
+If the config file does not exist, it will be created without content, in which case the default settings apply.
+See OPTIONS for a description of the possible values.
+If the file contains any content that is not a valid key-value pair, pacdef will exit with an error.
+
+
+.SH OPTIONS
+The options together with their default values.
+
+.TP
+.B aur_helper: paru
+The AUR helper to use on Arch Linux
+
+.TP
+.B aur_rm_args: []
+Additional arguments to pass to the AUR helper on Arch Linux when removing a package.
+Must be a list of strings.
+.br
+Example: [--recursive]
+
+.TP
+.B disabled_backends: []
+Backends that pacdef should ignore even if the binary exists on the system.
+This can reduce runtime if the package manager is notoriously slow (like pip).
+.br
+Example: [python, flatpak]
+
+.TP
+.B warn_not_symlinks: true
+Warn if any group file is not a symlink and is not a child of a symlinked dir inside the group folder.
+
+.TP
+.B flatpak_systemwide: true
+Whether flatpak packages shold be installed system-wide or per user.
+
+.SH SEE ALSO
+.BR pacdef(8)
+
