@@ -339,7 +339,7 @@ checksum = "b7e5500299e16ebb147ae15a00a942af264cf3688f47923b8fc2cd5858f23ad3"
 
 [[package]]
 name = "pacdef"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "anyhow",
  "pacdef_core",
@@ -347,7 +347,7 @@ dependencies = [
 
 [[package]]
 name = "pacdef_core"
-version = "1.2.1"
+version = "1.2.2"
 dependencies = [
  "alpm",
  "anyhow",
