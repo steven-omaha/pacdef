@@ -43,11 +43,6 @@ impl Pacdef {
     /// For convenience sake, all called functions take a `&self` argument, even if
     /// these are not strictly required.
     ///
-    /// # Panics
-    ///
-    /// Panics if the user passed an unexpected action. This means all fields from
-    /// `crate::action::Action` must be matched in this function.
-    ///
     /// # Errors
     ///
     /// This function propagates errors from the underlying functions.
