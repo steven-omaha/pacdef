@@ -362,12 +362,8 @@ impl Pacdef {
         // prevent group names that resolve to directories
         for name in new_groups {
             ensure!(
-                *name != ".",
-                crate::Error::InvalidGroupName(".".to_string())
-            );
-            ensure!(
-                *name != "..",
-                crate::Error::InvalidGroupName("..".to_string())
+                *name != "." && *name != "..",
+                crate::Error::InvalidGroupName(name.to_owned())
             );
         }
 
