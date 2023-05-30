@@ -1,4 +1,4 @@
-.TH "PACDEF" "8" "2023\-05\-26" "pacdef v1\&.2\&.1" "Pacdef Manual"
+.TH "PACDEF" "8" "2023\-05\-30" "pacdef v1\&.2\&.1" "Pacdef Manual"
 
 .SH NAME
 pacdef \(em multi-backend declarative package manager
@@ -6,11 +6,33 @@ pacdef \(em multi-backend declarative package manager
 \fIpacdef\fR <subcommand> ...
 .
 .SH DESCRIPTION
-Pacdef ...
+Pacdef allows the user to have consistent packages among multiple Linux machines and different backends by managing packages in group files.
+The idea is that (1) any package in the group files ("managed packages") will be installed explicitly, and (2) explicitly installed packages not found in any of the group files ("unmanaged packages") will be removed.
+The group files are maintained outside of pacdef by any VCS, like git.
+
+Pacdef manages multiple package groups (group files) that, e.g., may be tied to a specific use-case.
+Each group has one or more sections which correspond to a specific backend, like your system's package manager (pacman, apt, ...), or your programming languages package manger (cargo, pip, ...).
+Each section contains one or more packages that can be installed respective package manager.
 
 .SH CONFIGURATION
 Configure pacdef in its config file. See
 .BR pacdef.yaml(5).
+
+.SS GROUP FILE SYNTAX
+
+Group files loosely follow the syntax for ini-files.
+
+1. Sections begin by their name in brackets.
+.br
+2. One package per line.
+.br
+3. Anything after a # is ignored.
+.br
+4. Empty lines are ignored.
+.br
+5. If a package exists in multiple repositories, the repo can be specified as prefix followed by a forward slash. The package manager must understand this notation.
+
+
 
 .SH SUBCOMMANDS
 The main subcommands are 'group', 'package' and 'version'.
