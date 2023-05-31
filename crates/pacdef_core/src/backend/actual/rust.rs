@@ -1,9 +1,10 @@
 use std::collections::HashSet;
 use std::fs::read_to_string;
+use std::io::ErrorKind::NotFound;
 use std::path::PathBuf;
 use std::process::ExitStatus;
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use serde_json::Value;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
@@ -31,7 +32,18 @@ impl Backend for Rust {
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let file = get_crates_file().context("getting path to crates file")?;
-        let content = read_to_string(file).context("reading crates file")?;
+
+        let content = match read_to_string(file) {
+            Ok(string) => string,
+            Err(err) if err.kind() == NotFound => {
+                eprintln!(
+                    "WARNING: no crates file foud for cargo. Assuming no crates installed yet."
+                );
+                return Ok(HashSet::new());
+            }
+            Err(err) => bail!(err),
+        };
+
         let json: Value =
             serde_json::from_str(&content).context("parsing JSON from crates file")?;
         extract_packages(&json).context("extracing packages from crates file")
