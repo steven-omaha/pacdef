@@ -13,6 +13,7 @@ Procedural macros for `pacdef`.
     clippy::option_if_let_else,
     clippy::redundant_pub_crate,
     clippy::semicolon_if_nothing_returned,
+    clippy::unnecessary_wraps,
     clippy::unused_self,
     clippy::unwrap_used,
     clippy::use_debug,

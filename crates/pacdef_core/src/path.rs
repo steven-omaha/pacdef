@@ -123,15 +123,18 @@ where
 
 /// For each file argument, return the absolute path to the file.
 pub(crate) fn get_absolutized_file_paths(arg_match: &[String]) -> Result<Vec<PathBuf>> {
-    Ok(arg_match
-        .iter()
-        .map(PathBuf::from)
-        .map(|path| {
-            path.absolutize()
-                .expect("absolute path should exist")
-                .into_owned()
-        })
-        .collect())
+    let mut result = vec![];
+
+    for item in arg_match {
+        let path: PathBuf = item.into();
+        let absolute = path
+            .absolutize()
+            .with_context(|| format!("absolutizing {path:?}"))?
+            .into_owned();
+        result.push(absolute);
+    }
+
+    Ok(result)
 }
 
 #[cfg(test)]
