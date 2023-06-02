@@ -204,6 +204,10 @@ topgrade
 
 ## Misc.
 
+### Automation
+
+Pacdef is supported by [topgrade](https://github.com/topgrade-rs/topgrade).
+
 ### Naming
 
 `pacdef` combines the words "package" and "define".
@@ -212,3 +216,5 @@ topgrade
 ### minimum supported rust version (MSRV)
 
 MSRV is 1.65.0. Development is conducted against the latest stable version.
+
+
