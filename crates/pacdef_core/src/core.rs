@@ -271,14 +271,13 @@ impl Pacdef {
 
         // make sure all args exist before doing anything
         for arg_group in args {
-            let group = self.groups.iter().find(|g| g.name == **arg_group);
+            let possible_group = self.groups.iter().find(|g| g.name == **arg_group);
 
-            let group = match group {
-                Some(g) => g,
-                None => {
-                    errors.push((*arg_group).clone());
-                    continue;
-                }
+            let group = if let Some(group) = possible_group {
+                group
+            } else {
+                errors.push((*arg_group).clone());
+                continue;
             };
 
             groups.push(group);
