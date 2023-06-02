@@ -91,8 +91,8 @@ fn load_default_config(config_file: &Path) -> Result<Config> {
 }
 
 fn create_empty_config_file(config_file: &Path) -> Result<()> {
-    std::fs::create_dir_all(config_file.parent().context("getting parent dir")?)
-        .context("creating parent dir")?;
+    let config_dir = &config_file.parent().context("getting parent dir")?;
+    std::fs::create_dir_all(config_dir).context("creating parent dir")?;
     std::fs::File::create(config_file).context("creating empty config file")?;
     Ok(())
 }
