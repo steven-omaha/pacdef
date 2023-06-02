@@ -225,6 +225,7 @@ impl Pacdef {
         Ok(result)
     }
 
+    #[allow(clippy::unnecessary_wraps)]
     fn show_groups(self) -> Result<()> {
         if self.groups.is_empty() {
             eprintln!("WARNING: no group files found");
@@ -235,6 +236,7 @@ impl Pacdef {
         for g in vec {
             println!("{}", g.name);
         }
+
         Ok(())
     }
 
