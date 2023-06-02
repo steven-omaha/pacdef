@@ -273,9 +273,7 @@ impl Pacdef {
         for arg_group in args {
             let possible_group = self.groups.iter().find(|g| g.name == **arg_group);
 
-            let group = if let Some(group) = possible_group {
-                group
-            } else {
+            let Some(group) = possible_group else {
                 errors.push((*arg_group).clone());
                 continue;
             };
