@@ -50,7 +50,7 @@ impl Group {
 
             if path.is_dir() {
                 if warn_not_symlinks && path.is_symlink() {
-                    symlink_dirs.push(path.to_owned());
+                    symlink_dirs.push(path);
                 }
                 continue;
             }

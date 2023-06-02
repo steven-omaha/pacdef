@@ -364,7 +364,7 @@ impl Pacdef {
         for name in new_groups {
             ensure!(
                 *name != "." && *name != "..",
-                crate::Error::InvalidGroupName(name.to_owned())
+                crate::Error::InvalidGroupName(name.clone())
             );
         }
 
