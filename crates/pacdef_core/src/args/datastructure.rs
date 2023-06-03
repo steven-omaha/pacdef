@@ -8,6 +8,7 @@ pub enum Arguments {
 #[derive(Debug)]
 pub enum GroupAction {
     Edit(Groups),
+    Export(Groups),
     Import(Groups),
     List,
     New(Groups, Edit),

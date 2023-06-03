@@ -17,6 +17,7 @@ fn parse_group_args(args: &clap::ArgMatches) -> GroupAction {
 
     match args.subcommand() {
         Some(("edit", args)) => Edit(get_groups(args)),
+        Some(("export", args)) => Export(get_groups(args)),
         Some(("import", args)) => Import(get_groups(args)),
         Some(("list", _)) => List,
         Some(("new", args)) => New(get_groups(args), get_edit(args)),
