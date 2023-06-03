@@ -13,13 +13,15 @@ use crate::path::get_relative_path;
 
 use super::{Package, Section};
 
-/// Representation of a group file, composed of a name (file name from which it
-/// was read), the sections in the file, and the absolute path of the original
-/// file.
+/// Representation of a group file.
 #[derive(Debug)]
 pub struct Group {
+    /// Name of the group (file name from which it was read, relative to the group
+    /// base dir).
     pub(crate) name: String,
+    /// The sections in the file which in turn hold the packages.
     pub(crate) sections: HashSet<Section>,
+    /// The absolute path of the original file.
     pub(crate) path: PathBuf,
 }
 

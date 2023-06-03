@@ -29,7 +29,18 @@ fn get_group_cmd() -> Command {
                 .required(true)
                 .help("a previously imported group"),
         )
-        .visible_alias("e");
+        .visible_alias("ed");
+
+    let export = Command::new("export")
+        .about("export one or more group files")
+        .arg_required_else_help(true)
+        .arg(
+            Arg::new("groups")
+                .num_args(1..)
+                .required(true)
+                .help("the file to export as group"),
+        )
+        .visible_alias("ex");
 
     let import = Command::new("import")
         .about("import one or more group files")
@@ -86,7 +97,7 @@ fn get_group_cmd() -> Command {
         .about("manage groups")
         .visible_alias("g")
         .subcommand_required(true)
-        .subcommands([edit, import, list, new, remove, show])
+        .subcommands([edit, export, import, list, new, remove, show])
 }
 
 /// Build the `pacdef package` subcommand.

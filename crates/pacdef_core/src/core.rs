@@ -64,6 +64,7 @@ impl Pacdef {
 
         match args {
             Edit(args::Groups(groups)) => self.edit_groups(groups),
+            Export(args::Groups(groups)) => self.export_groups(groups),
             Import(args::Groups(groups)) => self.import_groups(groups),
             List => self.show_groups(),
             New(args::Groups(groups), args::Edit(edit)) => self.new_groups(groups, *edit),
@@ -396,13 +397,24 @@ impl Pacdef {
 
         Ok(())
     }
+
+    fn export_groups(&self, groups: &[String]) -> Result<()> {
+        let groups = get_group_file_paths_matching_args(groups, &self.groups)
+            .context("resolving group files")?;
+
+        std::fs::rename(from, to)
+
+        todo!()
+    }
 }
 
-/// For the provided CLI arguments, get the path to each corresponding group file.
+/// For the provided CLI arguments, get the absolute path to each corresponding
+/// group file.
 ///
 /// # Errors
 ///
-/// This function will return an error if any of the arguments do not match one of group names.
+/// This function will return an error if any of the arguments do not match one
+/// of group names.
 fn get_group_file_paths_matching_args<'a>(
     file_names: &[String],
     groups: &'a HashSet<Group>,
