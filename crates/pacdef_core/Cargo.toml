@@ -13,7 +13,9 @@ categories = ["command-line-utilities"]
 anyhow = { workspace = true }
 clap = "4.3"
 const_format = { version = "0.2", default-features = false }
+crossterm = "0.26"
 path-absolutize = "3.1"
+ratatui = "0.21"
 regex = { version = "1.8", default-features = false, features = ["std"] }
 termios = "0.3"
 walkdir = "2.3"
@@ -30,7 +32,6 @@ alpm = { version = "2.2", optional = true }
 rust-apt = { version = "0.5", optional = true }
 
 libc = { version = "0.2", optional = true }  # for debian
-ratatui = "0.21.0"
 
 [features]
 default = []

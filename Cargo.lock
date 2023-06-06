@@ -418,6 +418,7 @@ dependencies = [
  "anyhow",
  "clap",
  "const_format",
+ "crossterm",
  "libc",
  "pacdef_macros",
  "path-absolutize",
