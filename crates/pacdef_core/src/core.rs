@@ -233,6 +233,10 @@ impl Pacdef {
         Ok(result)
     }
 
+    /// Print the alphabetically sorted names of all groups to stdout.
+    ///
+    /// This methods cannot return an error. It returns a `Result` to be consistent
+    /// with other methods.
     #[allow(clippy::unnecessary_wraps)]
     fn show_groups(self) -> Result<()> {
         if self.groups.is_empty() {
