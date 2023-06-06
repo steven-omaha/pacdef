@@ -2,7 +2,7 @@ Release Checklist
 -----------------
 * Ensure local `main` is up to date with respect to `origin/main`.
 * Run `cargo update` and review dependency updates.
-  Commit updated `Cargo.lock`.
+  Commit updated `Cargo.lock` with "chore(release): update lockfile".
 * Run `cargo outdated` and review semver incompatible updates. 
   Unless there is a strong motivation otherwise, review and update every dependency.
 * Update the date and version in all man pages.
