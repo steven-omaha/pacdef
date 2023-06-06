@@ -25,8 +25,10 @@ _pacdef() {
     function _group_actions {
         local -a group_actions
         group_actions=(
-            'e:edit an imported group file'
+            'ed:edit an imported group file'
             'edit:edit an imported group file'
+            'ex:export a non-symlink group'
+            'export:export a non-symlink group'
             'l:show names of imported groups'
             'list:show names of imported groups'
             'i:import a new group file'
@@ -88,7 +90,7 @@ _pacdef() {
                         (l|list)
                             _message "no more arguments" && ret=0
                         ;;
-                        (e|edit|r|remove|s|show)
+                        (ed|edit|r|remove|s|show)
                             _arguments "*:group file(s):_files -W '$GROUPDIR'" && ret=0
 
                         ;;
