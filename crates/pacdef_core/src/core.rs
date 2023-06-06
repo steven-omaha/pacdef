@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
-use std::fs::{remove_file, File};
+use std::env::current_dir;
+use std::fs::{remove_file, rename, File};
 use std::os::unix::fs::symlink;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, ensure, Context, Result};
 use const_format::formatcp;
@@ -399,12 +400,28 @@ impl Pacdef {
     }
 
     fn export_groups(&self, groups: &[String]) -> Result<()> {
-        let groups = get_group_file_paths_matching_args(groups, &self.groups)
-            .context("resolving group files")?;
+        let groups: Vec<_> = groups
+            .iter()
+            .map(|group_name| {
+                self.groups
+                    .iter()
+                    .find(|group| group.name == *group_name)
+                    .unwrap()
+            })
+            .collect();
 
-        std::fs::rename(from, to)
+        let output_dir = current_dir()?;
 
-        todo!()
+        for group in &groups {
+            let mut exported_path = output_dir.clone();
+            exported_path.push(PathBuf::from(&group.name));
+            // TODO: check if output exists
+            // TODO: check if this was successful, resort to the other method otherwise
+            rename(&group.path, &exported_path)?;
+            symlink(&exported_path, &group.path)?;
+        }
+
+        Ok(())
     }
 }
 
