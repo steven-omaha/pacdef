@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::env::current_dir;
-use std::fs::{remove_file, rename, File};
+use std::fs::{copy, remove_file, rename, File};
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 
@@ -12,11 +12,11 @@ use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
 use crate::env::get_single_var;
 use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
-use crate::review;
 use crate::search;
 use crate::ui::get_user_confirmation;
 use crate::Config;
 use crate::Group;
+use crate::{review, Error};
 
 /// Most data that is required during runtime of the program.
 /// `args` is an `Option` so that we can take ownership later without cloning.
@@ -399,30 +399,69 @@ impl Pacdef {
         Ok(())
     }
 
-    fn export_groups(&self, groups: &[String]) -> Result<()> {
-        let groups: Vec<_> = groups
-            .iter()
-            .map(|group_name| {
-                self.groups
-                    .iter()
-                    .find(|group| group.name == *group_name)
-                    .unwrap()
-            })
-            .collect();
-
+    fn export_groups(&self, names: &[String]) -> Result<()> {
+        let groups = find_groups_by_name(names, &self.groups)?;
         let output_dir = current_dir()?;
 
         for group in &groups {
             let mut exported_path = output_dir.clone();
             exported_path.push(PathBuf::from(&group.name));
-            // TODO: check if output exists
-            // TODO: check if this was successful, resort to the other method otherwise
-            rename(&group.path, &exported_path)?;
+
+            ensure!(!exported_path.exists(), "{exported_path:?} already exists");
+
+            move_file(&group.path, &exported_path)?;
             symlink(&exported_path, &group.path)?;
         }
 
         Ok(())
     }
+}
+
+fn move_file<P, Q>(from: P, to: Q) -> Result<()>
+where
+    P: AsRef<Path>,
+    Q: AsRef<Path>,
+{
+    let from = from.as_ref();
+    let to = to.as_ref();
+    match rename(from, to) {
+        Ok(_) => (),
+        Err(e) => {
+            // CrossesDevices is nightly. See rust #86442.
+            // We cannot check that here, so we just assume that
+            // that would be the error if permisisons are okay.
+            if e.kind() == std::io::ErrorKind::PermissionDenied {
+                bail!(e);
+            }
+            copy(from, to)?;
+            remove_file(from)?;
+        }
+    };
+    Ok(())
+}
+
+/// For the provided names, get the group with the same name.
+///
+/// # Errors
+///
+/// This function will return an error if any of the file names
+/// do not match one of group names.
+fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Result<Vec<&'a Group>> {
+    let name_group_map: HashMap<&str, &Group> =
+        groups.iter().map(|g| (g.name.as_str(), g)).collect();
+
+    let mut result = Vec::new();
+
+    for file in names {
+        match name_group_map.get(file.as_str()) {
+            Some(group) => {
+                result.push(*group);
+            }
+            None => bail!(Error::GroupFileNotFound(file.clone())),
+        }
+    }
+
+    Ok(result)
 }
 
 /// For the provided CLI arguments, get the absolute path to each corresponding
@@ -436,19 +475,10 @@ fn get_group_file_paths_matching_args<'a>(
     file_names: &[String],
     groups: &'a HashSet<Group>,
 ) -> Result<Vec<&'a Path>> {
-    let name_group_map: HashMap<&str, &Group> =
-        groups.iter().map(|g| (g.name.as_str(), g)).collect();
-
-    let mut result = Vec::new();
-
-    for file in file_names {
-        match name_group_map.get(file.as_str()) {
-            Some(group) => {
-                result.push(group.path.as_path());
-            }
-            None => bail!(crate::errors::Error::GroupFileNotFound(file.clone())),
-        }
-    }
+    let result = find_groups_by_name(file_names, groups)?
+        .into_iter()
+        .map(|g| g.path.as_path())
+        .collect();
 
     Ok(result)
 }
