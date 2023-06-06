@@ -143,6 +143,7 @@ Usage on different machines:
 | Subcommand                        | Description                                                           |
 |-----------------------------------|-----------------------------------------------------------------------|
 | `group import [<path>...]`        | create a symlink to the specified group file(s) in your groups folder | 
+| `group export [args] <group> ...` | export (move) a non-symlink group and re-import it as symlink         | 
 | `group list`                      | list names of all groups                                              |  
 | `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
 | `group remove [<group>...]`       | remove a previously imported group                                    |

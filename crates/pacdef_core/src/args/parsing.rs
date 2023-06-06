@@ -17,7 +17,7 @@ fn parse_group_args(args: &clap::ArgMatches) -> GroupAction {
 
     match args.subcommand() {
         Some(("edit", args)) => Edit(get_groups(args)),
-        Some(("export", args)) => Export(get_groups(args)),
+        Some(("export", args)) => Export(get_groups(args), get_output_dir(args), get_force(args)),
         Some(("import", args)) => Import(get_groups(args)),
         Some(("list", _)) => List,
         Some(("new", args)) => New(get_groups(args), get_edit(args)),
@@ -68,4 +68,12 @@ fn get_groups(args: &clap::ArgMatches) -> Groups {
             .cloned()
             .collect(),
     )
+}
+
+fn get_output_dir(args: &clap::ArgMatches) -> OutputDir {
+    OutputDir(args.get_one::<String>("output_dir").cloned())
+}
+
+fn get_force(args: &clap::ArgMatches) -> Force {
+    Force(get_one_arg(args, "force"))
 }

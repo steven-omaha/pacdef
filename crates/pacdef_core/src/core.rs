@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::env::current_dir;
-use std::fs::{copy, remove_file, rename, File};
+use std::fs::{copy, create_dir_all, remove_file, rename, File};
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 
@@ -65,7 +65,9 @@ impl Pacdef {
 
         match args {
             Edit(args::Groups(groups)) => self.edit_groups(groups),
-            Export(args::Groups(groups)) => self.export_groups(groups),
+            Export(args::Groups(groups), args::OutputDir(dir), args::Force(force)) => {
+                self.export_groups(groups, dir.as_ref(), *force)
+            }
             Import(args::Groups(groups)) => self.import_groups(groups),
             List => self.show_groups(),
             New(args::Groups(groups), args::Edit(edit)) => self.new_groups(groups, *edit),
@@ -399,24 +401,92 @@ impl Pacdef {
         Ok(())
     }
 
-    fn export_groups(&self, names: &[String]) -> Result<()> {
+    /// Export pacdef groups by moving a group file to an output dir. The path of the
+    /// group file relative to the group base dir will be replicated under the output
+    /// directory.
+    ///
+    /// By default, the output dir is the current working directory. `output_dir` may be
+    /// specified to the path of another directory, in which case `output_dir` must
+    /// exist.
+    ///
+    /// If `force` is `true`, the output file will be overwritten if it exists.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if
+    /// - the group file is a symlink (in which case exporting makes no sense),
+    /// - the output file exists and `force` is not `true`, or
+    /// - the user does not have permission to write to the output dir.
+    ///
+    /// # Limitations
+    ///
+    /// At the moment we cannot export nested group dirs. The user would have to
+    /// export every group file individually, or use a shell glob.
+    fn export_groups(
+        &self,
+        names: &[String],
+        output_dir: Option<&String>,
+        force: bool,
+    ) -> Result<()> {
         let groups = find_groups_by_name(names, &self.groups)?;
-        let output_dir = current_dir()?;
+        let output_dir = match output_dir.map(PathBuf::from) {
+            Some(p) => p,
+            None => current_dir().context("no output dir specified, getting current directory")?,
+        };
+
+        ensure!(
+            output_dir.exists() && output_dir.is_dir(),
+            "output must be a directory and exist"
+        );
 
         for group in &groups {
+            ensure!(!&group.path.is_symlink(), "cannot export symlinks");
+
             let mut exported_path = output_dir.clone();
             exported_path.push(PathBuf::from(&group.name));
 
-            ensure!(!exported_path.exists(), "{exported_path:?} already exists");
+            ensure!(
+                !force && !exported_path.exists(),
+                "{exported_path:?} already exists"
+            );
 
-            move_file(&group.path, &exported_path)?;
-            symlink(&exported_path, &group.path)?;
+            create_parent(&exported_path)
+                .with_context(|| format!("creating parent dir of {exported_path:?}"))?;
+            move_file(&group.path, &exported_path).context("moving file")?;
+            symlink(&exported_path, &group.path).context("creating symlink to exported file")?;
         }
 
         Ok(())
     }
 }
 
+/// Create the parent directory of the `path` if that directory does not exist.
+/// Does nothing otherwise.
+///
+/// # Panics
+///
+/// Panics if the path does not have a parent.
+///
+/// # Errors
+///
+/// This function will propagate errors from [`std::fs::create_dir_all`].
+fn create_parent(path: &Path) -> Result<()> {
+    let parent = &path.parent().expect("this should never be /");
+    if !parent.is_dir() {
+        create_dir_all(parent).context("creating parent dir")?;
+    }
+    Ok(())
+}
+
+/// Move a file from one place to another.
+///
+/// At first [`std::fs::rename`] is used, which fails if `from` and `to` reside under
+/// different filesystems. In case that happens, we will resort to copying the files
+/// and then removing `from`.
+///
+/// # Errors
+///
+/// This function will return an error if we lack permission to write the file.
 fn move_file<P, Q>(from: P, to: Q) -> Result<()>
 where
     P: AsRef<Path>,
@@ -433,8 +503,8 @@ where
             if e.kind() == std::io::ErrorKind::PermissionDenied {
                 bail!(e);
             }
-            copy(from, to)?;
-            remove_file(from)?;
+            copy(from, to).with_context(|| format!("copying {from:?} to {to:?}"))?;
+            remove_file(from).with_context(|| format!("deleting {from:?}"))?;
         }
     };
     Ok(())
@@ -444,8 +514,8 @@ where
 ///
 /// # Errors
 ///
-/// This function will return an error if any of the file names
-/// do not match one of group names.
+/// This function will return an error if any of the file names do not match one
+/// of group names.
 fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Result<Vec<&'a Group>> {
     let name_group_map: HashMap<&str, &Group> =
         groups.iter().map(|g| (g.name.as_str(), g)).collect();
