@@ -8,8 +8,7 @@ pub enum Arguments {
 #[derive(Debug)]
 pub enum GroupAction {
     Edit(Groups),
-    // TODO: optional output dir
-    Export(Groups),
+    Export(Groups, OutputDir, Force),
     Import(Groups),
     List,
     New(Groups, Edit),
@@ -40,3 +39,9 @@ pub struct Edit(pub bool);
 
 #[derive(Debug)]
 pub struct Noconfirm(pub bool);
+
+#[derive(Debug)]
+pub struct Force(pub bool);
+
+#[derive(Debug)]
+pub struct OutputDir(pub Option<String>);

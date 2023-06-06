@@ -35,6 +35,19 @@ fn get_group_cmd() -> Command {
         .about("export one or more group files")
         .arg_required_else_help(true)
         .arg(
+            Arg::new("force")
+                .short('f')
+                .long("force")
+                .action(clap::ArgAction::SetTrue)
+                .help("overwrite output files if they exist"),
+        )
+        .arg(
+            Arg::new("output_dir")
+                .short('o')
+                .long("output")
+                .help("(optional) the directory under which to save the group"),
+        )
+        .arg(
             Arg::new("groups")
                 .num_args(1..)
                 .required(true)
