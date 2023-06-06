@@ -19,11 +19,12 @@ use crate::Group;
 use crate::{review, Error};
 
 /// Most data that is required during runtime of the program.
-/// `args` is an `Option` so that we can take ownership later without cloning.
-#[allow(dead_code)] // "`config` is only needed on Arch Linux"
 pub struct Pacdef {
+    /// The command line arguments. Is an `Option` so that we can take ownership later without cloning.
     args: Option<args::Arguments>,
+    /// The config of the program.
     config: Config,
+    /// The hashset of all groups.
     groups: HashSet<Group>,
 }
 
@@ -349,15 +350,27 @@ impl Pacdef {
             eprintln!("WARNING: no group files found");
         }
 
-        let paths = get_group_file_paths_matching_args(groups, &self.groups)?;
+        let found = find_groups_by_name(groups, &self.groups)?;
 
-        for file in paths {
-            remove_file(file)?;
+        for group in found {
+            remove_file(&group.path)?;
         }
 
         Ok(())
     }
 
+    /// Create empty group files.
+    ///
+    /// If `edit` is `true`, the editor will be run to edit the files after they are
+    /// created.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if
+    /// - a group name is `.` or `..`,
+    /// - a group with the same name already exists,
+    /// - the editor cannot be run, or
+    /// - if we do not have permission to write to the group dir.
     #[allow(clippy::unused_self)]
     fn new_groups(&self, new_groups: &[String], edit: bool) -> Result<()> {
         let group_path = get_group_dir()?;
@@ -461,7 +474,8 @@ impl Pacdef {
 }
 
 /// Create the parent directory of the `path` if that directory does not exist.
-/// Does nothing otherwise.
+///
+/// Do nothing otherwise.
 ///
 /// # Panics
 ///
@@ -596,6 +610,7 @@ pub const fn get_version_string() -> &'static str {
     }
 }
 
+/// Get a vector with the names of all backends, sorted alphabetically.
 fn get_included_backends() -> Vec<&'static str> {
     let mut result = vec![];
     for backend in Backends::iter() {
