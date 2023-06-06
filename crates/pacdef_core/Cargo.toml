@@ -30,6 +30,7 @@ alpm = { version = "2.2", optional = true }
 rust-apt = { version = "0.5", optional = true }
 
 libc = { version = "0.2", optional = true }  # for debian
+ratatui = "0.21.0"
 
 [features]
 default = []
