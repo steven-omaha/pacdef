@@ -114,7 +114,7 @@ impl Pacdef {
 
             match backend.get_missing_packages_sorted() {
                 Ok(diff) => to_install.push((backend, diff)),
-                Err(error) => show_error(&error, &*backend),
+                Err(error) => show_backend_query_error(&error, &*backend),
             };
         }
 
@@ -164,8 +164,11 @@ impl Pacdef {
             eprintln!("WARNING: no group files found");
         }
 
-        let group_files = get_group_file_paths_matching_args(groups, &self.groups)
-            .context("getting group files for args")?;
+        let group_files: Vec<_> = find_groups_by_name(groups, &self.groups)
+            .context("getting group files for args")?
+            .into_iter()
+            .map(|g| g.path.as_path())
+            .collect();
 
         let success = run_edit_command(&group_files)
             .context("running editor")?
@@ -224,7 +227,7 @@ impl Pacdef {
 
             match backend.get_unmanaged_packages_sorted() {
                 Ok(unmanaged) => result.push((backend, unmanaged)),
-                Err(error) => show_error(&error, &*backend),
+                Err(error) => show_backend_query_error(&error, &*backend),
             };
         }
         Ok(result)
@@ -548,27 +551,10 @@ fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Resu
     Ok(result)
 }
 
-/// For the provided CLI arguments, get the absolute path to each corresponding
-/// group file.
-///
-/// # Errors
-///
-/// This function will return an error if any of the arguments do not match one
-/// of group names.
-fn get_group_file_paths_matching_args<'a>(
-    file_names: &[String],
-    groups: &'a HashSet<Group>,
-) -> Result<Vec<&'a Path>> {
-    let result = find_groups_by_name(file_names, groups)?
-        .into_iter()
-        .map(|g| g.path.as_path())
-        .collect();
-
-    Ok(result)
-}
-
+/// Show the error chain for an error that has occured when a backend was queried
+/// if the `RUST_BACKTRACE` env variable is set to `1` or `full`.
 #[allow(clippy::option_if_let_else)]
-fn show_error(error: &anyhow::Error, backend: &dyn Backend) {
+fn show_backend_query_error(error: &anyhow::Error, backend: &dyn Backend) {
     let section = backend.get_section();
     match get_single_var("RUST_BACKTRACE") {
         Some(s) => {
