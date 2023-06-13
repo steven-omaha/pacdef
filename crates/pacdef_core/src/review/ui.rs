@@ -12,13 +12,13 @@ use ratatui::{
 };
 
 #[derive(Debug)]
-struct Ui<'a> {
-    pub backend_names: Vec<&'a str>,
+struct Ui {
+    pub backend_names: Vec<String>,
     pub index: usize,
 }
 
-impl<'a> Ui<'a> {
-    fn new(backend_names: Vec<&'a str>) -> Self {
+impl Ui {
+    fn new(backend_names: Vec<String>) -> Self {
         let index = 0;
         Self {
             backend_names,
@@ -34,7 +34,8 @@ impl<'a> Ui<'a> {
         let backend = CrosstermBackend::new(stdout);
         let mut terminal = Terminal::new(backend)?;
 
-        let mut app = Ui::new(vec!["abc, def"]);
+        let backend_names = ["abc", "def"].into_iter().map(|s| s.into()).collect();
+        let mut app = Self::new(backend_names);
         app.do_your_stuff(&mut terminal)?;
 
         // restore terminal
@@ -83,7 +84,7 @@ impl<'a> Ui<'a> {
                         //     's' => Ok(ReviewIntention::Skip),
                         //     _ => Ok(ReviewIntention::Invalid),
                         // },
-                        _ => {}
+                        _ => (),
                     }
                 }
             }
