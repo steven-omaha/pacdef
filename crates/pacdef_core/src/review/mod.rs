@@ -1,5 +1,6 @@
 mod datastructures;
 mod strategy;
+mod ui;
 
 use std::io::{stdin, stdout, Write};
 use std::rc::Rc;
