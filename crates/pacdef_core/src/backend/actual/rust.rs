@@ -37,7 +37,7 @@ impl Backend for Rust {
             Ok(string) => string,
             Err(err) if err.kind() == NotFound => {
                 eprintln!(
-                    "WARNING: no crates file foud for cargo. Assuming no crates installed yet."
+                    "WARNING: no crates file found for cargo. Assuming no crates installed yet."
                 );
                 return Ok(HashSet::new());
             }
