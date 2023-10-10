@@ -67,7 +67,7 @@ impl Eq for Section {
 
 impl PartialOrd for Section {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
+        self.name.partial_cmp(&other.name)
     }
 }
 
