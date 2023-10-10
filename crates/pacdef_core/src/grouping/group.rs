@@ -94,10 +94,7 @@ fn is_child_of_any_dir(path: &Path, dirs: &[PathBuf]) -> bool {
 
 impl PartialOrd for Group {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self.name.partial_cmp(&other.name) {
-            Some(core::cmp::Ordering::Equal) => None,
-            ord => ord,
-        }
+        Some(self.cmp(other))
     }
 }
 

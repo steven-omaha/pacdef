@@ -67,14 +67,13 @@ impl Eq for Section {
 
 impl PartialOrd for Section {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.name.partial_cmp(&other.name)
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Section {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other)
-            .expect("partial_cmp compares &str, which provide total order")
+        self.name.cmp(&other.name)
     }
 }
 
