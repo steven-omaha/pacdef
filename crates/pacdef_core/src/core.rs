@@ -48,6 +48,10 @@ impl Pacdef {
     /// # Errors
     ///
     /// This function propagates errors from the underlying functions.
+    ///
+    /// # Panics
+    ///
+    /// This function panics if the `args` field is `None`.
     #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(mut self) -> Result<()> {
         match self
