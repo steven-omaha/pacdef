@@ -11,12 +11,12 @@ categories = ["command-line-utilities"]
 
 [dependencies]
 anyhow = { workspace = true }
-clap = "4.3"
+clap = "4.4"
 const_format = { version = "0.2", default-features = false }
 path-absolutize = "3.1"
-regex = { version = "1.9", default-features = false, features = ["std"] }
+regex = { version = "1.10", default-features = false, features = ["std"] }
 termios = "0.3"
-walkdir = "2.3"
+walkdir = "2.4"
 
 serde = "1.0"
 serde_derive = "1.0"
