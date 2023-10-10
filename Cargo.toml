@@ -8,7 +8,7 @@ repository = "https://github.com/steven-omaha/pacdef"
 readme = "README.md"
 keywords = ["package-manager", "linux", "declarative", "cli"]
 categories = ["command-line-utilities"]
-rust-version = "1.65"
+rust-version = "1.70"
 
 [workspace]
 members = ["crates/pacdef_macros", "crates/pacdef_core"]

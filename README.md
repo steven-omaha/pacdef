@@ -216,6 +216,6 @@ Pacdef is supported by [topgrade](https://github.com/topgrade-rs/topgrade).
 
 ### minimum supported rust version (MSRV)
 
-MSRV is 1.65.0. Development is conducted against the latest stable version.
+MSRV is 1.70.0 due to dependencies that require this specific version. Development is conducted against the latest stable version.
 
 
