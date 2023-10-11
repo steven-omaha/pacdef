@@ -19,27 +19,16 @@ impl Section {
     }
 
     pub(crate) fn try_from_lines<'a>(
-        iter: &mut Peekable<(impl Iterator<Item = &'a str> + std::fmt::Debug)>,
+        iter: &mut Peekable<impl Iterator<Item = &'a str>>,
     ) -> Result<Self> {
-        let name = iter
-            .find(|line| line.starts_with('['))
-            .context("finding beginning of next section")?
-            .trim()
-            .trim_start_matches('[')
-            .trim_end_matches(']')
-            .to_string();
+        let name = find_next_section_name(iter)?;
 
         let mut packages = HashSet::new();
-        // `while let` chains are unstable, unfortunately
-        while iter.peek().is_some()
-            && !iter
-                .peek()
-                .expect("we checked this is some")
-                .starts_with('[')
-        {
+
+        while next_line_might_be_package(iter) {
             if let Some(package) = Package::try_from(iter.next().expect("we checked this is some"))
             {
-                packages.insert(package);
+                insert_package(package, &mut packages);
             }
         }
 
@@ -47,6 +36,37 @@ impl Section {
 
         Ok(Self::new(name, packages))
     }
+}
+
+fn insert_package(package: Package, packages: &mut HashSet<Package>) {
+    let package_name = package.name.clone();
+    let newly_inserted = packages.insert(package);
+
+    if !newly_inserted {
+        eprintln!("warning: {package_name} occurs twice in the same section");
+    }
+}
+
+fn next_line_might_be_package<'a>(iter: &mut Peekable<impl Iterator<Item = &'a str>>) -> bool {
+    // `while let` chains are unstable, unfortunately
+    iter.peek().is_some()
+        && !iter
+            .peek()
+            .expect("we checked this is some")
+            .starts_with('[')
+}
+
+fn find_next_section_name<'a>(
+    iter: &mut Peekable<impl Iterator<Item = &'a str>>,
+) -> Result<String> {
+    let name = iter
+        .find(|line| line.starts_with('['))
+        .context("finding beginning of next section")?
+        .trim()
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_string();
+    Ok(name)
 }
 
 impl Hash for Section {
