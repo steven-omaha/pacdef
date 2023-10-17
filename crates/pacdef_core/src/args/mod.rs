@@ -1,6 +1,8 @@
 mod cli;
 mod datastructure;
 mod parsing;
+#[cfg(test)]
+mod tests;
 
 pub use datastructure::*;
 

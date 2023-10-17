@@ -1,11 +1,11 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Arguments {
     Group(GroupAction),
     Package(PackageAction),
     Version,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum GroupAction {
     Edit(Groups),
     Export(Groups, OutputDir, Force),
@@ -16,13 +16,13 @@ pub enum GroupAction {
     Show(Groups),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Files(pub Vec<String>);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Groups(pub Vec<String>);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum PackageAction {
     Clean(Noconfirm),
     Review,
@@ -31,17 +31,17 @@ pub enum PackageAction {
     Unmanaged,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Regex(pub String);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Edit(pub bool);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Noconfirm(pub bool);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Force(pub bool);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct OutputDir(pub Option<String>);

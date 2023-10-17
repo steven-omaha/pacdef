@@ -41,6 +41,8 @@ command = [
   "test",
   "--color",
   "always",
+  "--package",
+  "pacdef_core",
   "--",
   "--color",
   "always",  # see https://github.com/Canop/bacon/issues/124
