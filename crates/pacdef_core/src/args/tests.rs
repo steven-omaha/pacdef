@@ -25,3 +25,14 @@ fn arg_parsing(#[case] input: Vec<&str>, #[case] expected: Arguments) {
 
     assert_eq!(parsed, expected);
 }
+
+#[rstest]
+#[should_panic]
+#[case(vec!["pacdef", "package", "search"], "regex missing")]
+#[should_panic]
+#[case(vec!["pacdef", "p", "s"], "can be either 'sync' or 'search'")]
+#[should_panic]
+#[case(vec!["pacdef", "group", "edit"], "group missing")]
+fn arg_parsing_invalid(#[case] input: Vec<&str>, #[case] err_msg: &str) {
+    build_cli().try_get_matches_from(input).expect(err_msg);
+}
