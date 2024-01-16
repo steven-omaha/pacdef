@@ -33,13 +33,11 @@ pub fn read_single_char_from_terminal() -> Result<char> {
     new_termios.c_cc[VTIME] = 0;
     tcsetattr(fd, TCSANOW, &new_termios).context("setting terminal mode")?;
 
-    let mut input = [0u8; 1];
+    let mut input_buffer = [0u8; 1];
     io::stdin()
-        .read_exact(&mut input[..])
+        .read_exact(&mut input_buffer[..])
         .context("reading one byte from stdin")?;
-    let result: char = input[0]
-        .try_into()
-        .context("reading a single byte from stdin")?;
+    let result: char = input_buffer[0].into();
 
     // stdin is not echoed automatically in this terminal mode
     println!("{result}");
