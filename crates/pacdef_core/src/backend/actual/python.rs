@@ -12,6 +12,7 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Python {
+    pub(crate) binary: String,
     pub(crate) packages: HashSet<Package>,
 }
 
@@ -29,14 +30,24 @@ const SUPPORTS_AS_DEPENDENCY: bool = false;
 impl Backend for Python {
     impl_backend_constants!();
 
+    fn get_binary(&self) -> Text {
+        let r#box = self.binary.clone().into_boxed_str();
+        Box::leak(r#box)
+    }
+
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
-        let output = run_pip_command(&["list", "--format", "json", "--user"])?;
+        let mut cmd = Command::new(self.get_binary());
+        let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
 
         extract_pacdef_packages(output)
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
-        let output = run_pip_command(&["list", "--format", "json", "--not-required", "--user"])?;
+        let mut cmd = Command::new(self.get_binary());
+        let output = run_pip_command(
+            &mut cmd,
+            &["list", "--format", "json", "--not-required", "--user"],
+        )?;
 
         extract_pacdef_packages(output)
     }
@@ -46,8 +57,7 @@ impl Backend for Python {
     }
 }
 
-fn run_pip_command(args: &[&str]) -> Result<Value> {
-    let mut cmd = Command::new(BINARY);
+fn run_pip_command(cmd: &mut Command, args: &[&str]) -> Result<Value> {
     cmd.args(args);
     let output = String::from_utf8(cmd.output()?.stdout)?;
     let val: Value = serde_json::from_str(&output)?;
@@ -57,7 +67,16 @@ fn run_pip_command(args: &[&str]) -> Result<Value> {
 impl Python {
     pub(crate) fn new() -> Self {
         Self {
+            binary: BINARY.to_string(),
             packages: HashSet::new(),
+        }
+    }
+
+    fn get_switches_runtime(&self) -> Switches {
+        if self.get_binary().eq("pip") {
+            &["list", "--format", "json", "--user"]
+        } else {
+            &["list", "--json"]
         }
     }
 }

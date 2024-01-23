@@ -24,6 +24,9 @@ pub struct Config {
     /// Backends the user does not want to use even though the binary exists.
     #[serde(default)]
     pub disabled_backends: Vec<String>,
+    /// Choose whether to use pipx instead of pip for python package management
+    #[serde(default)]
+    pub pip_binary: String,
 }
 
 fn yes() -> bool {
@@ -86,6 +89,7 @@ impl Default for Config {
             flatpak_systemwide: true,
             warn_not_symlinks: true,
             disabled_backends: vec![],
+            pip_binary: "pip".into(),
         }
     }
 }

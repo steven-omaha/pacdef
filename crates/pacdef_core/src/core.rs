@@ -140,6 +140,13 @@ impl Pacdef {
         {
             flatpak.systemwide = self.config.flatpak_systemwide;
         }
+
+        if let Some(python) = backend
+            .as_any_mut()
+            .downcast_mut::<crate::backend::Python>()
+        {
+            python.binary = self.config.pip_binary.clone();
+        }
     }
 
     fn install_packages(&mut self, noconfirm: bool) -> Result<()> {
