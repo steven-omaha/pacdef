@@ -39,7 +39,7 @@ impl Backend for Python {
         let mut cmd = Command::new(self.get_binary());
         let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
 
-        extract_pacdef_packages(output)
+        extract_pacdef_packages_pipx(output)
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
@@ -49,7 +49,7 @@ impl Backend for Python {
             &["list", "--format", "json", "--not-required", "--user"],
         )?;
 
-        extract_pacdef_packages(output)
+        extract_pacdef_packages_pipx(output)
     }
 
     fn make_dependency(&self, _packages: &[Package]) -> Result<ExitStatus> {
@@ -73,10 +73,10 @@ impl Python {
     }
 
     fn get_switches_runtime(&self) -> Switches {
-        if self.get_binary().eq("pip") {
-            &["list", "--format", "json", "--user"]
-        } else {
-            &["list", "--json"]
+        match self.get_binary() {
+            "pip" => &["list", "--format", "json", "--user"],
+            "pipx" => &["list", "--json"],
+            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
         }
     }
 }
@@ -88,6 +88,20 @@ fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
         .iter()
         .map(|node| node["name"].as_str().expect("should always be a string"))
         .map(Package::from)
+        .collect();
+    Ok(result)
+}
+
+fn extract_pacdef_packages_pipx(value: Value) -> Result<HashSet<Package>> {
+    let result = value["venvs"]
+        .as_object()
+        .context("getting inner json object")?
+        .iter()
+        .map(|(name, _)| {
+            println!("{name}");
+            Package::from(name.as_str())
+        })
+        // .map(|(name, _)| Package::from(name.as_str()))
         .collect();
     Ok(result)
 }
