@@ -38,18 +38,21 @@ impl Backend for Python {
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
         let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
-
-        extract_pacdef_packages_pipx(output)
+        match self.get_binary(){
+            "pip" => extract_pacdef_packages(output),
+            "pipx" => extract_pacdef_packages_pipx(output),
+            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
+        }
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
-        let output = run_pip_command(
-            &mut cmd,
-            &["list", "--format", "json", "--not-required", "--user"],
-        )?;
-
-        extract_pacdef_packages_pipx(output)
+        let output = run_pip_command(&mut cmd, self.get_switches_explicit())?;
+        match self.get_binary(){
+            "pip" => extract_pacdef_packages(output),
+            "pipx" => extract_pacdef_packages_pipx(output),
+            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
+        }
     }
 
     fn make_dependency(&self, _packages: &[Package]) -> Result<ExitStatus> {
@@ -74,7 +77,14 @@ impl Python {
 
     fn get_switches_runtime(&self) -> Switches {
         match self.get_binary() {
-            "pip" => &["list", "--format", "json", "--user"],
+            "pip" => &["list", "--format", "json", "--not-required", "--user"],
+            "pipx" => &["list", "--json"],
+            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
+        }
+    }
+    fn get_switches_explicit(&self) -> Switches {
+        match self.get_binary() {
+            "pip" => &["list", "--format", "json", "--user", ""],
             "pipx" => &["list", "--json"],
             _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
         }
@@ -97,11 +107,25 @@ fn extract_pacdef_packages_pipx(value: Value) -> Result<HashSet<Package>> {
         .as_object()
         .context("getting inner json object")?
         .iter()
-        .map(|(name, _)| {
-            println!("{name}");
-            Package::from(name.as_str())
-        })
-        // .map(|(name, _)| Package::from(name.as_str()))
+        .map(|(name, _)| Package::from(name.as_str()))
         .collect();
     Ok(result)
 }
+
+// fn extract_pacdef_packages_deps(value: Value) -> Result<HashSet<Package>> {
+//     let mut alldeps: HashSet<Package> = HashSet::new();
+//
+//     value["venvs"]
+//         .as_object()
+//         .context("getting inner json object")?
+//         .iter()
+//         .map(|(_, deps_obj)| {
+//             let deps = deps_obj["metadata"]["main_package"]["apps_paths_of_dependencies"]
+//                 .as_object()
+//                 .iter()
+//                 .map(|(name, _)| Package::from(name))
+//                 .collect();
+//             alldeps.extend(&deps);
+//         });
+//     Ok(alldeps)
+// }
