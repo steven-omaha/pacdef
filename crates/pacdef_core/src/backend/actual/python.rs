@@ -27,6 +27,12 @@ const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = false;
 
+macro_rules!  ERROR{
+    ($bin:expr) => {
+        panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx.", $bin)
+    };
+}
+
 impl Backend for Python {
     impl_backend_constants!();
 
@@ -38,21 +44,13 @@ impl Backend for Python {
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
         let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
-        match self.get_binary(){
-            "pip" => extract_pacdef_packages(output),
-            "pipx" => extract_pacdef_packages_pipx(output),
-            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
-        }
+        self.extract_packages(output)
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
         let output = run_pip_command(&mut cmd, self.get_switches_explicit())?;
-        match self.get_binary(){
-            "pip" => extract_pacdef_packages(output),
-            "pipx" => extract_pacdef_packages_pipx(output),
-            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
-        }
+        self.extract_packages(output)
     }
 
     fn make_dependency(&self, _packages: &[Package]) -> Result<ExitStatus> {
@@ -79,14 +77,22 @@ impl Python {
         match self.get_binary() {
             "pip" => &["list", "--format", "json", "--not-required", "--user"],
             "pipx" => &["list", "--json"],
-            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
+            _ => ERROR!(self.get_binary()),
         }
     }
     fn get_switches_explicit(&self) -> Switches {
         match self.get_binary() {
-            "pip" => &["list", "--format", "json", "--user", ""],
+            "pip" => &["list", "--format", "json", "--user"],
             "pipx" => &["list", "--json"],
-            _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
+            _ => ERROR!(self.get_binary()),
+        }
+    }
+
+    fn extract_packages(&self, output: Value) -> Result<HashSet<Package>> {
+        match self.get_binary() {
+            "pip" => extract_pacdef_packages(output),
+            "pipx" => extract_pacdef_packages_pipx(output),
+            _ => ERROR!(self.get_binary()),
         }
     }
 }
