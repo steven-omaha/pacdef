@@ -40,7 +40,18 @@ impl Backend for Python {
         let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
         match self.get_binary(){
             "pip" => extract_pacdef_packages(output),
-            "pipx" => extract_pacdef_packages_pipx(output),
+            "pipx" => {
+                let packs = extract_pacdef_packages_pipx(&output);
+                let deps = extract_pacdef_packages_deps(&output);
+                match  (packs, deps) {
+                    (Ok(mut pack), Ok(deps)) => {
+                        pack.extend(deps.into_iter());
+                        Ok(pack)
+                    }
+                    (Ok(pack), Err(_)) => Ok(pack),
+                    (Err(pack), _) => Err(pack),
+                }
+            }
             _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
         }
     }
@@ -50,7 +61,7 @@ impl Backend for Python {
         let output = run_pip_command(&mut cmd, self.get_switches_explicit())?;
         match self.get_binary(){
             "pip" => extract_pacdef_packages(output),
-            "pipx" => extract_pacdef_packages_pipx(output),
+            "pipx" => extract_pacdef_packages_pipx(&output),
             _ => panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx", self.get_binary()),
         }
     }
@@ -102,7 +113,7 @@ fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
     Ok(result)
 }
 
-fn extract_pacdef_packages_pipx(value: Value) -> Result<HashSet<Package>> {
+fn extract_pacdef_packages_pipx(value: &Value) -> Result<HashSet<Package>> {
     let result = value["venvs"]
         .as_object()
         .context("getting inner json object")?
@@ -112,20 +123,23 @@ fn extract_pacdef_packages_pipx(value: Value) -> Result<HashSet<Package>> {
     Ok(result)
 }
 
-// fn extract_pacdef_packages_deps(value: Value) -> Result<HashSet<Package>> {
-//     let mut alldeps: HashSet<Package> = HashSet::new();
-//
-//     value["venvs"]
-//         .as_object()
-//         .context("getting inner json object")?
-//         .iter()
-//         .map(|(_, deps_obj)| {
-//             let deps = deps_obj["metadata"]["main_package"]["apps_paths_of_dependencies"]
-//                 .as_object()
-//                 .iter()
-//                 .map(|(name, _)| Package::from(name))
-//                 .collect();
-//             alldeps.extend(&deps);
-//         });
-//     Ok(alldeps)
-// }
+fn extract_pacdef_packages_deps(value: &Value) -> Result<HashSet<Package>> {
+    let mut alldeps: HashSet<Package> = HashSet::new();
+    let _ = value["venvs"]
+        .as_object()
+        .context("getting inner json object")?
+        .iter()
+        .map(|(_, deps_obj)| -> Result<()> {
+            let deps: HashSet<Package> = deps_obj["metadata"]["main_package"]
+                ["apps_paths_of_dependencies"]
+                .as_object()
+                .context("getting inner dependencies")?
+                .iter()
+                .map(|(name, _)| Package::from(name.as_str()))
+                .collect();
+
+            alldeps.extend(deps);
+            Ok(())
+        });
+    Ok(alldeps)
+}
