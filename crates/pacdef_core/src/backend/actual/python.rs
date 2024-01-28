@@ -12,6 +12,7 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Python {
+    pub(crate) binary: String,
     pub(crate) packages: HashSet<Package>,
 }
 
@@ -26,19 +27,30 @@ const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = false;
 
+macro_rules!  ERROR{
+    ($bin:expr) => {
+        panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx.", $bin)
+    };
+}
+
 impl Backend for Python {
     impl_backend_constants!();
 
-    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
-        let output = run_pip_command(&["list", "--format", "json", "--user"])?;
+    fn get_binary(&self) -> Text {
+        let r#box = self.binary.clone().into_boxed_str();
+        Box::leak(r#box)
+    }
 
-        extract_pacdef_packages(output)
+    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
+        let mut cmd = Command::new(self.get_binary());
+        let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
+        self.extract_packages(output)
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
-        let output = run_pip_command(&["list", "--format", "json", "--not-required", "--user"])?;
-
-        extract_pacdef_packages(output)
+        let mut cmd = Command::new(self.get_binary());
+        let output = run_pip_command(&mut cmd, self.get_switches_explicit())?;
+        self.extract_packages(output)
     }
 
     fn make_dependency(&self, _packages: &[Package]) -> Result<ExitStatus> {
@@ -46,8 +58,7 @@ impl Backend for Python {
     }
 }
 
-fn run_pip_command(args: &[&str]) -> Result<Value> {
-    let mut cmd = Command::new(BINARY);
+fn run_pip_command(cmd: &mut Command, args: &[&str]) -> Result<Value> {
     cmd.args(args);
     let output = String::from_utf8(cmd.output()?.stdout)?;
     let val: Value = serde_json::from_str(&output)?;
@@ -57,7 +68,31 @@ fn run_pip_command(args: &[&str]) -> Result<Value> {
 impl Python {
     pub(crate) fn new() -> Self {
         Self {
+            binary: BINARY.to_string(),
             packages: HashSet::new(),
+        }
+    }
+
+    fn get_switches_runtime(&self) -> Switches {
+        match self.get_binary() {
+            "pip" => &["list", "--format", "json", "--not-required", "--user"],
+            "pipx" => &["list", "--json"],
+            _ => ERROR!(self.get_binary()),
+        }
+    }
+    fn get_switches_explicit(&self) -> Switches {
+        match self.get_binary() {
+            "pip" => &["list", "--format", "json", "--user"],
+            "pipx" => &["list", "--json"],
+            _ => ERROR!(self.get_binary()),
+        }
+    }
+
+    fn extract_packages(&self, output: Value) -> Result<HashSet<Package>> {
+        match self.get_binary() {
+            "pip" => extract_pacdef_packages(output),
+            "pipx" => extract_pacdef_packages_pipx(output),
+            _ => ERROR!(self.get_binary()),
         }
     }
 }
@@ -69,6 +104,16 @@ fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
         .iter()
         .map(|node| node["name"].as_str().expect("should always be a string"))
         .map(Package::from)
+        .collect();
+    Ok(result)
+}
+
+fn extract_pacdef_packages_pipx(value: Value) -> Result<HashSet<Package>> {
+    let result = value["venvs"]
+        .as_object()
+        .context("getting inner json object")?
+        .iter()
+        .map(|(name, _)| Package::from(name.as_str()))
         .collect();
     Ok(result)
 }

@@ -176,6 +176,7 @@ disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"]
 
 warn_not_symlinks: true  # warn if a group file is not a symlink
 flatpak_systemwide: true  # whether flatpak packages should be installed system-wide or per user
+pip_binary: pip # choose whether to use pipx instead of pip for python package management [See [Pitfalls while using pipx](#pitfalls-while-using-pipx)]
 ```
 
 
@@ -219,3 +220,6 @@ Pacdef is supported by [topgrade](https://github.com/topgrade-rs/topgrade).
 MSRV is 1.70.0 due to dependencies that require this specific version. Development is conducted against the latest stable version.
 
 
+### Pitfalls while using pipx
+
+Some packages like [mdformat-myst](https://github.com/executablebooks/mdformat-myst) do not provide an executable themselves but rather act as a plugin to their dependency, which is mdformat in this case. Please install such packages explicitly by running `pipx install <package-name> --include-deps`.
