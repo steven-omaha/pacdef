@@ -25,7 +25,7 @@ pub struct Config {
     #[serde(default)]
     pub disabled_backends: Vec<String>,
     /// Choose whether to use pipx instead of pip for python package management
-    #[serde(default)]
+    #[serde(default = "pip")]
     pub pip_binary: String,
 }
 
@@ -35,6 +35,10 @@ fn yes() -> bool {
 
 fn aur_helper() -> String {
     "paru".into()
+}
+
+fn pip() -> String {
+    "pip".into()
 }
 
 impl Config {
