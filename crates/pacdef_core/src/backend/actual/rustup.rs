@@ -90,20 +90,23 @@ impl Backend for Rustup {
         result
     }
 
+    fn remove_packages(
+        &self,
+        packages: &[Package],
+        _: bool,
+    ) -> anyhow::Result<std::process::ExitStatus> {
+        let mut result: anyhow::Result<std::process::ExitStatus> =
+            Ok(std::process::ExitStatus::from_raw(0));
         for p in packages {
             let repo = p
                 .repo
                 .as_ref()
-                .expect("Not specified wether it is a component or a toolchain!");
-            if repo == "component" {
-                let mut iter = p.name.split('/');
-                let toolchain = iter.next().expect("Toolchain not specified!");
-                let component = iter.next().expect("Component not specified!");
+                .expect("Not specified whether it is a toolchain or a component!");
+            if repo == "toolchain" {
                 let mut cmd = Command::new(self.get_binary());
-                cmd.args(&[&"component", &"add"]);
-                cmd.args([&"--toolchain", format!("{toolchain}").as_str()]);
-                cmd.arg(format!("{component}"));
-                result = cmd.status().context("Installing component {p}");
+                cmd.args(self.get_remove_switches(repo));
+                cmd.arg(format!("{}", p.name));
+                result = cmd.status().context("Removing toolchain {p}");
                 if !result.as_ref().is_ok_and(|exit| exit.success()) {
                     return result;
                 }
@@ -124,6 +127,14 @@ impl Rustup {
         match repotype {
             "toolchain" => &["toolchain", "install"],
             "component" => &["component", "add", "--toolchain"],
+            _ => panic!("No such type managed by rust"),
+        }
+    }
+
+    fn get_remove_switches(&self, repotype: &str) -> Switches {
+        match repotype {
+            "toolchain" => &["toolchain", "uninstall"],
+            "component" => &["component", "remove", "--toolchain"],
             _ => panic!("No such type managed by rust"),
         }
     }
