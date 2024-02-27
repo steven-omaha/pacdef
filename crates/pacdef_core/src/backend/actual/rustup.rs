@@ -28,7 +28,7 @@ impl Backend for Rustup {
 
     fn get_all_installed_packages(&self) -> anyhow::Result<HashSet<Package>> {
         let mut toolchains_vec = self
-            .run_toolchain_command(&[&"toolchain", &"list"])
+            .run_toolchain_command(self.get_info_switches("toolchain"))
             .context("Getting installed toolchains")?;
 
         let mut toolchains: HashSet<Package> = toolchains_vec
@@ -37,10 +37,7 @@ impl Backend for Rustup {
             .collect();
 
         let packages: HashSet<Package> = self
-            .run_component_command(
-                &[&"component", &"list", &"--installed", &"--toolchain"],
-                &mut toolchains_vec,
-            )
+            .run_component_command(self.get_info_switches("component"), &mut toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
@@ -55,13 +52,13 @@ impl Backend for Rustup {
     }
 
     fn make_dependency(&self, _: &[Package]) -> anyhow::Result<std::process::ExitStatus> {
-        panic!("Not supported by {}", BINARY)
+        panic!("Not supported by {}", self.get_binary())
     }
 
     fn install_packages(
         &self,
         packages: &[Package],
-        _noconfirm: bool,
+        _: bool,
     ) -> anyhow::Result<std::process::ExitStatus> {
         let mut result: anyhow::Result<std::process::ExitStatus> =
             Ok(std::process::ExitStatus::from_raw(0));
@@ -70,16 +67,29 @@ impl Backend for Rustup {
                 .repo
                 .as_ref()
                 .expect("Not specified whether it is a toolchain or a component!");
-            if repo == "toolchain" {
-                let mut cmd = Command::new(self.get_binary());
-                cmd.args(&[&"toolchain", &"install"]);
-                cmd.arg(format!("{}", p.name));
-                result = cmd.status().context("Installing toolchain {p}");
-                if !result.as_ref().is_ok_and(|exit| exit.success()) {
-                    return result;
+            let mut cmd = Command::new(self.get_binary());
+            cmd.args(self.get_install_switches(repo));
+            match repo.as_str() {
+                "toolchain" => {
+                    cmd.arg(format!("{}", p.name));
                 }
-            };
+                "component" => {
+                    let mut iter = p.name.split('/');
+                    let toolchain = iter.next().expect("Toolchain not specified!");
+                    let component = iter.next().expect("Component not specified!");
+                    cmd.arg(format!("{toolchain}"));
+                    cmd.arg(format!("{component}"));
+                }
+                _ => panic!("No such type is managed by rustup!"),
+            }
+            result = cmd.status().context("Installing toolchain {p}");
+            if !result.as_ref().is_ok_and(|exit| exit.success()) {
+                return result;
+            }
         }
+        result
+    }
+
         for p in packages {
             let repo = p
                 .repo
@@ -107,6 +117,22 @@ impl Rustup {
     pub(crate) fn new() -> Self {
         Self {
             packages: HashSet::new(),
+        }
+    }
+
+    fn get_install_switches(&self, repotype: &str) -> Switches {
+        match repotype {
+            "toolchain" => &["toolchain", "install"],
+            "component" => &["component", "add", "--toolchain"],
+            _ => panic!("No such type managed by rust"),
+        }
+    }
+
+    fn get_info_switches(&self, repotype: &str) -> Switches {
+        match repotype {
+            "toolchain" => &["toolchain", "list"],
+            "component" => &["component", "list", "--installed", "--toolchain"],
+            _ => panic!("No such type managed by rust"),
         }
     }
 
