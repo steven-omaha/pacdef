@@ -4,6 +4,7 @@ use crate::{Group, Package};
 use anyhow::Context;
 use core::panic;
 use std::collections::HashSet;
+use std::os::unix::process::ExitStatusExt;
 use std::process::Command;
 
 #[derive(Debug, Clone)]
@@ -57,7 +58,50 @@ impl Backend for Rustup {
         panic!("Not supported by {}", BINARY)
     }
 
+    fn install_packages(
+        &self,
+        packages: &[Package],
+        _noconfirm: bool,
+    ) -> anyhow::Result<std::process::ExitStatus> {
+        let mut result: anyhow::Result<std::process::ExitStatus> =
+            Ok(std::process::ExitStatus::from_raw(0));
+        for p in packages {
+            let repo = p
+                .repo
+                .as_ref()
+                .expect("Not specified whether it is a toolchain or a component!");
+            if repo == "toolchain" {
+                let mut cmd = Command::new(self.get_binary());
+                cmd.args(&[&"toolchain", &"install"]);
+                cmd.arg(format!("{}", p.name));
+                result = cmd.status().context("Installing toolchain {p}");
+                if !result.as_ref().is_ok_and(|exit| exit.success()) {
+                    return result;
+                }
+            };
+        }
+        for p in packages {
+            let repo = p
+                .repo
+                .as_ref()
+                .expect("Not specified wether it is a component or a toolchain!");
+            if repo == "component" {
+                let mut iter = p.name.split('/');
+                let toolchain = iter.next().expect("Toolchain not specified!");
+                let component = iter.next().expect("Component not specified!");
+                let mut cmd = Command::new(self.get_binary());
+                cmd.args(&[&"component", &"add"]);
+                cmd.args([&"--toolchain", format!("{toolchain}").as_str()]);
+                cmd.arg(format!("{component}"));
+                result = cmd.status().context("Installing component {p}");
+                if !result.as_ref().is_ok_and(|exit| exit.success()) {
+                    return result;
+                }
             }
+        }
+        result
+    }
+}
 
 impl Rustup {
     pub(crate) fn new() -> Self {
