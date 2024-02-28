@@ -48,6 +48,12 @@ impl Package {
         }
     }
 
+    /// Returns the repo name as a reference.
+    /// Panics if repo name is `None` with a custom error message.
+    pub(crate) fn repo(&self, msg: &str) -> &str {
+        self.repo.as_ref().expect(msg)
+    }
+
     /// Try to parse a string (from a line in a group file) and return a package.
     /// From the string, any possible comment is removed and whitespace is trimmed.
     /// Returns `None` if there is nothing left after trimming.
