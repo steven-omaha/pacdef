@@ -18,6 +18,8 @@ pub enum Backends {
     #[cfg(feature = "debian")]
     Debian,
     Flatpak,
+    #[cfg(feature = "fedora")]
+    Fedora,
     Python,
     Rust,
     Rustup,
