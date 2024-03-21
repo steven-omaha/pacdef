@@ -59,7 +59,7 @@ impl Strategy {
         }
 
         if !self.as_dependency.is_empty() {
-            println!("as depdendency:");
+            println!("as dependency:");
             for p in &self.as_dependency {
                 println!("  {p}");
             }
