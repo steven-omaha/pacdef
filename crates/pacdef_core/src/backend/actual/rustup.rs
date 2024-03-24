@@ -1,11 +1,11 @@
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::{Group, Package};
-use anyhow::Context;
+use anyhow::{Context, Result};
 use core::panic;
 use std::collections::HashSet;
 use std::os::unix::process::ExitStatusExt;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 
 #[derive(Debug, Clone)]
 pub struct Rustup {
@@ -26,7 +26,7 @@ const SUPPORTS_AS_DEPENDENCY: bool = false;
 impl Backend for Rustup {
     impl_backend_constants!();
 
-    fn get_all_installed_packages(&self) -> anyhow::Result<HashSet<Package>> {
+    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut toolchains_vec = self
             .run_toolchain_command(self.get_info_switches("toolchain"))
             .context("Getting installed toolchains")?;
@@ -46,22 +46,16 @@ impl Backend for Rustup {
         Ok(toolchains)
     }
 
-    fn get_explicitly_installed_packages(&self) -> anyhow::Result<HashSet<Package>> {
+    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
         self.get_all_installed_packages()
             .context("Getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> anyhow::Result<std::process::ExitStatus> {
+    fn make_dependency(&self, _: &[Package]) -> Result<std::process::ExitStatus> {
         panic!("Not supported by {}", self.get_binary())
     }
 
-    fn install_packages(
-        &self,
-        packages: &[Package],
-        _: bool,
-    ) -> anyhow::Result<std::process::ExitStatus> {
-        let mut result: anyhow::Result<std::process::ExitStatus> =
-            Ok(std::process::ExitStatus::from_raw(0));
+    fn install_packages(&self, packages: &[Package], _: bool) -> Result<std::process::ExitStatus> {
         for p in packages {
             let repo = p
                 .repo
@@ -168,7 +162,7 @@ impl Rustup {
         &self,
         args: &[&str],
         toolchains: &mut Vec<String>,
-    ) -> Result<Vec<String>, anyhow::Error> {
+    ) -> Result<Vec<String>> {
         let mut val = Vec::new();
         for toolchain in toolchains {
             let mut cmd = Command::new(self.get_binary());
@@ -194,7 +188,7 @@ impl Rustup {
         }
         Ok(val)
     }
-    fn run_toolchain_command(&self, args: &[&str]) -> Result<Vec<String>, anyhow::Error> {
+    fn run_toolchain_command(&self, args: &[&str]) -> Result<Vec<String>> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(args);
         let output = String::from_utf8(cmd.output()?.stdout)?;
