@@ -28,7 +28,7 @@ impl Backend for Rustup {
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut toolchains_vec = self
-            .run_toolchain_command(self.get_info_switches("toolchain"))
+            .run_toolchain_command(get_info_switches("toolchain"))
             .context("Getting installed toolchains")?;
 
         let mut toolchains: HashSet<Package> = toolchains_vec
@@ -37,12 +37,13 @@ impl Backend for Rustup {
             .collect();
 
         let packages: HashSet<Package> = self
-            .run_component_command(self.get_info_switches("component"), &mut toolchains_vec)
+            .run_component_command(get_info_switches("component"), &mut toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
             .collect();
-        toolchains.extend(packages.into_iter());
+
+        toolchains.extend(packages);
         Ok(toolchains)
     }
 
@@ -61,26 +62,27 @@ impl Backend for Rustup {
                 .repo
                 .as_ref()
                 .expect("Not specified whether it is a toolchain or a component!");
+
             let mut cmd = Command::new(self.get_binary());
-            cmd.args(self.get_install_switches(repo));
+            cmd.args(get_install_switches(repo));
             match repo.as_str() {
                 "toolchain" => {
-                    cmd.arg(format!("{}", p.name));
+                    cmd.arg(&p.name);
                 }
                 "component" => {
                     let mut iter = p.name.split('/');
                     let toolchain = iter.next().expect("Toolchain not specified!");
                     let component = iter.next().expect("Component not specified!");
-                    cmd.arg(format!("{toolchain}")).arg(format!("{component}"));
+                    cmd.arg(toolchain).arg(component);
                 }
                 _ => panic!("No such type is managed by rustup!"),
             }
-            result = cmd.status().context("Installing toolchain {p}");
+            let result = cmd.status().context("Installing toolchain {p}");
             if !result.as_ref().is_ok_and(|exit| exit.success()) {
                 return result;
             }
         }
-        result
+        Ok(ExitStatus::from_raw(0))
     }
 
     fn remove_packages(
@@ -88,42 +90,45 @@ impl Backend for Rustup {
         packages: &[Package],
         _: bool,
     ) -> anyhow::Result<std::process::ExitStatus> {
-        let mut result: anyhow::Result<std::process::ExitStatus> =
-            Ok(std::process::ExitStatus::from_raw(0));
         let mut toolchains_rem = Vec::new();
 
         for p in packages {
-            let repo = p.repo("Not specified whether it is a toolchain or a component");
+            let repo = p
+                .repo
+                .as_ref()
+                .expect("Not specified whether it is a toolchain or a component");
             if repo == "toolchain" {
                 let mut cmd = Command::new(self.get_binary());
-                cmd.args(self.get_remove_switches(repo))
-                    .arg(format!("{}", p.name));
+                cmd.args(get_remove_switches(repo)).arg(&p.name);
                 toolchains_rem.push(p.name.as_str());
-                result = cmd.status().context("Removing toolchain {p}");
+                let result = cmd.status().context("Removing toolchain {p}");
                 if !result.as_ref().is_ok_and(|exit| exit.success()) {
                     return result;
                 }
             }
         }
         for p in packages {
-            let repo = p.repo("Not specified whether it is a toolchain or a component");
+            let repo = p
+                .repo
+                .as_ref()
+                .expect("Not specified whether it is a toolchain or a component");
             let mut iter = p.name.split('/');
             let toolchain = iter
                 .next()
                 .expect("No toolchain name provided for component");
             if repo == "component" && !toolchains_rem.contains(&toolchain) {
                 let mut cmd = Command::new(self.get_binary());
-                cmd.args(self.get_remove_switches(repo)).arg(toolchain).arg(
+                cmd.args(get_remove_switches(repo)).arg(toolchain).arg(
                     iter.next()
-                        .expect(format!("Component name not provided for {}", p.name).as_str()),
+                        .unwrap_or_else(|| panic!("Component name not provided for {}", p.name)),
                 );
-                result = cmd.status().context("Removing toolchain {p}");
+                let result = cmd.status().context("Removing toolchain {p}");
                 if !result.as_ref().is_ok_and(|exit| exit.success()) {
                     return result;
                 }
             }
         }
-        result
+        Ok(ExitStatus::from_raw(0))
     }
 }
 
