@@ -139,30 +139,6 @@ impl Rustup {
         }
     }
 
-    fn get_install_switches(&self, repotype: &str) -> Switches {
-        match repotype {
-            "toolchain" => &["toolchain", "install"],
-            "component" => &["component", "add", "--toolchain"],
-            _ => panic!("No such type managed by rust"),
-        }
-    }
-
-    fn get_remove_switches(&self, repotype: &str) -> Switches {
-        match repotype {
-            "toolchain" => &["toolchain", "uninstall"],
-            "component" => &["component", "remove", "--toolchain"],
-            _ => panic!("No such type managed by rust"),
-        }
-    }
-
-    fn get_info_switches(&self, repotype: &str) -> Switches {
-        match repotype {
-            "toolchain" => &["toolchain", "list"],
-            "component" => &["component", "list", "--installed", "--toolchain"],
-            _ => panic!("No such type managed by rust"),
-        }
-    }
-
     fn run_component_command(
         &self,
         args: &[&str],
@@ -203,5 +179,26 @@ impl Rustup {
             val.push(it.next().expect("Toolchain name is empty.").to_string());
         }
         Ok(val)
+    }
+}
+fn get_install_switches(repotype: &str) -> Switches {
+    match repotype {
+        "toolchain" => &["toolchain", "install"],
+        "component" => &["component", "add", "--toolchain"],
+        _ => panic!("No such type managed by rust"),
+    }
+}
+fn get_remove_switches(repotype: &str) -> Switches {
+    match repotype {
+        "toolchain" => &["toolchain", "uninstall"],
+        "component" => &["component", "remove", "--toolchain"],
+        _ => panic!("No such type managed by rust"),
+    }
+}
+fn get_info_switches(repotype: &str) -> Switches {
+    match repotype {
+        "toolchain" => &["toolchain", "list"],
+        "component" => &["component", "list", "--installed", "--toolchain"],
+        _ => panic!("No such type managed by rust"),
     }
 }
