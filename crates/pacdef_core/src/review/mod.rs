@@ -34,6 +34,7 @@ pub fn review(
             match get_action_for_package(package, &groups, &mut actions, &*backend)? {
                 ContinueWithReview::Yes => continue,
                 ContinueWithReview::No => return Ok(()),
+                ContinueWithReview::NoAndApply => break,
             }
         }
         reviews.push((backend, actions));
@@ -101,6 +102,7 @@ fn get_action_for_package(
             ReviewIntention::Invalid => (),
             ReviewIntention::Skip => break,
             ReviewIntention::Quit => return Ok(ContinueWithReview::No),
+            ReviewIntention::Apply => return Ok(ContinueWithReview::NoAndApply),
         }
     }
     Ok(ContinueWithReview::Yes)
@@ -122,6 +124,7 @@ fn ask_user_action_for_package(supports_as_dependency: bool) -> Result<ReviewInt
         'i' => Ok(ReviewIntention::Info),
         'q' => Ok(ReviewIntention::Quit),
         's' => Ok(ReviewIntention::Skip),
+        'p' => Ok(ReviewIntention::Apply),
         _ => Ok(ReviewIntention::Invalid),
     }
 }
@@ -140,7 +143,7 @@ fn print_query(supports_as_dependency: bool) -> Result<()> {
         query.push_str("(a)s dependency, ");
     }
 
-    query.push_str("(q)uit? ");
+    query.push_str("a(p)ply, (q)uit? ");
 
     print!("{query}");
     stdout().lock().flush()?;

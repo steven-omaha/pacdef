@@ -21,6 +21,7 @@ pub(super) enum ReviewIntention {
     Invalid,
     Skip,
     Quit,
+    Apply,
 }
 
 #[derive(Debug)]
@@ -88,6 +89,7 @@ impl IntoIterator for ReviewsPerBackend {
 pub(super) enum ContinueWithReview {
     Yes,
     No,
+    NoAndApply,
 }
 
 fn extract_actions(
