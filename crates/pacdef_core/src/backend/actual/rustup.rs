@@ -149,8 +149,8 @@ impl Rustup {
             let mut cmd = Command::new(self.get_binary());
             cmd.args(args).arg(&toolchain);
             let output = String::from_utf8(cmd.output()?.stdout)?;
-            for line in output.lines() {
-                install_components(line, toolchain, &mut val);
+            for component in output.lines() {
+                install_components(component, toolchain, &mut val);
             }
         }
         Ok(val)
@@ -161,7 +161,7 @@ impl Rustup {
         let output = String::from_utf8(cmd.output()?.stdout)?;
         let mut val = Vec::new();
         for i in output.lines() {
-            let mut it = i.splitn(2, "-");
+            let mut it = i.splitn(2, '-');
             val.push(it.next().expect("Toolchain name is empty.").to_string());
         }
         Ok(val)
