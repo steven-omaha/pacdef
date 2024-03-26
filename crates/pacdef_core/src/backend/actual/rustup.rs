@@ -149,22 +149,8 @@ impl Rustup {
             let mut cmd = Command::new(self.get_binary());
             cmd.args(args).arg(&toolchain);
             let output = String::from_utf8(cmd.output()?.stdout)?;
-            for i in output.lines() {
-                let mut it = i.splitn(3, "-");
-                let component = it.next().expect("Component name is empty!");
-                match component {
-                    "cargo" | "rustfmt" | "clippy" | "miri" | "rls" | "rustc" => {
-                        val.push([toolchain, component].join("/"));
-                    }
-                    _ => {
-                        let component = [
-                            component,
-                            it.next().expect("No such component is managed by rustup"),
-                        ]
-                        .join("-");
-                        val.push([toolchain, component.as_str()].join("/"));
-                    }
-                }
+            for line in output.lines() {
+                install_components(line, toolchain, &mut val);
             }
         }
         Ok(val)
@@ -181,6 +167,7 @@ impl Rustup {
         Ok(val)
     }
 }
+
 fn get_install_switches(repotype: &str) -> Switches {
     match repotype {
         "toolchain" => &["toolchain", "install"],
@@ -188,6 +175,7 @@ fn get_install_switches(repotype: &str) -> Switches {
         _ => panic!("No such type managed by rust"),
     }
 }
+
 fn get_remove_switches(repotype: &str) -> Switches {
     match repotype {
         "toolchain" => &["toolchain", "uninstall"],
@@ -195,10 +183,33 @@ fn get_remove_switches(repotype: &str) -> Switches {
         _ => panic!("No such type managed by rust"),
     }
 }
+
 fn get_info_switches(repotype: &str) -> Switches {
     match repotype {
         "toolchain" => &["toolchain", "list"],
         "component" => &["component", "list", "--installed", "--toolchain"],
         _ => panic!("No such type managed by rust"),
+    }
+}
+
+fn install_components(line: &str, toolchain: &str, val: &mut Vec<String>) {
+    let mut chunks = line.splitn(3, '-');
+    let component = chunks.next().expect("Component name is empty!");
+    match component {
+        // these are the only components that have a single word name
+        "cargo" | "rustfmt" | "clippy" | "miri" | "rls" | "rustc" => {
+            val.push([toolchain, component].join("/"));
+        }
+        // all the others have two words hyphenated as component names
+        _ => {
+            let component = [
+                component,
+                chunks
+                    .next()
+                    .expect("No such component is managed by rustup"),
+            ]
+            .join("-");
+            val.push([toolchain, component.as_str()].join("/"));
+        }
     }
 }
