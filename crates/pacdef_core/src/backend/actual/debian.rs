@@ -34,7 +34,7 @@ impl Backend for Debian {
         let sort = PackageSort::default().installed();
 
         let mut result = HashSet::new();
-        for pkg in cache.packages(&sort) {
+        for pkg in cache.packages(&sort)? {
             result.insert(Package::from(pkg.name().to_string()));
         }
         Ok(result)
@@ -45,7 +45,7 @@ impl Backend for Debian {
         let sort = PackageSort::default().installed().manually_installed();
 
         let mut result = HashSet::new();
-        for pkg in cache.packages(&sort) {
+        for pkg in cache.packages(&sort)? {
             result.insert(Package::from(pkg.name().to_string()));
         }
         Ok(result)
