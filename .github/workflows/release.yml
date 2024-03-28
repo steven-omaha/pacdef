@@ -8,15 +8,20 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/archlinux/archlinux:latest
     strategy:
       matrix:
-        features: [arch, debian]        
+        features: [arch, debian]
     steps:
+    - name: Install rust toolchain
+      run: pacman -Syy --noconfirm rust
     - uses: actions/checkout@master
-    - name: Compile and release
-      uses: rust-build/rust-build.action@v1.4.5
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RUSTTARGET: x86_64-unknown-linux-musl
-        FEATURES: ${{ matrix.features }}
-        EXTRA_FILES: "README.md LICENSE"
+    - name: Build
+      run: cargo build --release --features ${{ matrix.features }}
+    - name: Create archive
+      run: tar czf pacdef-${{ matrix.features }}.tar.gz target/release/pacdef LICENCE README.md
+    - name: Upload to release
+      uses: softprops/action-gh-release@v1
+      with:
+          files: pacdef-pacdef-${{ matrix.features }}.tar.gz
