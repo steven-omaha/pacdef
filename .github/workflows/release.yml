@@ -15,7 +15,7 @@ jobs:
         features: [default, arch, debian]
     steps:
     - name: Install dependencies
-      run: pacman -Syy --noconfirm rust apt
+      run: pacman -Syy --noconfirm rust apt git
     - uses: actions/checkout@master
     - name: Build
       run: cargo build --release --features ${{ matrix.features }}
