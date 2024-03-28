@@ -9,13 +9,13 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/archlinux/archlinux:latest
+      image: ghcr.io/archlinux/archlinux:base-devel
     strategy:
       matrix:
         features: [arch, debian]
     steps:
     - name: Install rust toolchain
-      run: pacman -Syy --noconfirm rust
+      run: pacman -Syy --noconfirm rust libalpm
     - uses: actions/checkout@master
     - name: Build
       run: cargo build --release --features ${{ matrix.features }}
