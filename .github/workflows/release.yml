@@ -15,7 +15,7 @@ jobs:
         features: [arch, debian]
     steps:
     - name: Install rust toolchain
-      run: pacman -Syy --noconfirm rust libalpm
+      run: pacman -Syy --noconfirm rust
     - uses: actions/checkout@master
     - name: Build
       run: cargo build --release --features ${{ matrix.features }}
