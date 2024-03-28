@@ -20,7 +20,7 @@ jobs:
     - name: Build
       run: cargo build --release --features ${{ matrix.features }}
     - name: Create archive
-      run: tar czf pacdef-${{ matrix.features }}.tar.gz target/release/pacdef LICENCE README.md
+      run: tar czf pacdef-${{ matrix.features }}.tar.gz target/release/pacdef LICENSE README.md
     - name: Upload to release
       uses: softprops/action-gh-release@v1
       with:
