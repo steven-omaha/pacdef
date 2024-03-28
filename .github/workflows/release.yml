@@ -12,10 +12,10 @@ jobs:
       image: ghcr.io/archlinux/archlinux:base-devel
     strategy:
       matrix:
-        features: [arch, debian]
+        features: [default, arch, debian]
     steps:
-    - name: Install rust toolchain
-      run: pacman -Syy --noconfirm rust
+    - name: Install dependencies
+      run: pacman -Syy --noconfirm rust apt
     - uses: actions/checkout@master
     - name: Build
       run: cargo build --release --features ${{ matrix.features }}
