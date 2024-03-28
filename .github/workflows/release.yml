@@ -22,6 +22,6 @@ jobs:
     - name: Create archive
       run: tar czf pacdef-${{ matrix.features }}.tar.gz target/release/pacdef LICENSE README.md
     - name: Upload to release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
           files: pacdef-${{ matrix.features }}.tar.gz
