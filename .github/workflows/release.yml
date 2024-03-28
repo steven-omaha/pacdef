@@ -7,13 +7,16 @@ on:
 jobs:
   release:
     name: release
-    runs-on: ubuntu-latest
+    runs-on: archlinux-latest
+    strategy:
+      matrix:
+        features: [arch, debian]        
     steps:
     - uses: actions/checkout@master
     - name: Compile and release
       uses: rust-build/rust-build.action@v1.4.5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
         RUSTTARGET: x86_64-unknown-linux-musl
+        FEATURES: ${{ features }}
         EXTRA_FILES: "README.md LICENSE"
