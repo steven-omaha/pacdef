@@ -57,16 +57,17 @@ impl Backend for Rustup {
             .context("Getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<std::process::ExitStatus> {
-        panic!("Not supported by {}", self.get_binary())
+    fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
+        anyhow::bail!("Not supported by {}", self.get_binary())
     }
 
-    fn install_packages(&self, packages: &[Package], _: bool) -> Result<std::process::ExitStatus> {
+    fn install_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
         for p in packages {
-            let repo = p
-                .repo
-                .as_ref()
-                .expect("Not specified whether it is a toolchain or a component!");
+            let repo = if p.repo.is_some() {
+                p.repo.as_ref().expect("This should never be reached")
+            } else {
+                anyhow::bail!("Not specified whether it is a toolchain or a component")
+            };
 
             let mut cmd = Command::new(self.get_binary());
             match repo.as_str() {
@@ -81,8 +82,9 @@ impl Backend for Rustup {
                     let component = iter.next().expect("Component not specified!");
                     cmd.arg(toolchain).arg(component);
                 }
-                _ => panic!("No such type is managed by rustup!"),
+                _ => anyhow::bail!("No such type is managed by rustup!"),
             }
+
             let result = cmd.status().context("Installing toolchain {p}");
             if !result.as_ref().is_ok_and(|exit| exit.success()) {
                 return result;
@@ -91,44 +93,54 @@ impl Backend for Rustup {
         Ok(ExitStatus::from_raw(0))
     }
 
-    fn remove_packages(
-        &self,
-        packages: &[Package],
-        _: bool,
-    ) -> anyhow::Result<std::process::ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
         let mut toolchains_rem = Vec::new();
 
         for p in packages {
-            let repo = p
-                .repo
-                .as_ref()
-                .expect("Not specified whether it is a toolchain or a component");
+            let repo = if p.repo.is_some() {
+                p.repo.as_ref().expect("This will never be printed!")
+            } else {
+                anyhow::bail!("Not specified whether it is a toolchain or a component")
+            };
+
             if repo == "toolchain" {
                 let mut cmd = Command::new(self.get_binary());
                 cmd.args(get_remove_switches(Repotype::Toolchain))
                     .arg(&p.name);
                 toolchains_rem.push(p.name.as_str());
+
                 let result = cmd.status().context("Removing toolchain {p}");
                 if !result.as_ref().is_ok_and(|exit| exit.success()) {
                     return result;
                 }
             }
         }
+
         for p in packages {
-            let repo = p
-                .repo
-                .as_ref()
-                .expect("Not specified whether it is a toolchain or a component");
-            let mut iter = p.name.split('/');
-            let toolchain = iter
-                .next()
-                .expect("No toolchain name provided for component");
+            let repo = if p.repo.is_some() {
+                p.repo.as_ref().expect("This will never be printed!")
+            } else {
+                anyhow::bail!("Not specified whether it is a toolchain or a component")
+            };
+
+            let mut iter = p.name.split('/').peekable();
+            let toolchain = if iter.peek().is_some() {
+                iter.next().expect("This should never be printed")
+            } else {
+                anyhow::bail!("No toolchain name provided for the given component!")
+            };
+
             if repo == "component" && !toolchains_rem.contains(&toolchain) {
                 let mut cmd = Command::new(self.get_binary());
-                cmd.args(get_remove_switches(repo)).arg(toolchain).arg(
-                    iter.next()
-                        .unwrap_or_else(|| panic!("Component name not provided for {}", p.name)),
-                );
+
+                cmd.args(get_remove_switches(Repotype::Component))
+                    .arg(toolchain)
+                    .arg(
+                        iter.next().unwrap_or_else(|| {
+                            panic!("Component name not provided for {}", p.name)
+                        }),
+                    );
+
                 let result = cmd.status().context("Removing toolchain {p}");
                 if !result.as_ref().is_ok_and(|exit| exit.success()) {
                     return result;
