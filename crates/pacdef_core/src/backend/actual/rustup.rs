@@ -12,6 +12,11 @@ pub struct Rustup {
     pub(crate) packages: HashSet<Package>,
 }
 
+enum Repotype {
+    Toolchain,
+    Component,
+}
+
 const BINARY: Text = "rustup";
 const SECTION: Text = "rustup";
 
@@ -28,7 +33,7 @@ impl Backend for Rustup {
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut toolchains_vec = self
-            .run_toolchain_command(get_info_switches("toolchain"))
+            .run_toolchain_command(get_info_switches(Repotype::Toolchain))
             .context("Getting installed toolchains")?;
 
         let mut toolchains: HashSet<Package> = toolchains_vec
@@ -37,7 +42,7 @@ impl Backend for Rustup {
             .collect();
 
         let packages: HashSet<Package> = self
-            .run_component_command(get_info_switches("component"), &mut toolchains_vec)
+            .run_component_command(get_info_switches(Repotype::Component), &mut toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
@@ -64,12 +69,13 @@ impl Backend for Rustup {
                 .expect("Not specified whether it is a toolchain or a component!");
 
             let mut cmd = Command::new(self.get_binary());
-            cmd.args(get_install_switches(repo));
             match repo.as_str() {
                 "toolchain" => {
+                    cmd.args(get_install_switches(Repotype::Toolchain));
                     cmd.arg(&p.name);
                 }
                 "component" => {
+                    cmd.args(get_install_switches(Repotype::Component));
                     let mut iter = p.name.split('/');
                     let toolchain = iter.next().expect("Toolchain not specified!");
                     let component = iter.next().expect("Component not specified!");
@@ -99,7 +105,8 @@ impl Backend for Rustup {
                 .expect("Not specified whether it is a toolchain or a component");
             if repo == "toolchain" {
                 let mut cmd = Command::new(self.get_binary());
-                cmd.args(get_remove_switches(repo)).arg(&p.name);
+                cmd.args(get_remove_switches(Repotype::Toolchain))
+                    .arg(&p.name);
                 toolchains_rem.push(p.name.as_str());
                 let result = cmd.status().context("Removing toolchain {p}");
                 if !result.as_ref().is_ok_and(|exit| exit.success()) {
@@ -168,27 +175,24 @@ impl Rustup {
     }
 }
 
-fn get_install_switches(repotype: &str) -> Switches {
+fn get_install_switches(repotype: Repotype) -> Switches {
     match repotype {
-        "toolchain" => &["toolchain", "install"],
-        "component" => &["component", "add", "--toolchain"],
-        _ => panic!("No such type managed by rust"),
+        Repotype::Toolchain => &["toolchain", "install"],
+        Repotype::Component => &["component", "add", "--toolchain"],
     }
 }
 
-fn get_remove_switches(repotype: &str) -> Switches {
+fn get_remove_switches(repotype: Repotype) -> Switches {
     match repotype {
-        "toolchain" => &["toolchain", "uninstall"],
-        "component" => &["component", "remove", "--toolchain"],
-        _ => panic!("No such type managed by rust"),
+        Repotype::Toolchain => &["toolchain", "uninstall"],
+        Repotype::Component => &["component", "remove", "--toolchain"],
     }
 }
 
-fn get_info_switches(repotype: &str) -> Switches {
+fn get_info_switches(repotype: Repotype) -> Switches {
     match repotype {
-        "toolchain" => &["toolchain", "list"],
-        "component" => &["component", "list", "--installed", "--toolchain"],
-        _ => panic!("No such type managed by rust"),
+        Repotype::Toolchain => &["toolchain", "list"],
+        Repotype::Component => &["component", "list", "--installed", "--toolchain"],
     }
 }
 
