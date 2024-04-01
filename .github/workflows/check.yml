@@ -46,5 +46,5 @@ jobs:
         run: cargo clippy --features arch,debian -- -Dwarnings
 
       - name: Test
-        run: cargo test --workspace
+        run: cargo test --workspace --features arch,debian
 
