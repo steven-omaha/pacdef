@@ -31,7 +31,7 @@ jobs:
       image: archlinux
     steps:
       - name: Install Packages
-        run: pacman -Syu git rust clang gcc libarchive pkgconf --noconfirm --needed
+        run: pacman -Syu git rust clang gcc libarchive pkgconf apt --noconfirm --needed
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -40,10 +40,10 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Build
-        run: cargo build --locked --features arch
+        run: cargo build --locked --features arch,debian
 
       - name: Clippy
-        run: cargo clippy -- -Dwarnings
+        run: cargo clippy --features arch,debian -- -Dwarnings
 
       - name: Test
         run: cargo test --workspace
