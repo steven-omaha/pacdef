@@ -176,7 +176,7 @@ disabled_backends: []  # backends that pacdef should not manage, e.g. ["python"]
 
 warn_not_symlinks: true  # warn if a group file is not a symlink
 flatpak_systemwide: true  # whether flatpak packages should be installed system-wide or per user
-pip_binary: pip # choose whether to use pipx instead of pip for python package management [See [Pitfalls while using pipx](#pitfalls-while-using-pipx)]
+pip_binary: pip  # choose whether to use pipx instead of pip for python package management (see below, 'pitfalls while using pipx')
 ```
 
 
