@@ -88,7 +88,7 @@ Pull requests for additional backends are welcome!
 | Application | Package Manager | Section     | feature flag | Notes                                                                                                     |
 |-------------|-----------------|-------------|--------------|-----------------------------------------------------------------------------------------------------------|
 | Arch Linux  | `pacman`        | `[arch]`    | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                                       |
-| Debian      | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version unknown ([upstream issue](https://gitlab.com/volian/rust-apt/-/issues/20))  |
+| Debian      | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version 2.0.2 ([see upstream](https://gitlab.com/volian/rust-apt))                  |
 | Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                                     |
 | Python      | `pip`           | `[python]`  | built-in     |                                                                                                           |
 | Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                                           |
