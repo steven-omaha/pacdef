@@ -43,7 +43,7 @@ jobs:
         run: cargo build --locked --features arch
 
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy -- -Dwarnings
 
       - name: Test
         run: cargo test --workspace
