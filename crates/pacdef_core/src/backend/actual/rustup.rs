@@ -140,7 +140,7 @@ impl Backend for Rustup {
 
                 cmd.args(get_remove_switches(Repotype::Component))
                     .arg(toolchain);
-
+                iter.next();
                 let component = match iter.next() {
                     Some(name) => name,
                     None => bail!("No component name provided for {}", p.name),
