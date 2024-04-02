@@ -19,4 +19,5 @@ pub enum Backends {
     Flatpak,
     Python,
     Rust,
+    Rustup,
 }

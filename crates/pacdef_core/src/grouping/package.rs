@@ -6,7 +6,7 @@ use std::hash::Hash;
 #[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
     pub(crate) name: String,
-    repo: Option<String>,
+    pub(crate) repo: Option<String>,
 }
 
 fn remove_comment_and_trim_whitespace(s: &str) -> &str {
@@ -41,10 +41,11 @@ impl Package {
     ///
     /// Panics if `string` is empty.
     fn split_into_name_and_repo(string: &str) -> (String, Option<String>) {
-        let mut iter = string.split('/').rev();
-        let name = iter.next().expect("we checked that earlier").to_string();
-        let repo = iter.next().map(|s| s.to_string());
-        (name, repo)
+        if let Some((before, after)) = string.split_once('/') {
+            (after.to_string(), Some(before.to_string()))
+        } else {
+            (string.to_string(), None)
+        }
     }
 
     /// Try to parse a string (from a line in a group file) and return a package.
