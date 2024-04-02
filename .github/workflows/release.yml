@@ -1,0 +1,31 @@
+name: release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/archlinux/archlinux:base-devel
+    strategy:
+      matrix:
+        features: [default, arch, debian]
+    steps:
+    - name: Install dependencies
+      run: pacman -Syy --noconfirm rust apt git
+    - uses: actions/checkout@master
+    - name: Build
+      run: cargo build --release --features ${{ matrix.features }}
+    - name: Create temporary directory
+      run: mkdir pacdef-${{ matrix.features }}
+    - name: Copy artifacts to directory
+      run: cp -R target/release/pacdef man LICENSE README.md pacdef-${{ matrix.features }}
+    - name: Create archive from directory
+      run: tar czf pacdef-${{ matrix.features }}.tar.gz pacdef-${{ matrix.features }}
+    - name: Upload to release
+      uses: softprops/action-gh-release@v2
+      with:
+          files: pacdef-${{ matrix.features }}.tar.gz
