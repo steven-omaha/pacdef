@@ -79,19 +79,19 @@ Pacdef will make sure you have the following packages installed for each package
 
 Note that the name of the section corresponds to the ecosystem it relates to, rather than the package manager it uses.
 
-
 ## Supported backends
 
 At the moment, supported backends are the following.
 Pull requests for additional backends are welcome!
 
-| Application | Package Manager | Section     | feature flag | Notes                                                                                                     |
-|-------------|-----------------|-------------|--------------|-----------------------------------------------------------------------------------------------------------|
-| Arch Linux  | `pacman`        | `[arch]`    | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                                       |
-| Debian      | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version 2.0.2 ([see upstream](https://gitlab.com/volian/rust-apt))                  |
-| Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                                     |
-| Python      | `pip`           | `[python]`  | built-in     |                                                                                                           |
-| Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                                           |
+| Application | Package Manager | Section     | feature flag | Notes                                                                                    |
+| ----------- | --------------- | ----------- | ------------ | ---------------------------------------------------------------------------------------- |
+| Arch Linux  | `pacman`        | `[arch]`    | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                      |
+| Debian      | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version 2.0.2 ([see upstream](https://gitlab.com/volian/rust-apt)) |
+| Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                    |
+| Python      | `pip`           | `[python]`  | built-in     |                                                                                          |
+| Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                          |
+| Rust        | `rustup`        | `[rustup]`  | built-in     | See the comments below about the syntax of the packages in the group file.               |
 
 Backends that have a `feature flag` require setting the respective flag for the build process.
 The appropriate system libraries and their header files must be present on the machine and be detectable by `pkg-config`.
@@ -202,6 +202,32 @@ mycustomrepo/zsh-theme-powerlevel10k
 [rust]
 cargo-update
 topgrade
+```
+
+### Rustup
+
+Rustup packages are managed quite differently. For referring to the syntax, have a look [below](#group-file-syntax).
+In contrast to other package managers, rustup handles package naming very differently.
+These packages are either of the form `toolchain/<VERSION>` or `component/<VERSION>/<component>`, where <VERSION> can be stable, nightly, or any explicit rust version.
+The `<component>` field has to be substituted with the name of the component you want installed.
+
+Example:
+
+```ini
+[rustup]
+component/stable/rust-analyzer
+toolchain/stable
+component/stable/cargo
+component/stable/rust-src
+component/stable/rustc
+toolchain/1.70.0
+component/1.70.0/cargo
+component/1.70.0/clippy
+component/1.70.0/rust-docs
+component/1.70.0/rust-src
+component/1.70.0/rust-std
+component/1.70.0/rustc
+component/1.70.0/rustfmt
 ```
 
 ## Misc.
