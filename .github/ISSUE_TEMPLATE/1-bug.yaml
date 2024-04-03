@@ -51,6 +51,7 @@ body:
     attributes:
       label: What operating system and version are you encountering this issue on?
       description: Most OS produce output for `lsb_release -a`.
+      render: shell
     validations:
       required: true
 
