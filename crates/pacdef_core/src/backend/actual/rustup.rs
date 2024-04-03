@@ -31,7 +31,7 @@ impl Backend for Rustup {
     impl_backend_constants!();
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
-        let mut toolchains_vec = self
+        let toolchains_vec = self
             .run_toolchain_command(get_info_switches(Repotype::Toolchain))
             .context("Getting installed toolchains")?;
 
@@ -41,7 +41,7 @@ impl Backend for Rustup {
             .collect();
 
         let components: HashSet<Package> = self
-            .run_component_command(get_info_switches(Repotype::Component), &mut toolchains_vec)
+            .run_component_command(get_info_switches(Repotype::Component), &toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
@@ -169,22 +169,21 @@ impl Rustup {
         }
     }
 
-    fn run_component_command(
-        &self,
-        args: &[&str],
-        toolchains: &mut Vec<String>,
-    ) -> Result<Vec<String>> {
+    fn run_component_command(&self, args: &[&str], toolchains: &[String]) -> Result<Vec<String>> {
         let mut val = Vec::new();
+
         for toolchain in toolchains {
             let mut cmd = Command::new(self.get_binary());
-            cmd.args(args).arg(&toolchain);
+            cmd.args(args).arg(toolchain);
             let output = String::from_utf8(cmd.output()?.stdout)?;
             for component in output.lines() {
                 install_components(component, toolchain, &mut val);
             }
         }
+
         Ok(val)
     }
+
     fn run_toolchain_command(&self, args: &[&str]) -> Result<Vec<String>> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(args);
