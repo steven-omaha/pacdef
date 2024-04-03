@@ -35,20 +35,24 @@ impl Backend for Rustup {
             .run_toolchain_command(get_info_switches(Repotype::Toolchain))
             .context("Getting installed toolchains")?;
 
-        let mut toolchains: HashSet<Package> = toolchains_vec
+        let toolchains: HashSet<Package> = toolchains_vec
             .iter()
             .map(|name| ["toolchain", name].join("/").into())
             .collect();
 
-        let packages: HashSet<Package> = self
+        let components: HashSet<Package> = self
             .run_component_command(get_info_switches(Repotype::Component), &mut toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
             .collect();
 
-        toolchains.extend(packages);
-        Ok(toolchains)
+        let mut packages = HashSet::new();
+
+        packages.extend(toolchains);
+        packages.extend(components);
+
+        Ok(packages)
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
