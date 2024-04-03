@@ -1,0 +1,42 @@
+name: Feature request
+description: Request an additional feature for pacdef
+title: "[Feature request]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: input
+    id: intent
+    attributes:
+      label: In one sentence, what would the new feature allow the user to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Describe what problem this new feature would solve.
+    validations:
+      required: true
+
+  - type: textarea
+    id: works
+    attributes:
+      label: How should this feature in your opinion work?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: implement
+    attributes:
+      label: Would you be willing to implement this? We would support you through this process.
+      description: Tick the box if so.
+      options:
+        - label: Yes, I would like to implement this.
+
+  - type: textarea
+    id: information
+    attributes:
+      label: Additional information
+      description: Any additional information that may be relevant.
+    validations:
+      required: false
+
