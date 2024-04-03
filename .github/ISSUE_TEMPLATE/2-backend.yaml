@@ -17,17 +17,13 @@ body:
     validations:
       required: true
 
-  - type: dropdown
+  - type: checkboxes
     id: implement
     attributes:
-      label: Would you be willing to implement this yourself?
-      description: We would support you through this process.
-      multiple: false
+      label: Would you be willing to implement this? We would support you through this process.
+      description: Tick the box if so.
       options:
-        - "yes"
-        - "no"
-    validations:
-      required: true
+        - label: Yes, I would like to implement this.
 
   - type: textarea
     id: information
