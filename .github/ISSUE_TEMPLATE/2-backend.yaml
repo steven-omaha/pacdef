@@ -1,0 +1,39 @@
+name: Package manager request
+description: Request support for an additional package manager / backend
+title: "[Backend request]: "
+labels: ["backend request", "triage"]
+body:
+  - type: input
+    id: backend
+    attributes:
+      label: What's the name of the package manager pacdef should support?
+    validations:
+      required: true
+
+  - type: input
+    id: ecosystem
+    attributes:
+      label: What operating system or software ecosystem does it relate to?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: implement
+    attributes:
+      label: Would you be willing to implement this yourself?
+      description: We would support you through this process.
+      multiple: false
+      options:
+        - "yes"
+        - "no"
+    validations:
+      required: true
+
+  - type: textarea
+    id: information
+    attributes:
+      label: Additional information
+      description: Any additional information that may be relevant.
+    validations:
+      required: false
+
