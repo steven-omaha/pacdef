@@ -57,7 +57,7 @@ impl Backend for Rustup {
     }
 
     fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
-        bail!("Not supported by {}", self.get_binary())
+        panic!("Not supported by {}", self.get_binary())
     }
 
     fn install_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
