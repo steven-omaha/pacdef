@@ -1,0 +1,64 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: input
+    id: what-intent
+    attributes:
+      label: In one sentence, what did you try to achieve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-expected
+    attributes:
+      label: What did you expect to happen?
+      description: Tell us what should have happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Tell us what actually happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: version
+    attributes:
+      label: Output of `pacdef version`
+      description: What version of pacdef are you running?
+    validations:
+      required: true
+
+  - type: textarea
+    id: os
+    attributes:
+      label: What operating system and version are you encountering this issue on?
+      description: Most OS produce output for `lsb_release -a`
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Run the pacdef command in question with the environment variable `RUST_BACKTRACE=full`.
+        Please copy and paste any relevant log output.
+        This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: information
+    attributes:
+      label: Additional information
+      description: Any additional information that may be relevant to this bug report.
+    validations:
+      required: false
+
