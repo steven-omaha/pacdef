@@ -176,7 +176,9 @@ impl Rustup {
         for toolchain in toolchains {
             let mut cmd = Command::new(self.get_binary());
             cmd.args(args).arg(toolchain);
+
             let output = String::from_utf8(cmd.output()?.stdout)?;
+
             for component in output.lines() {
                 install_components(component, toolchain, &mut val);
             }
@@ -188,8 +190,11 @@ impl Rustup {
     fn run_toolchain_command(&self, args: &[&str]) -> Result<Vec<String>> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(args);
+
         let output = String::from_utf8(cmd.output()?.stdout)?;
+
         let mut val = Vec::new();
+
         for line in output.lines() {
             let toolchain = line.split('-').next();
             match toolchain {
@@ -197,6 +202,7 @@ impl Rustup {
                 None => bail!("Toolchain name not provided!"),
             }
         }
+
         Ok(val)
     }
 }
