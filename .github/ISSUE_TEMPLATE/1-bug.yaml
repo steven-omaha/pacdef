@@ -31,10 +31,11 @@ body:
     attributes:
       label: How can we reproduce this?
       description: Provide the exact steps to reproduce the issue.
-      value: "1.
+      value: |
+        1.
         2.
         3.
-        4."
+        4.
 
   - type: textarea
     id: version
