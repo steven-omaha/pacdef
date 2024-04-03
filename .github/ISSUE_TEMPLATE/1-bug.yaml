@@ -47,6 +47,15 @@ body:
       required: true
 
   - type: textarea
+    id: config
+    attributes:
+      label: Pacdef config
+      description: Paste the content of your pacdef config file, normally found under `~/.config/pacdef/pacdef.yaml`.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
     id: os
     attributes:
       label: What operating system and version are you encountering this issue on?
