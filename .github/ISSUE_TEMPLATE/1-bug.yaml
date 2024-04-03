@@ -51,7 +51,7 @@ body:
     attributes:
       label: Pacdef config
       description: Paste the content of your pacdef config file, normally found under `~/.config/pacdef/pacdef.yaml`.
-      render: shell
+      render: yaml
     validations:
       required: true
 
