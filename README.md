@@ -91,7 +91,7 @@ Pull requests for additional backends are welcome!
 | Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                    |
 | Python      | `pip`           | `[python]`  | built-in     |                                                                                          |
 | Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                          |
-| Rust        | `rustup`        | `[rustup]`  | built-in     | See the comments below about the syntax of the packages in the group file.               |
+| Rustup      | `rustup`        | `[rustup]`  | built-in     | See the comments [below](#rustup) about the syntax of the packages in the group file.    |
 
 Backends that have a `feature flag` require setting the respective flag for the build process.
 The appropriate system libraries and their header files must be present on the machine and be detectable by `pkg-config`.
