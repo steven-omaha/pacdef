@@ -106,6 +106,7 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
+        // TODO this calls rustup for each component and each toolchain
         let mut toolchains_rem = Vec::new();
 
         for p in packages {
