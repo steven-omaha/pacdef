@@ -86,8 +86,7 @@ impl Rust {
 }
 
 fn get_crates_file() -> Result<PathBuf> {
-    let mut result = crate::path::get_home_dir().context("getting home dir")?;
-    result.push(".cargo");
+    let mut result = crate::path::get_cargo_home().context("getting cargo home dir")?;
     result.push(".crates2.json");
     Ok(result)
 }
