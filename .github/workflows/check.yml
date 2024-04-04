@@ -37,14 +37,18 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Format
+        if: '!cancelled()'
         run: cargo fmt -- --check
 
       - name: Build
+        if: '!cancelled()'
         run: cargo build --locked --features arch,debian
 
       - name: Clippy
+        if: '!cancelled()'
         run: cargo clippy --features arch,debian -- -Dwarnings
 
       - name: Test
+        if: '!cancelled()'
         run: cargo test --workspace --features arch,debian
 
