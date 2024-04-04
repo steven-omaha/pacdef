@@ -2,6 +2,7 @@ mod actual;
 mod backend_trait;
 mod iter;
 mod macros;
+mod root;
 mod todo_per_backend;
 
 pub use backend_trait::Backend;

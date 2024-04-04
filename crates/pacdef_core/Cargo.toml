@@ -17,6 +17,7 @@ path-absolutize = "3.1"
 regex = { version = "1.10", default-features = false, features = ["std"] }
 termios = "0.3"
 walkdir = "2.5"
+libc = "0.2"
 
 serde = "1.0"
 serde_derive = "1.0"
@@ -29,12 +30,10 @@ pacdef_macros = { path = "../pacdef_macros", version = "1.0" }
 alpm = { version = "3.0", optional = true }
 rust-apt = { version = "0.7", optional = true }
 
-libc = { version = "0.2", optional = true }  # for debian
-
 [dev-dependencies]
 rstest = "0.18"
 
 [features]
 default = []
 arch = ["dep:alpm"]
-debian = ["dep:rust-apt", "dep:libc"]
+debian = ["dep:rust-apt"]

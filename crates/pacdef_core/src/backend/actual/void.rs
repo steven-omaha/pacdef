@@ -6,6 +6,7 @@ use regex::Regex;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
+use crate::backend::root::build_base_command_with_privileges;
 use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
@@ -42,12 +43,12 @@ impl Backend for Void {
         cmd.args(["-l"]);
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
-        let packages: HashSet<Package> = output
+        let packages = output
             .lines()
             .map(|line| {
-                let result = re1.replace_all(line, "").to_string();
-                let result = re2.replace_all(&result, "").to_string();
-                result.into()
+                let result = re1.replace_all(line, "");
+                let result = re2.replace_all(&result, "");
+                result.to_string().into()
             })
             .collect();
         Ok(packages)
@@ -61,7 +62,7 @@ impl Backend for Void {
         cmd.args(["-m"]);
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
-        let packages: HashSet<Package> = output
+        let packages = output
             .lines()
             .map(|line| {
                 let result = re.replace_all(line, "").to_string();
@@ -73,8 +74,7 @@ impl Backend for Void {
 
     /// Install the specified packages.
     fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
-        let mut cmd = Command::new("sudo");
-        cmd.arg(INSTALL_BINARY);
+        let mut cmd = build_base_command_with_privileges(INSTALL_BINARY);
         cmd.args(self.get_switches_install());
 
         if noconfirm {
@@ -90,8 +90,7 @@ impl Backend for Void {
     }
 
     fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
-        let mut cmd = Command::new("sudo");
-        cmd.arg(REMOVE_BINARY);
+        let mut cmd = build_base_command_with_privileges(REMOVE_BINARY);
         cmd.args(self.get_switches_remove());
 
         if noconfirm {
@@ -107,8 +106,7 @@ impl Backend for Void {
     }
 
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
-        let mut cmd = Command::new("sudo");
-        cmd.arg(PKGDB_BINARY);
+        let mut cmd = build_base_command_with_privileges(PKGDB_BINARY);
         cmd.args(self.get_switches_make_dependency());
 
         for p in packages {
