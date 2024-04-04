@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./crates/pacdef_core/Cargo.toml",
+        "./crates/pacdef_core/Cargo.toml",
+        "./crates/pacdef_core/Cargo.toml"
+    ]
+}

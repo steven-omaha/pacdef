@@ -33,3 +33,4 @@ strip = true
 default = []
 debian = ["pacdef_core/debian"]
 arch = ["pacdef_core/arch"]
+void = ["pacdef_core/void"]
