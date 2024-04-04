@@ -38,4 +38,3 @@ rstest = "0.18"
 default = []
 arch = ["dep:alpm"]
 debian = ["dep:rust-apt", "dep:libc"]
-void = []

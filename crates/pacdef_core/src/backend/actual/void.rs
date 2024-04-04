@@ -1,4 +1,3 @@
-use core::panic;
 use std::collections::HashSet;
 use std::process::{Command, ExitStatus};
 
@@ -28,23 +27,6 @@ const SWITCHES_NOCONFIRM: Switches = &["-y"];
 const SWITCHES_REMOVE: Switches = &["-R"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = true;
-impl Void {
-    fn get_binary_info(&self) -> Text {
-        QUERY_BINARY
-    }
-
-    fn get_binary_install(&self) -> Text {
-        INSTALL_BINARY
-    }
-
-    fn get_binary_remove(&self) -> Text {
-        REMOVE_BINARY
-    }
-
-    fn get_binary_make_dependency(&self) -> Text {
-        PKGDB_BINARY
-    }
-}
 
 impl Backend for Void {
     impl_backend_constants!();
@@ -56,8 +38,8 @@ impl Backend for Void {
         let re_str_2 = r"-[^-]*$";
         let re1 = Regex::new(re_str_1)?;
         let re2 = Regex::new(re_str_2)?;
-        let mut cmd = Command::new(self.get_binary_info());
-        cmd.args(&["-l"]);
+        let mut cmd = Command::new(QUERY_BINARY);
+        cmd.args(["-l"]);
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
         let packages: HashSet<Package> = output
@@ -75,7 +57,7 @@ impl Backend for Void {
         // Removes the package version from output
         let re_str = r"-[^-]*$";
         let re = Regex::new(re_str)?;
-        let mut cmd = Command::new(self.get_binary_info());
+        let mut cmd = Command::new(QUERY_BINARY);
         cmd.args(self.get_switches_info());
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
@@ -92,7 +74,7 @@ impl Backend for Void {
     /// Install the specified packages.
     fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new("sudo");
-        cmd.arg(self.get_binary_install());
+        cmd.arg(INSTALL_BINARY);
         cmd.args(self.get_switches_install());
 
         if noconfirm {
@@ -109,7 +91,7 @@ impl Backend for Void {
 
     fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new("sudo");
-        cmd.arg(self.get_binary_remove());
+        cmd.arg(REMOVE_BINARY);
         cmd.args(self.get_switches_remove());
 
         if noconfirm {
@@ -126,7 +108,7 @@ impl Backend for Void {
 
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new("sudo");
-        cmd.arg(self.get_binary_make_dependency());
+        cmd.arg(PKGDB_BINARY);
         cmd.args(self.get_switches_make_dependency());
 
         for p in packages {
@@ -139,8 +121,8 @@ impl Backend for Void {
 }
 
 impl Void {
-    pub fn new() -> Self {
-        Void {
+    pub(crate) fn new() -> Self {
+        Self {
             packages: HashSet::new(),
         }
     }

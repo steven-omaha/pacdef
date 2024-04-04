@@ -16,10 +16,9 @@ pub enum Backends {
     Arch,
     #[cfg(feature = "debian")]
     Debian,
-    #[cfg(feature = "void")]
-    Void,
     Flatpak,
     Python,
     Rust,
     Rustup,
+    Void,
 }
