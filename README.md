@@ -88,6 +88,7 @@ Pull requests for additional backends are welcome!
 | ----------- | --------------- | ----------- | ------------ | ---------------------------------------------------------------------------------------- |
 | Arch Linux  | `pacman`        | `[arch]`    | `arch`       | includes pacman-wrapping AUR helpers (configurable)                                      |
 | Debian      | `apt`           | `[debian]`  | `debian`     | minimum supported apt-version 2.0.2 ([see upstream](https://gitlab.com/volian/rust-apt)) |
+| Void Linux  | `xbps`          | `[void]`    | `void`       |                                                                                          |
 | Flatpak     | `flatpak`       | `[flatpak]` | built-in     | can manage either system-wide or per-user installation (configurable)                    |
 | Python      | `pip`           | `[python]`  | built-in     |                                                                                          |
 | Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                          |
