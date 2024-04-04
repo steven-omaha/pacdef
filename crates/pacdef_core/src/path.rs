@@ -34,6 +34,22 @@ pub(crate) fn get_pacdef_base_dir() -> Result<PathBuf> {
     Ok(dir)
 }
 
+/// Get the path to the cargo home directory.
+///
+/// # Errors
+///
+/// This function will return an error if neither the `$CARGO_HOME` nor
+/// the `$HOME` environment variables are set.
+pub(crate) fn get_cargo_home() -> Result<PathBuf> {
+    if let Ok(config) = env::var("CARGO_HOME") {
+        Ok(config.into())
+    } else {
+        let mut config = get_home_dir().context("falling back to $HOME/.cargo")?;
+        config.push(".cargo");
+        Ok(config)
+    }
+}
+
 /// Get the path to the XDG config directory.
 ///
 /// # Errors
