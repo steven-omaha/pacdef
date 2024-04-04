@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::process::Command;
 use std::process::ExitStatus;
 
 use anyhow::{Context, Result};
