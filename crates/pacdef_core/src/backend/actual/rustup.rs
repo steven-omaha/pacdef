@@ -1,20 +1,10 @@
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::{Group, Package};
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use std::collections::HashSet;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, ExitStatus};
-
-#[derive(Debug, Clone)]
-pub struct Rustup {
-    pub(crate) packages: HashSet<Package>,
-}
-
-enum Repotype {
-    Toolchain,
-    Component,
-}
 
 const BINARY: Text = "rustup";
 const SECTION: Text = "rustup";
@@ -26,6 +16,90 @@ const SWITCHES_NOCONFIRM: Switches = &[];
 const SWITCHES_REMOVE: Switches = &["component", "remove"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = false;
+
+#[derive(Debug, Clone)]
+pub struct Rustup {
+    pub(crate) packages: HashSet<Package>,
+}
+
+#[derive(Debug)]
+enum Repotype {
+    Toolchain,
+    Component,
+}
+
+impl Repotype {
+    fn try_from<T>(value: T) -> Result<Self>
+    where
+        T: AsRef<str>,
+    {
+        let value = value.as_ref();
+        let result = match value {
+            "toolchain" => Self::Toolchain,
+            "component" => Self::Component,
+            _ => bail!("{} is neither toolchain nor component", value),
+        };
+        Ok(result)
+    }
+}
+
+/// A package as used exclusively in the rustup backend. Contrary to other packages, this does not
+/// have an (optional) repository and a name, but is either a component or a toolchain, has a
+/// toolchain version, and if it is a toolchain also a name.
+#[derive(Debug)]
+struct RustupPackage {
+    /// Whether it is a toolchain or a component.
+    pub repotype: Repotype,
+    /// The name of the toolchain this belongs to (stable, nightly, a pinned version)
+    pub toolchain: String,
+    /// If it is a toolchain, it will not have a component name.
+    /// If it is a component, this will be its name.
+    pub component: Option<String>,
+}
+
+impl RustupPackage {
+    /// Creates a new [`RustupPackage`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if
+    /// - repotype is Toolchain and component is Some, or
+    /// - repotype is Component and component is None.
+    fn new(repotype: Repotype, toolchain: String, component: Option<String>) -> Self {
+        match repotype {
+            Repotype::Toolchain => assert!(component.is_none()),
+            Repotype::Component => assert!(component.is_some()),
+        };
+
+        Self {
+            repotype,
+            toolchain,
+            component,
+        }
+    }
+}
+
+impl TryFrom<&Package> for RustupPackage {
+    type Error = anyhow::Error;
+
+    fn try_from(package: &Package) -> Result<Self> {
+        let repo = package.repo.as_ref().context("getting repo from package")?;
+        let repotype = Repotype::try_from(repo).context("getting repotype")?;
+
+        let (toolchain, component) = match repotype {
+            Repotype::Toolchain => (package.name.to_string(), None),
+            Repotype::Component => {
+                let (toolchain, component) = package
+                    .name
+                    .split_once('/')
+                    .context("splitting package into toolchain and component")?;
+                (toolchain.to_string(), Some(component.into()))
+            }
+        };
+
+        Ok(Self::new(repotype, toolchain, component))
+    }
+}
 
 impl Backend for Rustup {
     impl_backend_constants!();
@@ -64,6 +138,7 @@ impl Backend for Rustup {
         panic!("Not supported by {}", self.get_binary())
     }
 
+    // TODO refactor
     fn install_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
         for p in packages {
             let repo = match p.repo.as_ref() {
@@ -106,61 +181,96 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
-        // TODO this calls rustup for each component and each toolchain
-        let mut toolchains_rem = Vec::new();
+        let rustup_packages = convert_all_packages_to_rustup_packages(packages)?;
 
-        for p in packages {
-            let repo = match p.repo.as_ref() {
-                Some(reponame) => reponame,
-                None => bail!("Not specified whether it is a toolchain or a component"),
-            };
+        let (toolchains, components) =
+            sort_packages_into_toolchains_and_components(rustup_packages);
 
-            if repo == "toolchain" {
-                let mut cmd = Command::new(self.get_binary());
-                cmd.args(get_remove_switches(Repotype::Toolchain))
-                    .arg(&p.name);
-                toolchains_rem.push(p.name.as_str());
+        let mut removed_toolchains = vec![];
 
-                let result = cmd.status().context("Removing toolchain {p}");
-                if !result.as_ref().is_ok_and(|exit| exit.success()) {
-                    return result;
-                }
+        if !toolchains.is_empty() {
+            let mut cmd = Command::new(self.get_binary());
+            cmd.args(get_remove_switches(Repotype::Toolchain));
+
+            for toolchain_package in &toolchains {
+                let name = toolchain_package.toolchain.as_str();
+                cmd.arg(name);
+                removed_toolchains.push(name);
             }
+
+            // TODO this should be abstracted
+            let exit_status = cmd.status().with_context(|| "running command [{cmd:?}]")?;
+            ensure!(
+                exit_status.success(),
+                "command returned non-zero exit status"
+            );
         }
 
-        for p in packages {
-            let repo = match p.repo.as_ref() {
-                Some(reponame) => reponame,
-                None => bail!("Not specified whether it is a toolchain or a component"),
-            };
+        for component in components {
+            let mut cmd = Command::new(self.get_binary());
+            cmd.args(get_remove_switches(Repotype::Component));
 
-            let mut iter = p.name.split('/').peekable();
-            let toolchain = match iter.peek() {
-                Some(name) => name,
-                None => bail!("No toolchain name provided for the given component!"),
-            };
+            if toolchain_of_component_was_already_removed(&removed_toolchains, &component) {
+                continue;
+            }
 
-            if repo == "component" && !toolchains_rem.contains(toolchain) {
-                let mut cmd = Command::new(self.get_binary());
+            cmd.arg(&component.toolchain);
 
-                cmd.args(get_remove_switches(Repotype::Component))
-                    .arg(toolchain);
-                iter.next();
-                let component = match iter.next() {
-                    Some(name) => name,
-                    None => bail!("No component name provided for {}", p.name),
-                };
+            cmd.arg(
+                component
+                    .component
+                    .as_ref()
+                    .expect("the constructor ensures this cannot be None"),
+            );
 
-                cmd.arg(component);
-
-                let result = cmd.status().context("Removing toolchain {p}");
-                if !result.as_ref().is_ok_and(|exit| exit.success()) {
-                    return result;
-                }
+            let result = cmd
+                .status()
+                .with_context(|| format!("Removing toolchain {:?})", component));
+            if !result.as_ref().is_ok_and(|exit| exit.success()) {
+                return result;
             }
         }
         Ok(ExitStatus::from_raw(0))
     }
+}
+
+fn convert_all_packages_to_rustup_packages(packages: &[Package]) -> Result<Vec<RustupPackage>> {
+    let mut result = vec![];
+
+    for package in packages {
+        let rustup_package = RustupPackage::try_from(package).with_context(|| {
+            format!(
+                "converting pacdef package {} to rustup package",
+                package.name
+            )
+        })?;
+        result.push(rustup_package);
+    }
+
+    Ok(result)
+}
+
+fn toolchain_of_component_was_already_removed(
+    removed_toolchains: &[&str],
+    component: &RustupPackage,
+) -> bool {
+    removed_toolchains.contains(&component.toolchain.as_ref())
+}
+
+fn sort_packages_into_toolchains_and_components(
+    packages: Vec<RustupPackage>,
+) -> (Vec<RustupPackage>, Vec<RustupPackage>) {
+    let mut toolchains = vec![];
+    let mut components = vec![];
+
+    for package in packages {
+        match package.repotype {
+            Repotype::Toolchain => toolchains.push(package),
+            Repotype::Component => components.push(package),
+        }
+    }
+
+    (toolchains, components)
 }
 
 impl Rustup {
