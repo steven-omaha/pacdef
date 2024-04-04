@@ -20,7 +20,7 @@ const QUERY_BINARY: Text = "xbps-query";
 const PKGDB_BINARY: Text = "xbps-pkgdb";
 const SECTION: Text = "void";
 
-const SWITCHES_INFO: Switches = &["-m"];
+const SWITCHES_INFO: Switches = &[];
 const SWITCHES_INSTALL: Switches = &["-S"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &["-m", "auto"];
 const SWITCHES_NOCONFIRM: Switches = &["-y"];
@@ -58,7 +58,7 @@ impl Backend for Void {
         let re_str = r"-[^-]*$";
         let re = Regex::new(re_str)?;
         let mut cmd = Command::new(QUERY_BINARY);
-        cmd.args(self.get_switches_info());
+        cmd.args(["-m"]);
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
         let packages: HashSet<Package> = output
@@ -117,6 +117,15 @@ impl Backend for Void {
 
         cmd.status()
             .with_context(|| format!("running command [{cmd:?}]"))
+    }
+
+    /// Show information from package manager for package.
+    fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
+        let mut cmd = Command::new(QUERY_BINARY);
+        cmd.args(self.get_switches_info());
+        cmd.arg(format!("{package}"));
+        cmd.status()
+            .with_context(|| format!("running command {cmd:?}"))
     }
 }
 
