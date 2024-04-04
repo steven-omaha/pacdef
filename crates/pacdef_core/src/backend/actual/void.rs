@@ -50,7 +50,9 @@ impl Backend for Void {
     impl_backend_constants!();
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
-        let re_str_1 = r"ii | .*";
+        // Removes the package status and description from output
+        let re_str_1 = r"^ii |^uu |^hr |^\?\? | .*";
+        // Removes the package version from output
         let re_str_2 = r"-[^-]*$";
         let re1 = Regex::new(re_str_1)?;
         let re2 = Regex::new(re_str_2)?;
@@ -70,6 +72,7 @@ impl Backend for Void {
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
+        // Removes the package version from output
         let re_str = r"-[^-]*$";
         let re = Regex::new(re_str)?;
         let mut cmd = Command::new(self.get_binary_info());
