@@ -8,7 +8,7 @@ multi-backend declarative package manager for Linux
 ## Installation
 
 ### Arch Linux
-`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git).
+`pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git) or [binary version](https://aur.archlinux.org/packages/pacdef-bin).
 The AUR package will also provide completions for `zsh`.
 
 ### other
