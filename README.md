@@ -92,6 +92,7 @@ Pull requests for additional backends are welcome!
 | Python      | `pip`           | `[python]`  | built-in     |                                                                                          |
 | Rust        | `cargo`         | `[rust]`    | built-in     |                                                                                          |
 | Rustup      | `rustup`        | `[rustup]`  | built-in     | See the comments [below](#rustup) about the syntax of the packages in the group file.    |
+| Void Linux  | `xbps`          | `[void]`    | built-in     |                                                                                          |
 
 Backends that have a `feature flag` require setting the respective flag for the build process.
 The appropriate system libraries and their header files must be present on the machine and be detectable by `pkg-config`.

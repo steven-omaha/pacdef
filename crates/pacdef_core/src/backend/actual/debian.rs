@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::process::Command;
 use std::process::ExitStatus;
 
 use anyhow::{Context, Result};
@@ -8,6 +7,7 @@ use rust_apt::new_cache;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
+use crate::backend::root::build_base_command_with_privileges;
 use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
@@ -103,20 +103,4 @@ impl Debian {
             packages: HashSet::new(),
         }
     }
-}
-
-fn we_are_root() -> bool {
-    let uid = unsafe { libc::geteuid() };
-    uid == 0
-}
-
-fn build_base_command_with_privileges(binary: &str) -> Command {
-    let cmd = if we_are_root() {
-        Command::new(binary)
-    } else {
-        let mut cmd = Command::new("sudo");
-        cmd.arg(binary);
-        cmd
-    };
-    cmd
 }

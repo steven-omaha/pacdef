@@ -6,3 +6,4 @@ pub mod flatpak;
 pub mod python;
 pub mod rust;
 pub mod rustup;
+pub mod void;
