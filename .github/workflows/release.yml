@@ -22,7 +22,7 @@ jobs:
     - name: Create temporary directory
       run: mkdir pacdef-${{ matrix.features }}
     - name: Copy artifacts to directory
-      run: cp -R target/release/pacdef man LICENSE README.md pacdef-${{ matrix.features }}
+      run: cp -R target/release/pacdef _completion man LICENSE README.md pacdef-${{ matrix.features }}
     - name: Create archive from directory
       run: tar czf pacdef-${{ matrix.features }}.tar.gz pacdef-${{ matrix.features }}
     - name: Upload to release
