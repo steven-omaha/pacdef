@@ -36,7 +36,9 @@ where
 /// This function will return an error if the command cannot be run or if it returns a non-zero
 /// exit status. In case of an error the full command will be part of the error message.
 pub fn run_external_command(mut cmd: Command) -> Result<()> {
-    let exit_status = cmd.status().with_context(|| "running command [{cmd:?}]")?;
+    let exit_status = cmd
+        .status()
+        .with_context(|| format!("running command [{cmd:?}]"))?;
     let success = exit_status.success();
     ensure!(
         success,
