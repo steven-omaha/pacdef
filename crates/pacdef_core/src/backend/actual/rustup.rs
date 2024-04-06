@@ -1,7 +1,8 @@
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
+use crate::cmd::run_external_command;
 use crate::{Group, Package};
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{bail, Context, Result};
 use std::collections::HashSet;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, ExitStatus};
@@ -198,12 +199,7 @@ impl Backend for Rustup {
                 removed_toolchains.push(name);
             }
 
-            // TODO this should be abstracted
-            let exit_status = cmd.status().with_context(|| "running command [{cmd:?}]")?;
-            ensure!(
-                exit_status.success(),
-                "command returned non-zero exit status"
-            );
+            run_external_command(cmd)?;
         }
 
         for component in components {
