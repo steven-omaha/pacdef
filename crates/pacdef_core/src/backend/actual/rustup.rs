@@ -173,10 +173,7 @@ impl Backend for Rustup {
                 _ => bail!("No such type is managed by rustup!"),
             }
 
-            let result = cmd.status().context("Installing toolchain {p}");
-            if !result.as_ref().is_ok_and(|exit| exit.success()) {
-                return result;
-            }
+            run_external_command(cmd).with_context(|| format!("Installing toolchain {p}"))?;
         }
         Ok(ExitStatus::from_raw(0))
     }
@@ -199,32 +196,28 @@ impl Backend for Rustup {
                 removed_toolchains.push(name);
             }
 
-            run_external_command(cmd)?;
+            run_external_command(cmd)
+                .with_context(|| format!("removing toolchains [{toolchains:?}]"))?;
         }
 
-        for component in components {
+        for component_package in components {
             let mut cmd = Command::new(self.get_binary());
             cmd.args(get_remove_switches(Repotype::Component));
 
-            if toolchain_of_component_was_already_removed(&removed_toolchains, &component) {
+            if toolchain_of_component_was_already_removed(&removed_toolchains, &component_package) {
                 continue;
             }
 
-            cmd.arg(&component.toolchain);
-
+            cmd.arg(&component_package.toolchain);
             cmd.arg(
-                component
+                component_package
                     .component
                     .as_ref()
                     .expect("the constructor ensures this cannot be None"),
             );
 
-            let result = cmd
-                .status()
-                .with_context(|| format!("Removing toolchain {:?})", component));
-            if !result.as_ref().is_ok_and(|exit| exit.success()) {
-                return result;
-            }
+            run_external_command(cmd)
+                .with_context(|| format!("removing component {component_package:?}"))?;
         }
         Ok(ExitStatus::from_raw(0))
     }
