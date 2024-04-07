@@ -3,7 +3,7 @@ use std::process::{Command, ExitStatus};
 
 use anyhow::{anyhow, ensure, Context, Result};
 
-use crate::env::get_editor;
+use crate::env::{get_editor, should_print_debug_info};
 
 /// Run the editor and pass the provided files as arguments. The workdir is set
 /// to the parent of the first file.
@@ -29,16 +29,23 @@ where
     inner(&files)
 }
 
-/// Run an external command. Use the anyhow framework to bubble up errors if they occur.
+/// Run an external command. Use the anyhow framework to bubble up errors if they occur. Will print
+/// the full command to be executed when pacdef is in debug mode.
 ///
 /// # Errors
 ///
 /// This function will return an error if the command cannot be run or if it returns a non-zero
 /// exit status. In case of an error the full command will be part of the error message.
 pub fn run_external_command(mut cmd: Command) -> Result<()> {
+    if should_print_debug_info() {
+        println!("will run the following command");
+        dbg!(&cmd);
+    }
+
     let exit_status = cmd
         .status()
         .with_context(|| format!("running command [{cmd:?}]"))?;
+
     let success = exit_status.success();
     ensure!(
         success,

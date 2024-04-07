@@ -10,7 +10,7 @@ use const_format::formatcp;
 use crate::args::{self, PackageAction};
 use crate::backend::{Backend, Backends, ToDoPerBackend};
 use crate::cmd::run_edit_command;
-use crate::env::get_single_var;
+use crate::env::should_print_debug_info;
 use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
 use crate::search;
 use crate::ui::get_user_confirmation;
@@ -571,16 +571,13 @@ fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Resu
 #[allow(clippy::option_if_let_else)]
 fn show_backend_query_error(error: &anyhow::Error, backend: &dyn Backend) {
     let section = backend.get_section();
-    match get_single_var("RUST_BACKTRACE") {
-        Some(s) => {
-            if s == "1" || s == "full" {
-                eprintln!("WARNING: skipping backend '{section}':");
-                for err in error.chain() {
-                    eprintln!("  {err}");
-                }
-            }
+    if should_print_debug_info() {
+        eprintln!("WARNING: skipping backend '{section}':");
+        for err in error.chain() {
+            eprintln!("  {err}");
         }
-        None => eprintln!("WARNING: skipping backend '{section}': {error}"),
+    } else {
+        eprintln!("WARNING: skipping backend '{section}': {error}");
     }
 }
 

@@ -10,6 +10,14 @@ fn check_vars_in_order(vars: &[&str]) -> Option<String> {
     vars.iter().find_map(|v| var(v).ok())
 }
 
-pub fn get_single_var(variable: &str) -> Option<String> {
+fn get_single_var(variable: &str) -> Option<String> {
     var(variable).ok()
+}
+
+pub fn should_print_debug_info() -> bool {
+    match get_single_var("RUST_BACKTRACE") {
+        Some(value) if ["s", "full"].contains(&value.as_str()) => true,
+        Some(_) => false,
+        None => false,
+    }
 }
