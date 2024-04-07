@@ -139,42 +139,14 @@ impl Backend for Rustup {
         panic!("Not supported by {}", self.get_binary())
     }
 
-    // TODO refactor
     fn install_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
-        for p in packages {
-            let repo = match p.repo.as_ref() {
-                Some(name) => name,
-                None => bail!("Not specified whether it is a toolchain or a component"),
-            };
+        let packages = convert_all_packages_to_rustup_packages(packages)?;
 
-            let mut cmd = Command::new(self.get_binary());
-            match repo.as_str() {
-                "toolchain" => {
-                    cmd.args(get_install_switches(Repotype::Toolchain));
-                    cmd.arg(&p.name);
-                }
-                "component" => {
-                    cmd.args(get_install_switches(Repotype::Component));
+        let (toolchains, components) = sort_packages_into_toolchains_and_components(packages);
 
-                    let mut iter = p.name.split('/');
+        self.install_toolchains(toolchains)?;
+        self.install_components(components)?;
 
-                    let toolchain = match iter.next() {
-                        Some(name) => name,
-                        None => bail!("Toolchain not specified!"),
-                    };
-                    cmd.arg(toolchain);
-
-                    let component = match iter.next() {
-                        Some(name) => name,
-                        None => bail!("Component not specified!"),
-                    };
-                    cmd.arg(component);
-                }
-                _ => bail!("No such type is managed by rustup!"),
-            }
-
-            run_external_command(cmd).with_context(|| format!("Installing toolchain {p}"))?;
-        }
         Ok(ExitStatus::from_raw(0))
     }
 
@@ -304,6 +276,56 @@ impl Rustup {
 
         Ok(val)
     }
+
+    fn install_toolchains(&self, toolchains: Vec<RustupPackage>) -> Result<()> {
+        if toolchains.is_empty() {
+            return Ok(());
+        }
+        let mut cmd = Command::new(self.get_binary());
+        cmd.args(get_install_switches(Repotype::Toolchain));
+
+        for toolchain in toolchains {
+            cmd.arg(&toolchain.toolchain);
+        }
+
+        run_external_command(cmd).context("installing toolchains")?;
+
+        Ok(())
+    }
+
+    fn install_components(&self, components: Vec<RustupPackage>) -> Result<()> {
+        if components.is_empty() {
+            return Ok(());
+        }
+
+        let components_by_toolchain = group_components_by_toolchains(components);
+
+        for components_for_one_toolchain in components_by_toolchain {
+            let mut cmd = Command::new(self.get_binary());
+            cmd.args(get_install_switches(Repotype::Component));
+
+            let the_toolchain = &components_for_one_toolchain
+                .first()
+                .expect("will have at least one element")
+                .toolchain;
+
+            cmd.arg(the_toolchain);
+
+            for component_package in &components_for_one_toolchain {
+                let actual_component = component_package
+                    .component
+                    .as_ref()
+                    .expect("constructor makes sure this is Some");
+
+                cmd.arg(actual_component);
+            }
+
+            run_external_command(cmd)
+                .with_context(|| format!("installing [{components_for_one_toolchain:?}]"))?;
+        }
+
+        Ok(())
+    }
 }
 
 fn get_install_switches(repotype: Repotype) -> Switches {
@@ -347,4 +369,31 @@ fn install_components(line: &str, toolchain: &str, val: &mut Vec<String>) {
             val.push([toolchain, component.as_str()].join("/"));
         }
     }
+}
+
+fn group_components_by_toolchains(components: Vec<RustupPackage>) -> Vec<Vec<RustupPackage>> {
+    let mut result = vec![];
+
+    let mut toolchains: Vec<String> = vec![];
+
+    for component in components {
+        let index = toolchains
+            .iter()
+            .enumerate()
+            .find(|(_, toolchain)| toolchain == &&component.toolchain)
+            .map(|(idx, _)| idx)
+            .unwrap_or_else(|| {
+                toolchains.push(component.toolchain.clone());
+                result.push(vec![]);
+                toolchains.len() - 1
+            });
+        result
+            .get_mut(index)
+            .expect(
+                "either the index already existed or we just pushed the element with that index",
+            )
+            .push(component);
+    }
+
+    result
 }
