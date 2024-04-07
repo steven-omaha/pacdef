@@ -9,9 +9,13 @@ multi-backend declarative package manager for Linux
 
 ### Arch Linux
 `pacdef` is available in the AUR [as stable release](https://aur.archlinux.org/packages/pacdef) or [development version](https://aur.archlinux.org/packages/pacdef-git) or [binary version](https://aur.archlinux.org/packages/pacdef-bin).
-The AUR package will also provide completions for `zsh`.
 
-### other
+### binaries for other Linux versions
+For every release since 1.5.0 you can download binaries for some other Linux versions.
+Check out the assets for the [latest release](https://github.com/steven-omaha/pacdef/releases).
+
+### from source
+
 Install it from [crates.io](https://crates.io/crates/pacdef) using this command.
 ```bash
 $ cargo install [-F <backend>[,...]] pacdef
@@ -19,7 +23,10 @@ $ cargo install [-F <backend>[,...]] pacdef
 
 See below ("[supported backends](#supported-backends)") for the feature flags you will need for your distribution.
 
-To get zsh completion to work you must copy the `_completion.zsh` file to the right folder manually and rename it to `_pacdef`.
+### shell completion
+
+For Arch Linux, zsh completion will work automatically when you install pacdef from the AUR packages.
+For other distributions you must copy the `_completion.zsh` file to the right folder manually and rename it to `_pacdef`.
 
 ## Use-case
 
