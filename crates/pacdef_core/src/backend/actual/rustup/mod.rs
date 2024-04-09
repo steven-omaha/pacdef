@@ -10,6 +10,9 @@ use std::collections::HashSet;
 use std::os::unix::process::ExitStatusExt;
 use std::process::{Command, ExitStatus};
 
+use self::helpers::{
+    group_components_by_toolchains, install_components, toolchain_of_component_was_already_removed,
+};
 pub use self::types::Rustup;
 use self::types::{Repotype, RustupPackage};
 
@@ -65,7 +68,7 @@ impl Backend for Rustup {
         let packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
-            helpers::sort_packages_into_toolchains_and_components(packages);
+            RustupPackage::sort_packages_into_toolchains_and_components(packages);
 
         self.install_toolchains(toolchains)?;
         self.install_components(components)?;
@@ -77,7 +80,7 @@ impl Backend for Rustup {
         let rustup_packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
-            helpers::sort_packages_into_toolchains_and_components(rustup_packages);
+            RustupPackage::sort_packages_into_toolchains_and_components(rustup_packages);
 
         let removed_toolchains = self.remove_toolchains(toolchains)?;
 
@@ -87,12 +90,6 @@ impl Backend for Rustup {
 }
 
 impl Rustup {
-    pub(crate) fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
-    }
-
     fn run_component_command(&self, args: &[&str], toolchains: &[String]) -> Result<Vec<String>> {
         let mut val = Vec::new();
 
@@ -103,7 +100,7 @@ impl Rustup {
             let output = String::from_utf8(cmd.output()?.stdout)?;
 
             for component in output.lines() {
-                helpers::install_components(component, toolchain, &mut val);
+                install_components(component, toolchain, &mut val);
             }
         }
 
@@ -150,7 +147,7 @@ impl Rustup {
             return Ok(());
         }
 
-        let components_by_toolchain = helpers::group_components_by_toolchains(components);
+        let components_by_toolchain = group_components_by_toolchains(components);
 
         for components_for_one_toolchain in components_by_toolchain {
             let mut cmd = Command::new(self.get_binary());
@@ -206,10 +203,7 @@ impl Rustup {
             let mut cmd = Command::new(self.get_binary());
             cmd.args(Repotype::Component.get_remove_switches());
 
-            if helpers::toolchain_of_component_was_already_removed(
-                &removed_toolchains,
-                &component_package,
-            ) {
+            if toolchain_of_component_was_already_removed(&removed_toolchains, &component_package) {
                 continue;
             }
 

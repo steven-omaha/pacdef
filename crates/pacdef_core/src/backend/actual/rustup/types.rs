@@ -14,6 +14,28 @@ pub enum Repotype {
     Component,
 }
 
+/// A package as used exclusively in the rustup backend. Contrary to other packages, this does not
+/// have an (optional) repository and a name, but is either a component or a toolchain, has a
+/// toolchain version, and if it is a toolchain also a name.
+#[derive(Debug)]
+pub struct RustupPackage {
+    /// Whether it is a toolchain or a component.
+    pub repotype: Repotype,
+    /// The name of the toolchain this belongs to (stable, nightly, a pinned version)
+    pub toolchain: String,
+    /// If it is a toolchain, it will not have a component name.
+    /// If it is a component, this will be its name.
+    pub component: Option<String>,
+}
+
+impl Rustup {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+        }
+    }
+}
+
 impl Repotype {
     fn try_from<T>(value: T) -> Result<Self>
     where
@@ -50,20 +72,6 @@ impl Repotype {
     }
 }
 
-/// A package as used exclusively in the rustup backend. Contrary to other packages, this does not
-/// have an (optional) repository and a name, but is either a component or a toolchain, has a
-/// toolchain version, and if it is a toolchain also a name.
-#[derive(Debug)]
-pub struct RustupPackage {
-    /// Whether it is a toolchain or a component.
-    pub repotype: Repotype,
-    /// The name of the toolchain this belongs to (stable, nightly, a pinned version)
-    pub toolchain: String,
-    /// If it is a toolchain, it will not have a component name.
-    /// If it is a component, this will be its name.
-    pub component: Option<String>,
-}
-
 impl RustupPackage {
     /// Creates a new [`RustupPackage`].
     ///
@@ -83,6 +91,22 @@ impl RustupPackage {
             toolchain,
             component,
         }
+    }
+
+    pub fn sort_packages_into_toolchains_and_components(
+        packages: Vec<Self>,
+    ) -> (Vec<Self>, Vec<Self>) {
+        let mut toolchains = vec![];
+        let mut components = vec![];
+
+        for package in packages {
+            match package.repotype {
+                Repotype::Toolchain => toolchains.push(package),
+                Repotype::Component => components.push(package),
+            }
+        }
+
+        (toolchains, components)
     }
 
     pub fn from_pacdef_packages(packages: &[Package]) -> Result<Vec<Self>> {

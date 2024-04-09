@@ -1,26 +1,10 @@
-use super::types::{Repotype, RustupPackage};
+use super::types::RustupPackage;
 
 pub fn toolchain_of_component_was_already_removed(
     removed_toolchains: &[String],
     component: &RustupPackage,
 ) -> bool {
     removed_toolchains.contains(&component.toolchain)
-}
-
-pub fn sort_packages_into_toolchains_and_components(
-    packages: Vec<RustupPackage>,
-) -> (Vec<RustupPackage>, Vec<RustupPackage>) {
-    let mut toolchains = vec![];
-    let mut components = vec![];
-
-    for package in packages {
-        match package.repotype {
-            Repotype::Toolchain => toolchains.push(package),
-            Repotype::Component => components.push(package),
-        }
-    }
-
-    (toolchains, components)
 }
 
 pub fn install_components(line: &str, toolchain: &str, val: &mut Vec<String>) {
@@ -61,6 +45,7 @@ pub fn group_components_by_toolchains(components: Vec<RustupPackage>) -> Vec<Vec
                 result.push(vec![]);
                 toolchains.len() - 1
             });
+
         result
             .get_mut(index)
             .expect(
