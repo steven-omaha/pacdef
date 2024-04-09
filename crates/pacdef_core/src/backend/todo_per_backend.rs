@@ -49,6 +49,9 @@ impl ToDoPerBackend {
             .context("removing packages")
     }
 
+    /// # Todo
+    ///
+    /// refactor this! preferably inline it to all callers
     fn handle_backend_command<'a, F>(
         &'a self,
         func: F,
