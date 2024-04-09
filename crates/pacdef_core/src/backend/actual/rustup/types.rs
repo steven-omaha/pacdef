@@ -1,7 +1,7 @@
 use anyhow::{bail, Context, Result};
 use std::collections::HashSet;
 
-use crate::Package;
+use crate::{backend::backend_trait::Switches, Package};
 
 #[derive(Debug, Clone)]
 pub struct Rustup {
@@ -26,6 +26,27 @@ impl Repotype {
             _ => bail!("{} is neither toolchain nor component", value),
         };
         Ok(result)
+    }
+
+    pub fn get_install_switches(self) -> Switches {
+        match self {
+            Self::Toolchain => &["toolchain", "install"],
+            Self::Component => &["component", "add", "--toolchain"],
+        }
+    }
+
+    pub fn get_remove_switches(self) -> Switches {
+        match self {
+            Self::Toolchain => &["toolchain", "uninstall"],
+            Self::Component => &["component", "remove", "--toolchain"],
+        }
+    }
+
+    pub fn get_info_switches(self) -> Switches {
+        match self {
+            Self::Toolchain => &["toolchain", "list"],
+            Self::Component => &["component", "list", "--installed", "--toolchain"],
+        }
     }
 }
 

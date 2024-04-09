@@ -1,5 +1,3 @@
-use crate::backend::backend_trait::Switches;
-
 use super::types::{Repotype, RustupPackage};
 
 pub fn toolchain_of_component_was_already_removed(
@@ -23,27 +21,6 @@ pub fn sort_packages_into_toolchains_and_components(
     }
 
     (toolchains, components)
-}
-
-pub fn get_install_switches(repotype: Repotype) -> Switches {
-    match repotype {
-        Repotype::Toolchain => &["toolchain", "install"],
-        Repotype::Component => &["component", "add", "--toolchain"],
-    }
-}
-
-pub fn get_remove_switches(repotype: Repotype) -> Switches {
-    match repotype {
-        Repotype::Toolchain => &["toolchain", "uninstall"],
-        Repotype::Component => &["component", "remove", "--toolchain"],
-    }
-}
-
-pub fn get_info_switches(repotype: Repotype) -> Switches {
-    match repotype {
-        Repotype::Toolchain => &["toolchain", "list"],
-        Repotype::Component => &["component", "list", "--installed", "--toolchain"],
-    }
 }
 
 pub fn install_components(line: &str, toolchain: &str, val: &mut Vec<String>) {

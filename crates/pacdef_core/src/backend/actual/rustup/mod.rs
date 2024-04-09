@@ -29,7 +29,7 @@ impl Backend for Rustup {
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let toolchains_vec = self
-            .run_toolchain_command(helpers::get_info_switches(Repotype::Toolchain))
+            .run_toolchain_command(Repotype::Toolchain.get_info_switches())
             .context("Getting installed toolchains")?;
 
         let toolchains: HashSet<Package> = toolchains_vec
@@ -38,10 +38,7 @@ impl Backend for Rustup {
             .collect();
 
         let components: HashSet<Package> = self
-            .run_component_command(
-                helpers::get_info_switches(Repotype::Component),
-                &toolchains_vec,
-            )
+            .run_component_command(Repotype::Component.get_install_switches(), &toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
@@ -153,7 +150,7 @@ impl Rustup {
             return Ok(());
         }
         let mut cmd = Command::new(self.get_binary());
-        cmd.args(helpers::get_install_switches(Repotype::Toolchain));
+        cmd.args(Repotype::Toolchain.get_install_switches());
 
         for toolchain in toolchains {
             cmd.arg(&toolchain.toolchain);
@@ -173,7 +170,7 @@ impl Rustup {
 
         for components_for_one_toolchain in components_by_toolchain {
             let mut cmd = Command::new(self.get_binary());
-            cmd.args(helpers::get_install_switches(Repotype::Component));
+            cmd.args(Repotype::Component.get_install_switches());
 
             let the_toolchain = &components_for_one_toolchain
                 .first()
@@ -202,7 +199,7 @@ impl Rustup {
         let mut removed_toolchains = vec![];
         if !toolchains.is_empty() {
             let mut cmd = Command::new(self.get_binary());
-            cmd.args(helpers::get_remove_switches(Repotype::Toolchain));
+            cmd.args(Repotype::Toolchain.get_remove_switches());
 
             for toolchain_package in &toolchains {
                 let name = toolchain_package.toolchain.as_str();
@@ -223,7 +220,7 @@ impl Rustup {
     ) -> Result<()> {
         for component_package in components {
             let mut cmd = Command::new(self.get_binary());
-            cmd.args(helpers::get_remove_switches(Repotype::Component));
+            cmd.args(Repotype::Component.get_remove_switches());
 
             if helpers::toolchain_of_component_was_already_removed(
                 &removed_toolchains,
