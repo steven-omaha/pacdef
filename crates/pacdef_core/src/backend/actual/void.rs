@@ -1,12 +1,13 @@
 use std::collections::HashSet;
-use std::process::{Command, ExitStatus};
+use std::process::Command;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use regex::Regex;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::backend::root::build_base_command_with_privileges;
+use crate::cmd::run_external_command;
 use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
@@ -73,7 +74,7 @@ impl Backend for Void {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = build_base_command_with_privileges(INSTALL_BINARY);
         cmd.args(self.get_switches_install());
 
@@ -85,11 +86,10 @@ impl Backend for Void {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command {cmd:?}"))
+        run_external_command(cmd)
     }
 
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = build_base_command_with_privileges(REMOVE_BINARY);
         cmd.args(self.get_switches_remove());
 
@@ -101,11 +101,10 @@ impl Backend for Void {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+        run_external_command(cmd)
     }
 
-    fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn make_dependency(&self, packages: &[Package]) -> Result<()> {
         let mut cmd = build_base_command_with_privileges(PKGDB_BINARY);
         cmd.args(self.get_switches_make_dependency());
 
@@ -113,17 +112,16 @@ impl Backend for Void {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+        run_external_command(cmd)
     }
 
     /// Show information from package manager for package.
-    fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
+    fn show_package_info(&self, package: &Package) -> Result<()> {
         let mut cmd = Command::new(QUERY_BINARY);
         cmd.args(self.get_switches_info());
         cmd.arg(format!("{package}"));
-        cmd.status()
-            .with_context(|| format!("running command {cmd:?}"))
+
+        run_external_command(cmd)
     }
 }
 

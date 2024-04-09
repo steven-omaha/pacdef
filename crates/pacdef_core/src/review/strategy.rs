@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use anyhow::{ensure, Result};
+use anyhow::Result;
 
 use crate::backend::Backend;
 use crate::{Group, Package};
@@ -30,11 +30,11 @@ impl Strategy {
 
     pub(super) fn execute(self) -> Result<()> {
         if !self.delete.is_empty() {
-            ensure!(self.backend.remove_packages(&self.delete, false)?.success());
+            self.backend.remove_packages(&self.delete, false)?;
         }
 
         if !self.as_dependency.is_empty() {
-            ensure!(self.backend.make_dependency(&self.as_dependency)?.success());
+            self.backend.make_dependency(&self.as_dependency)?;
         }
 
         if !self.assign_group.is_empty() {

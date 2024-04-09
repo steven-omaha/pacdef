@@ -7,8 +7,7 @@ use crate::cmd::run_external_command;
 use crate::{Group, Package};
 use anyhow::{bail, Context, Result};
 use std::collections::HashSet;
-use std::os::unix::process::ExitStatusExt;
-use std::process::{Command, ExitStatus};
+use std::process::Command;
 
 use self::helpers::{
     group_components_by_toolchains, install_components, toolchain_of_component_was_already_removed,
@@ -60,11 +59,11 @@ impl Backend for Rustup {
             .context("Getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
+    fn make_dependency(&self, _: &[Package]) -> Result<()> {
         panic!("Not supported by {}", self.get_binary())
     }
 
-    fn install_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], _: bool) -> Result<()> {
         let packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
@@ -73,10 +72,10 @@ impl Backend for Rustup {
         self.install_toolchains(toolchains)?;
         self.install_components(components)?;
 
-        Ok(ExitStatus::from_raw(0))
+        Ok(())
     }
 
-    fn remove_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], _: bool) -> Result<()> {
         let rustup_packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
@@ -85,7 +84,8 @@ impl Backend for Rustup {
         let removed_toolchains = self.remove_toolchains(toolchains)?;
 
         self.remove_components(components, removed_toolchains)?;
-        Ok(ExitStatus::from_raw(0))
+
+        Ok(())
     }
 }
 

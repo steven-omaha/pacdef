@@ -1,6 +1,5 @@
 use std::collections::HashSet;
 use std::process::Command;
-use std::process::ExitStatus;
 
 use anyhow::Context;
 use anyhow::Result;
@@ -53,7 +52,7 @@ impl Backend for Python {
         self.extract_packages(output)
     }
 
-    fn make_dependency(&self, _packages: &[Package]) -> Result<ExitStatus> {
+    fn make_dependency(&self, _packages: &[Package]) -> Result<()> {
         panic!("not supported by {}", BINARY)
     }
 }

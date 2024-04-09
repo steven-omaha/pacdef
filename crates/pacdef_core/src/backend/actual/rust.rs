@@ -2,7 +2,6 @@ use std::collections::HashSet;
 use std::fs::read_to_string;
 use std::io::ErrorKind::NotFound;
 use std::path::PathBuf;
-use std::process::ExitStatus;
 
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -54,7 +53,7 @@ impl Backend for Rust {
             .context("getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<ExitStatus> {
+    fn make_dependency(&self, _: &[Package]) -> Result<()> {
         panic!("not supported by {}", BINARY)
     }
 }

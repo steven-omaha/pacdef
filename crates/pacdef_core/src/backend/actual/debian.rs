@@ -8,6 +8,7 @@ use rust_apt::new_cache;
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::backend::root::build_base_command_with_privileges;
+use crate::cmd::run_external_command;
 use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
@@ -51,18 +52,18 @@ impl Backend for Debian {
         Ok(result)
     }
 
-    fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn make_dependency(&self, packages: &[Package]) -> Result<()> {
         let mut cmd = build_base_command_with_privileges("apt-mark");
         cmd.arg("auto");
         for p in packages {
             cmd.arg(format!("{p}"));
         }
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+
+        run_external_command(cmd)
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = build_base_command_with_privileges(self.get_binary());
 
         cmd.args(self.get_switches_install());
@@ -75,12 +76,11 @@ impl Backend for Debian {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command {cmd:?}"))
+        run_external_command(cmd)
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = build_base_command_with_privileges(self.get_binary());
         cmd.args(self.get_switches_remove());
 
@@ -92,8 +92,7 @@ impl Backend for Debian {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+        run_external_command(cmd)
     }
 }
 

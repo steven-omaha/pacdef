@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::process::{Command, ExitStatus};
+use std::process::Command;
 
 use alpm::Alpm;
 use alpm::PackageReason::Explicit;
@@ -7,6 +7,7 @@ use anyhow::{Context, Result};
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
+use crate::cmd::run_external_command;
 use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
@@ -51,7 +52,7 @@ impl Backend for Arch {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = Command::new(&self.binary);
 
         cmd.args(self.get_switches_install());
@@ -64,12 +65,11 @@ impl Backend for Arch {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command {cmd:?}"))
+        run_external_command(cmd)
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = Command::new(&self.binary);
 
         cmd.args(self.get_switches_remove());
@@ -83,8 +83,7 @@ impl Backend for Arch {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+        run_external_command(cmd)
     }
 }
 

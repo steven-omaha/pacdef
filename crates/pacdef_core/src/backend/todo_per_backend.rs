@@ -1,7 +1,6 @@
 use std::fmt::Write;
-use std::process::ExitStatus;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{Context, Result};
 
 use super::Backend;
 use crate::Package;
@@ -58,21 +57,16 @@ impl ToDoPerBackend {
         verb_continuous: &'_ str,
     ) -> Result<()>
     where
-        F: Fn(&'a dyn Backend, &'a [Package], bool) -> Result<ExitStatus>,
+        F: Fn(&'a dyn Backend, &'a [Package], bool) -> Result<()>,
     {
         for (backend, packages) in &self.0 {
             if packages.is_empty() {
                 continue;
             }
 
-            let exit_status = func(&**backend, packages, noconfirm).with_context(|| {
+            func(&**backend, packages, noconfirm).with_context(|| {
                 format!("{verb_continuous} packages for {}", backend.get_section())
             })?;
-
-            match exit_status.code() {
-                Some(val) => ensure!(val == 0, "command returned with exit code {val}"),
-                None => bail!("could not {verb} packages for {}", backend.get_section()),
-            }
         }
         Ok(())
     }

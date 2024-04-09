@@ -3,11 +3,12 @@ use std::cmp::{Eq, Ord};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::process::{Command, ExitStatus};
+use std::process::Command;
 use std::rc::Rc;
 
 use anyhow::{Context, Result};
 
+use crate::cmd::run_external_command;
 use crate::{Group, Package};
 
 pub(in crate::backend) type Switches = &'static [&'static str];
@@ -93,11 +94,7 @@ pub trait Backend: Debug {
     ///
     /// This function will return an error if the package manager cannot be run or it
     /// returns an error.
-    ///
-    /// # Todo
-    ///
-    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
 
@@ -109,8 +106,7 @@ pub trait Backend: Debug {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command {cmd:?}"))
+        run_external_command(cmd)
     }
 
     /// Mark the packages as non-explicit / dependency using the underlying
@@ -119,11 +115,7 @@ pub trait Backend: Debug {
     /// # Panics
     ///
     /// This method shall panic when the backend does not support depedent packages.
-    ///
-    /// # Todo
-    ///
-    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
-    fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
+    fn make_dependency(&self, packages: &[Package]) -> Result<()> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_make_dependency());
 
@@ -131,16 +123,12 @@ pub trait Backend: Debug {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+        run_external_command(cmd)
     }
 
     /// Remove the specified packages.
     ///
-    /// # Todo
-    ///
-    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
+    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_remove());
 
@@ -152,8 +140,7 @@ pub trait Backend: Debug {
             cmd.arg(format!("{p}"));
         }
 
-        cmd.status()
-            .with_context(|| format!("running command [{cmd:?}]"))
+        run_external_command(cmd)
     }
 
     /// Get missing packages, sorted alphabetically.
@@ -168,16 +155,12 @@ pub trait Backend: Debug {
     }
 
     /// Show information from package manager for package.
-    ///
-    /// # Todo
-    ///
-    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
-    fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
+    fn show_package_info(&self, package: &Package) -> Result<()> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_info());
         cmd.arg(format!("{package}"));
-        cmd.status()
-            .with_context(|| format!("running command {cmd:?}"))
+
+        run_external_command(cmd)
     }
 
     /// Get unmanaged packages, sorted alphabetically.
