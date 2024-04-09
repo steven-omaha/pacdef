@@ -87,7 +87,10 @@ impl Pacdef {
         match args {
             Clean(args::Noconfirm(noconfirm)) => self.clean_packages(*noconfirm),
             Review => review::review(self.get_unmanaged_packages()?, self.groups),
-            Search(args::Regex(regex)) => search::search_packages(regex, &self.groups),
+            Search(args::Regex(regex)) => {
+                self.warn_about_groups_that_arent_symlinks();
+                search::search_packages(regex, &self.groups)
+            }
             Sync(args::Noconfirm(noconfirm)) => self.install_packages(*noconfirm),
             Unmanaged => self.show_unmanaged_packages(),
         }
@@ -150,6 +153,8 @@ impl Pacdef {
     }
 
     fn install_packages(&mut self, noconfirm: bool) -> Result<()> {
+        self.warn_about_groups_that_arent_symlinks();
+
         let to_install = self.get_missing_packages()?;
 
         if to_install.nothing_to_do_for_all_backends() {
@@ -170,7 +175,20 @@ impl Pacdef {
         to_install.install_missing_packages(noconfirm)
     }
 
+    fn warn_about_groups_that_arent_symlinks(&self) {
+        for group in &self.groups {
+            if group.warn_symlink {
+                eprintln!(
+                    "WARNING: group file {} is not a symlink",
+                    group.path.to_string_lossy()
+                );
+            }
+        }
+    }
+
     fn edit_groups(&self, groups: &[String]) -> Result<()> {
+        self.warn_about_groups_that_arent_symlinks();
+
         if self.groups.is_empty() {
             eprintln!("WARNING: no group files found");
         }
@@ -211,6 +229,8 @@ impl Pacdef {
     ///
     /// This function will propagate errors from the individual backends.
     fn get_unmanaged_packages(&mut self) -> Result<ToDoPerBackend> {
+        self.warn_about_groups_that_arent_symlinks();
+
         if self.groups.is_empty() {
             eprintln!("WARNING: no group files found");
         }
@@ -247,6 +267,8 @@ impl Pacdef {
     /// with other methods.
     #[allow(clippy::unnecessary_wraps)]
     fn show_groups(self) -> Result<()> {
+        self.warn_about_groups_that_arent_symlinks();
+
         if self.groups.is_empty() {
             eprintln!("WARNING: no group files found");
         }
@@ -282,6 +304,8 @@ impl Pacdef {
     }
 
     fn show_group_content(&self, args: &[String]) -> Result<()> {
+        self.warn_about_groups_that_arent_symlinks();
+
         if self.groups.is_empty() {
             eprintln!("WARNING: no group files found");
         }

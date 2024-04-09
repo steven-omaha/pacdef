@@ -23,6 +23,8 @@ pub struct Group {
     pub(crate) sections: HashSet<Section>,
     /// The absolute path of the original file.
     pub(crate) path: PathBuf,
+    /// Whether the main program should warn this group being loaded from a symlink.
+    pub(crate) warn_symlink: bool,
 }
 
 impl Group {
@@ -57,15 +59,11 @@ impl Group {
                 continue;
             }
 
-            if warn_not_symlinks && !path.is_symlink() && !is_child_of_any_dir(&path, &symlink_dirs)
-            {
-                eprintln!(
-                    "WARNING: group file {} is not a symlink",
-                    path.to_string_lossy()
-                );
-            }
+            let should_warn_about_symlinks = warn_not_symlinks
+                && !path.is_symlink()
+                && !is_child_of_any_dir(&path, &symlink_dirs);
 
-            let group = Self::try_from(path.as_path(), group_dir)
+            let group = Self::try_from(path.as_path(), group_dir, should_warn_about_symlinks)
                 .with_context(|| format!("reading group file {path:?}"))?;
 
             result.insert(group);
@@ -132,7 +130,7 @@ impl Group {
     /// # Errors
     ///
     /// This function will return an error if the group file cannot be read.
-    fn try_from<P>(path: P, group_dir: P) -> Result<Self>
+    fn try_from<P>(path: P, group_dir: P, warn_symlink: bool) -> Result<Self>
     where
         P: AsRef<Path>,
     {
@@ -167,6 +165,7 @@ impl Group {
             name,
             sections,
             path,
+            warn_symlink,
         })
     }
 
