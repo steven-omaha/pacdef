@@ -41,7 +41,7 @@ impl Backend for Rustup {
             .collect();
 
         let components: HashSet<Package> = self
-            .run_component_command(Repotype::Component.get_install_switches(), &toolchains_vec)
+            .run_component_command(Repotype::Component.get_info_switches(), &toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
