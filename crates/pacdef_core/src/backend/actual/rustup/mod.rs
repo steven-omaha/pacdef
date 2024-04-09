@@ -62,7 +62,7 @@ impl Backend for Rustup {
     }
 
     fn install_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
-        let packages = convert_all_packages_to_rustup_packages(packages)?;
+        let packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
             helpers::sort_packages_into_toolchains_and_components(packages);
@@ -74,7 +74,7 @@ impl Backend for Rustup {
     }
 
     fn remove_packages(&self, packages: &[Package], _: bool) -> Result<ExitStatus> {
-        let rustup_packages = convert_all_packages_to_rustup_packages(packages)?;
+        let rustup_packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
             helpers::sort_packages_into_toolchains_and_components(rustup_packages);
@@ -84,22 +84,6 @@ impl Backend for Rustup {
         self.remove_components(components, removed_toolchains)?;
         Ok(ExitStatus::from_raw(0))
     }
-}
-
-fn convert_all_packages_to_rustup_packages(packages: &[Package]) -> Result<Vec<RustupPackage>> {
-    let mut result = vec![];
-
-    for package in packages {
-        let rustup_package = RustupPackage::try_from(package).with_context(|| {
-            format!(
-                "converting pacdef package {} to rustup package",
-                package.name
-            )
-        })?;
-        result.push(rustup_package);
-    }
-
-    Ok(result)
 }
 
 impl Rustup {

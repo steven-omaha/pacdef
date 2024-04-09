@@ -84,6 +84,22 @@ impl RustupPackage {
             component,
         }
     }
+
+    pub fn from_pacdef_packages(packages: &[Package]) -> Result<Vec<Self>> {
+        let mut result = vec![];
+
+        for package in packages {
+            let rustup_package = Self::try_from(package).with_context(|| {
+                format!(
+                    "converting pacdef package {} to rustup package",
+                    package.name
+                )
+            })?;
+            result.push(rustup_package);
+        }
+
+        Ok(result)
+    }
 }
 
 impl TryFrom<&Package> for RustupPackage {
