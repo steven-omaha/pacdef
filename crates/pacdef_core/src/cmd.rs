@@ -1,17 +1,17 @@
 use std::path::Path;
-use std::process::{Command, ExitStatus};
+use std::process::Command;
 
-use anyhow::{anyhow, ensure, Context, Result};
+use anyhow::{ensure, Context, Result};
 
 use crate::env::{get_editor, should_print_debug_info};
 
 /// Run the editor and pass the provided files as arguments. The workdir is set
 /// to the parent of the first file.
-pub fn run_edit_command<P>(files: &[P]) -> Result<ExitStatus>
+pub fn run_edit_command<P>(files: &[P]) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    fn inner(files: &[&Path]) -> Result<ExitStatus> {
+    fn inner(files: &[&Path]) -> Result<()> {
         let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
         cmd.current_dir(
             files[0]
@@ -21,8 +21,7 @@ where
         for f in files {
             cmd.arg(f.to_string_lossy().to_string());
         }
-        // TODO this could also use the run_external_command function
-        cmd.status().map_err(|e| anyhow!(e))
+        run_external_command(cmd)
     }
 
     let files: Vec<_> = files.iter().map(|p| p.as_ref()).collect();

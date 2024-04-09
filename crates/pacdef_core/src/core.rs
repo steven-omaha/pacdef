@@ -181,11 +181,8 @@ impl Pacdef {
             .map(|g| g.path.as_path())
             .collect();
 
-        let success = run_edit_command(&group_files)
-            .context("running editor")?
-            .success();
+        run_edit_command(&group_files).context("running editor")?;
 
-        ensure!(success, "editor exited with error");
         Ok(())
     }
 
@@ -422,11 +419,7 @@ impl Pacdef {
         }
 
         if edit {
-            let success = run_edit_command(&paths)
-                .context("running editor")?
-                .success();
-
-            ensure!(success, "editor exited with error");
+            run_edit_command(&paths).context("running editor")?;
         }
 
         Ok(())
