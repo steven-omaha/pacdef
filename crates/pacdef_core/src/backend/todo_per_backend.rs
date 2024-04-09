@@ -35,41 +35,25 @@ impl ToDoPerBackend {
     }
 
     pub(crate) fn install_missing_packages(&self, noconfirm: bool) -> Result<()> {
-        self.handle_backend_command(
-            Backend::install_packages,
-            noconfirm,
-            "install",
-            "installing",
-        )
-        .context("installing packages")
-    }
-
-    pub(crate) fn remove_unmanaged_packages(&self, noconfirm: bool) -> Result<()> {
-        self.handle_backend_command(Backend::remove_packages, noconfirm, "remove", "removing")
-            .context("removing packages")
-    }
-
-    /// # Todo
-    ///
-    /// refactor this! preferably inline it to all callers
-    fn handle_backend_command<'a, F>(
-        &'a self,
-        func: F,
-        noconfirm: bool,
-        verb: &'_ str,
-        verb_continuous: &'_ str,
-    ) -> Result<()>
-    where
-        F: Fn(&'a dyn Backend, &'a [Package], bool) -> Result<()>,
-    {
         for (backend, packages) in &self.0 {
             if packages.is_empty() {
                 continue;
             }
 
-            func(&**backend, packages, noconfirm).with_context(|| {
-                format!("{verb_continuous} packages for {}", backend.get_section())
-            })?;
+            Backend::install_packages(&**backend, packages, noconfirm)
+                .with_context(|| format!("installing packages for {}", backend.get_section()))?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn remove_unmanaged_packages(&self, noconfirm: bool) -> Result<()> {
+        for (backend, packages) in &self.0 {
+            if packages.is_empty() {
+                continue;
+            }
+
+            Backend::remove_packages(&**backend, packages, noconfirm)
+                .with_context(|| format!("removing packages for {}", backend.get_section()))?;
         }
         Ok(())
     }
