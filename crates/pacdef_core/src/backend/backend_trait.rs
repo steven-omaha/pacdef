@@ -93,6 +93,10 @@ pub trait Backend: Debug {
     ///
     /// This function will return an error if the package manager cannot be run or it
     /// returns an error.
+    ///
+    /// # Todo
+    ///
+    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
     fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_install());
@@ -115,6 +119,10 @@ pub trait Backend: Debug {
     /// # Panics
     ///
     /// This method shall panic when the backend does not support depedent packages.
+    ///
+    /// # Todo
+    ///
+    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
     fn make_dependency(&self, packages: &[Package]) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_make_dependency());
@@ -128,6 +136,10 @@ pub trait Backend: Debug {
     }
 
     /// Remove the specified packages.
+    ///
+    /// # Todo
+    ///
+    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
     fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_remove());
@@ -156,6 +168,10 @@ pub trait Backend: Debug {
     }
 
     /// Show information from package manager for package.
+    ///
+    /// # Todo
+    ///
+    /// The [`ExitStatus`] return type is not really necessary. [`anyhow::Result`] suffices.
     fn show_package_info(&self, package: &Package) -> Result<ExitStatus> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_info());
