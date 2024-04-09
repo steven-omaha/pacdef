@@ -1,7 +1,6 @@
 use std::collections::HashSet;
-use std::process::ExitStatus;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use rust_apt::cache::PackageSort;
 use rust_apt::new_cache;
 
