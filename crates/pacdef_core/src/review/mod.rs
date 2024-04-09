@@ -27,14 +27,17 @@ pub fn review(
         return Ok(());
     }
 
-    for (backend, packages) in todo_per_backend.into_iter() {
+    'outer: for (backend, packages) in todo_per_backend.into_iter() {
         let mut actions = vec![];
         for package in packages {
             println!("{}: {package}", backend.get_section());
             match get_action_for_package(package, &groups, &mut actions, &*backend)? {
                 ContinueWithReview::Yes => continue,
                 ContinueWithReview::No => return Ok(()),
-                ContinueWithReview::NoAndApply => break,
+                ContinueWithReview::NoAndApply => {
+                    reviews.push((backend, actions));
+                    break 'outer;
+                }
             }
         }
         reviews.push((backend, actions));
