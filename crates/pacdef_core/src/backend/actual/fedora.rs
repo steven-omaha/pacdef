@@ -36,9 +36,10 @@ impl Backend for Fedora {
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_info());
-        let output = String::from_utf8(cmd.output()?.stdout)?;
 
+        let output = String::from_utf8(cmd.output()?.stdout)?;
         let packages: HashSet<Package> = output.lines().map(create_package).collect();
+
         Ok(packages)
     }
 
@@ -52,8 +53,8 @@ impl Backend for Fedora {
         ]);
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
-
         let packages: HashSet<Package> = output.lines().map(create_package).collect();
+
         Ok(packages)
     }
 
@@ -74,6 +75,7 @@ impl Backend for Fedora {
             }
         }
 
+        // add these two repositories as these are needed for many dependencies
         cmd.args(["--repo", "updates"]);
         cmd.args(["--repo", "fedora"]);
 
@@ -92,6 +94,7 @@ impl Backend for Fedora {
         for p in packages {
             cmd.arg(&p.name);
         }
+
         run_external_command(cmd)
     }
 
