@@ -70,12 +70,12 @@ impl Backend for Fedora {
         for p in packages {
             cmd.arg(&p.name);
             if let Some(repo) = p.repo.as_ref() {
-                cmd.args(&["--repo", repo]);
+                cmd.args(["--repo", repo]);
             }
         }
 
-        cmd.args(&["--repo", "updates"]);
-        cmd.args(&["--repo", "fedora"]);
+        cmd.args(["--repo", "updates"]);
+        cmd.args(["--repo", "fedora"]);
 
         run_external_command(cmd)
     }
