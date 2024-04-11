@@ -21,7 +21,7 @@ const SWITCHES_INFO: Switches = &[
     "repoquery",
     "--installed",
     "--queryformat",
-    "%{reponame}/%{name}",
+    "%{from_repo}/%{name}",
 ];
 const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
@@ -48,7 +48,7 @@ impl Backend for Fedora {
             "repoquery",
             "--userinstalled",
             "--queryformat",
-            "%{reponame}/%{name}",
+            "%{from_repo}/%{name}",
         ]);
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
@@ -68,8 +68,14 @@ impl Backend for Fedora {
         }
 
         for p in packages {
-            cmd.arg(format!("{p}"));
+            cmd.arg(&p.name);
+            if let Some(repo) = p.repo.as_ref() {
+                cmd.args(&["--repo", repo]);
+            }
         }
+
+        cmd.args(&["--repo", "updates"]);
+        cmd.args(&["--repo", "fedora"]);
 
         run_external_command(cmd)
     }
@@ -84,9 +90,8 @@ impl Backend for Fedora {
         }
 
         for p in packages {
-            cmd.arg(format!("{p}"));
+            cmd.arg(&p.name);
         }
-
         run_external_command(cmd)
     }
 
