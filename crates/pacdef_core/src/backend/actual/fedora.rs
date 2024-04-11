@@ -38,7 +38,7 @@ impl Backend for Fedora {
         cmd.args(self.get_switches_info());
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
-        let packages: HashSet<Package> = output.lines().map(|package| package.into()).collect();
+        let packages: HashSet<Package> = output.lines().map(create_package).collect();
         Ok(packages)
     }
 
@@ -53,7 +53,7 @@ impl Backend for Fedora {
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
-        let packages: HashSet<Package> = output.lines().map(|package| package.into()).collect();
+        let packages: HashSet<Package> = output.lines().map(create_package).collect();
         Ok(packages)
     }
 
@@ -105,5 +105,20 @@ impl Fedora {
         Self {
             packages: HashSet::new(),
         }
+    }
+}
+
+fn create_package(package: &str) -> Package {
+    if (package.contains("koji")
+        || package.contains("fedora")
+        || package.contains("updates")
+        || package.contains("anaconda")
+        || package.contains('@'))
+        && !package.contains("copr")
+    {
+        let package = package.split('/').nth(1).expect("Cannot be empty!");
+        package.into()
+    } else {
+        package.into()
     }
 }
