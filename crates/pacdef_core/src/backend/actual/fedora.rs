@@ -23,6 +23,7 @@ const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
 const SWITCHES_NOCONFIRM: Switches = &["--assumeyes"];
 const SWITCHES_REMOVE: Switches = &["remove"];
 
+const SUPPORTS_AS_DEPENDENCY: bool = false;
 
 const SWITCHES_FETCH_USER: Switches = &[
     "repoquery",
@@ -38,7 +39,6 @@ const SWITCHES_FETCH_GLOBAL: Switches = &[
     "%{from_repo}/%{name}",
 ];
 
-const SUPPORTS_AS_DEPENDENCY: bool = true;
 /// fill stuff here
 const DEFAULT_REPOS: [&str; 5] = ["koji", "fedora", "updates", "anaconda", "@"];
 
@@ -101,6 +101,14 @@ impl Backend for Fedora {
         for p in packages {
             cmd.arg(&p.name);
         }
+
+        run_external_command(cmd)
+    }
+
+    fn show_package_info(&self, package: &Package) -> Result<()> {
+        let mut cmd = Command::new(self.get_binary());
+        cmd.args(self.get_switches_info());
+        cmd.arg(&package.name);
 
         run_external_command(cmd)
     }
