@@ -25,6 +25,8 @@ const SWITCHES_REMOVE: Switches = &["remove"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = false;
 
+/// These switches are responsible for
+/// getting the packages explicitly installed by the user
 const SWITCHES_FETCH_USER: Switches = &[
     "repoquery",
     "--userinstalled",
@@ -32,6 +34,8 @@ const SWITCHES_FETCH_USER: Switches = &[
     "%{from_repo}/%{name}",
 ];
 
+/// These switches are responsible for
+/// getting all the packages installed on the system
 const SWITCHES_FETCH_GLOBAL: Switches = &[
     "repoquery",
     "--installed",
@@ -39,7 +43,8 @@ const SWITCHES_FETCH_GLOBAL: Switches = &[
     "%{from_repo}/%{name}",
 ];
 
-/// fill stuff here
+/// These repositories are ignored when storing the packages
+/// as these are present by default on any sane fedora system
 const DEFAULT_REPOS: [&str; 5] = ["koji", "fedora", "updates", "anaconda", "@"];
 
 impl Backend for Fedora {
@@ -89,6 +94,7 @@ impl Backend for Fedora {
         run_external_command(cmd)
     }
 
+    /// Show information from package manager for package.
     fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
         let mut cmd = Command::new("sudo");
         cmd.arg(self.get_binary());
