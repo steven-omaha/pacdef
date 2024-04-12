@@ -17,13 +17,21 @@ pub struct Fedora {
 const BINARY: Text = "dnf";
 const SECTION: Text = "fedora";
 
-const SWITCHES_INFO: Switches = &[
 const SWITCHES_INFO: Switches = &["info"];
 const SWITCHES_INSTALL: Switches = &["install"];
 const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
 const SWITCHES_NOCONFIRM: Switches = &["--assumeyes"];
 const SWITCHES_REMOVE: Switches = &["remove"];
 
+
+const SWITCHES_FETCH_USER: Switches = &[
+    "repoquery",
+    "--userinstalled",
+    "--queryformat",
+    "%{from_repo}/%{name}",
+];
+
+const SWITCHES_FETCH_GLOBAL: Switches = &[
     "repoquery",
     "--installed",
     "--queryformat",
@@ -39,7 +47,7 @@ impl Backend for Fedora {
 
     fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
-        cmd.args(self.get_switches_info());
+        cmd.args(SWITCHES_FETCH_GLOBAL);
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
         let packages = output.lines().map(create_package).collect();
@@ -49,12 +57,7 @@ impl Backend for Fedora {
 
     fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
         let mut cmd = Command::new(self.get_binary());
-        cmd.args([
-            "repoquery",
-            "--userinstalled",
-            "--queryformat",
-            "%{from_repo}/%{name}",
-        ]);
+        cmd.args(SWITCHES_FETCH_USER);
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
         let packages = output.lines().map(create_package).collect();
