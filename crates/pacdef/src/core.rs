@@ -548,7 +548,7 @@ where
         Err(e) => {
             // CrossesDevices is nightly. See rust #86442.
             // We cannot check that here, so we just assume that
-            // that would be the error if permisisons are okay.
+            // that would be the error if permissions are okay.
             if e.kind() == std::io::ErrorKind::PermissionDenied {
                 bail!(e);
             }
@@ -583,7 +583,7 @@ fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Resu
     Ok(result)
 }
 
-/// Show the error chain for an error that has occured when a backend was queried
+/// Show the error chain for an error that has occurred when a backend was queried
 /// if the `RUST_BACKTRACE` env variable is set to `1` or `full`.
 #[allow(clippy::option_if_let_else)]
 fn show_backend_query_error(error: &anyhow::Error, backend: &dyn Backend) {

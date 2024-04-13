@@ -1,13 +1,14 @@
 [package]
 name = "pacdef_macros"
-version = "1.0.1"
-edition = "2021"
-license = "GPL-3.0-or-later"
-readme = "README.md"
-repository = "https://github.com/steven-omaha/pacdef/tree/main/crates/pacdef_macros"
 description = "procedural macros for pacdef"
-keywords = ["macro", "proc-macro"]
-categories = ["command-line-utilities"]
+version = "1.0.1"
+
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 proc-macro2 = "1.0"

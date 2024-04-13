@@ -53,8 +53,8 @@ pub fn review(
     println!();
     let mut iter = strategies.iter().peekable();
 
-    while let Some(strat) = iter.next() {
-        strat.show();
+    while let Some(strategy) = iter.next() {
+        strategy.show();
 
         if iter.peek().is_some() {
             println!();
@@ -66,8 +66,8 @@ pub fn review(
         return Ok(());
     }
 
-    for strat in strategies {
-        strat.execute()?;
+    for strategy in strategies {
+        strategy.execute()?;
     }
 
     Ok(())
