@@ -1,8 +1,9 @@
-[package]
-name = "pacdef"
-version = "1.6.0"
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
 edition = "2021"
-description = "multi-backend declarative package manager for Linux"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/steven-omaha/pacdef"
 readme = "README.md"
@@ -10,26 +11,11 @@ keywords = ["package-manager", "linux", "declarative", "cli"]
 categories = ["command-line-utilities"]
 rust-version = "1.74"
 
-[workspace]
-members = ["crates/pacdef_macros", "crates/pacdef_core"]
-
 [workspace.dependencies]
-anyhow = "1.0"
-
-[dependencies]
-anyhow = {workspace = true}
-pacdef_core = {path = "crates/pacdef_core", version = "=1.6.0" }
-
-[[bin]]
-name = "pacdef"
-path = "crates/main/main.rs"
+pacdef_macros = { path = "crates/pacdef_macros", version = "1.0" }
+pacdef = { path = "crates/pacdef", version = "1.6" }
 
 [profile.release]
 lto = "off"
 opt-level = "z"
 strip = true
-
-[features]
-default = []
-debian = ["pacdef_core/debian"]
-arch = ["pacdef_core/arch"]

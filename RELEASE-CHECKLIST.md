@@ -6,8 +6,7 @@ Release Checklist
 * Run `cargo outdated` and review semver incompatible updates. 
   Unless there is a strong motivation otherwise, review and update every dependency.
 * Update the date and version in all man pages: "chore(release): bump man pages".
-* Run `cargo release -p pacdef_core -p pacdef <level>`.
-  `pacdef_core` and `pacdef` shall have the same version at all times.
+* Run `cargo release -p pacdef <version>`.
   Verify everything works as expected.
 * Rerun `cargo publish` with `--execute.`
 * Generate GitHub release with `git cliff`

@@ -27,7 +27,7 @@ mod register;
 use proc_macro::TokenStream;
 
 /// Derive (1) an iterator over the variants, (2) imports for the individual backends, and (3)
-/// instatiation code for each backend.
+/// instantiationn code for each backend.
 #[proc_macro_derive(Register)]
 pub fn register(input: TokenStream) -> TokenStream {
     register::register(input)

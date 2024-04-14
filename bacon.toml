@@ -42,7 +42,7 @@ command = [
   "--color",
   "always",
   "--package",
-  "pacdef_core",
+  "pacdef",
   "--",
   "--color",
   "always",  # see https://github.com/Canop/bacon/issues/124

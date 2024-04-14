@@ -114,7 +114,7 @@ pub trait Backend: Debug {
     ///
     /// # Panics
     ///
-    /// This method shall panic when the backend does not support depedent packages.
+    /// This method shall panic when the backend does not support dependent packages.
     fn make_dependency(&self, packages: &[Package]) -> Result<()> {
         let mut cmd = Command::new(self.get_binary());
         cmd.args(self.get_switches_make_dependency());

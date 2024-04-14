@@ -1,5 +1,5 @@
 /*!
-Main program for `pacdef`. All internal logic happens in [`pacdef_core`].
+Main program for `pacdef`.
 */
 
 #![warn(
@@ -21,8 +21,8 @@ use std::process::{ExitCode, Termination};
 
 use anyhow::{bail, Context, Result};
 
-use pacdef_core::path::{get_config_path, get_config_path_old_version, get_group_dir};
-use pacdef_core::{get_args, Config, Error as PacdefError, Group, Pacdef};
+use pacdef::path::{get_config_path, get_config_path_old_version, get_group_dir};
+use pacdef::{get_args, Config, Error as PacdefError, Group, Pacdef};
 
 const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
 You seem to have used version 0.x of pacdef before.

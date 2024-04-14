@@ -57,7 +57,7 @@ impl Config {
                 if e.kind() == ErrorKind::NotFound {
                     bail!(crate::Error::ConfigFileNotFound)
                 }
-                bail!("unexpected error occured: {e:?}");
+                bail!("unexpected error occurred: {e:?}");
             }
         };
 

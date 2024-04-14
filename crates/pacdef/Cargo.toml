@@ -1,16 +1,17 @@
 [package]
-name = "pacdef_core"
+name = "pacdef"
+description = "multi-backend declarative package manager for Linux"
 version = "1.6.0"
-edition = "2021"
-description = "pacdef core library"
-license = "GPL-3.0-or-later"
-repository = "https://github.com/steven-omaha/pacdef/tree/main/crates/pacdef_core"
-readme = "README.md"
-keywords = ["package-manager", "linux", "declarative", "cli"]
-categories = ["command-line-utilities"]
+
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
-anyhow = { workspace = true }
+anyhow = "1.0"
 clap = "4.5"
 const_format = { version = "0.2", default-features = false }
 path-absolutize = "3.1"
@@ -24,7 +25,7 @@ serde_derive = "1.0"
 serde_json = "1.0"
 serde_yaml = "0.9"
 
-pacdef_macros = { path = "../pacdef_macros", version = "1.0" }
+pacdef_macros.workspace = true
 
 # backends
 alpm = { version = "3.0", optional = true }
