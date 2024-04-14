@@ -1,7 +1,7 @@
 use std::fmt::{Display, Write};
 use std::hash::Hash;
 
-/// A struct to represent a single package, consiting of a `name`, and
+/// A struct to represent a single package, consisting of a `name`, and
 /// optionally a `repo`.
 #[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
