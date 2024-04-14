@@ -12,7 +12,19 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Rust {
-    pub(crate) packages: HashSet<Package>,
+    pub packages: HashSet<Package>,
+}
+impl Rust {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+        }
+    }
+}
+impl Default for Rust {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "cargo";
@@ -74,14 +86,6 @@ fn extract_packages(json: &Value) -> Result<HashSet<Package>> {
         .map(|name| Package::try_from(name).expect("name is valid"))
         .collect();
     Ok(result)
-}
-
-impl Rust {
-    pub(crate) fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
-    }
 }
 
 fn get_crates_file() -> Result<PathBuf> {

@@ -1,6 +1,4 @@
-/*!
-Main program for `pacdef`.
-*/
+//! Main program for `pacdef`.
 
 #![warn(
     clippy::as_conversions,

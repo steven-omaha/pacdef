@@ -12,8 +12,7 @@ categories = ["command-line-utilities"]
 rust-version = "1.74"
 
 [workspace.dependencies]
-pacdef_macros = { path = "crates/pacdef_macros", version = "1.0" }
-pacdef = { path = "crates/pacdef", version = "1.6" }
+pacdef = { path = "crates/pacdef" }
 
 [profile.release]
 lto = "off"

@@ -10,8 +10,46 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Flatpak {
-    pub(crate) packages: HashSet<Package>,
-    pub(crate) systemwide: bool,
+    pub packages: HashSet<Package>,
+    pub systemwide: bool,
+}
+impl Flatpak {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+            systemwide: true,
+        }
+    }
+
+    fn get_switches_runtime(&self) -> Switches {
+        if self.systemwide {
+            &[]
+        } else {
+            &["--user"]
+        }
+    }
+
+    fn get_installed_packages(&self, include_implicit: bool) -> Result<HashSet<Package>> {
+        let mut cmd = Command::new(BINARY);
+        cmd.args(["list", "--columns=application"]);
+        if !include_implicit {
+            cmd.arg("--app");
+        }
+        if !self.systemwide {
+            cmd.arg("--user");
+        }
+
+        let output = String::from_utf8(cmd.output()?.stdout)?;
+        Ok(output
+            .lines()
+            .map(Package::from)
+            .collect::<HashSet<Package>>())
+    }
+}
+impl Default for Flatpak {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "flatpak";
@@ -82,39 +120,5 @@ impl Backend for Flatpak {
         cmd.arg(format!("{package}"));
 
         run_external_command(cmd)
-    }
-}
-
-impl Flatpak {
-    pub(crate) fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-            systemwide: true,
-        }
-    }
-
-    fn get_switches_runtime(&self) -> Switches {
-        if self.systemwide {
-            &[]
-        } else {
-            &["--user"]
-        }
-    }
-
-    fn get_installed_packages(&self, include_implicit: bool) -> Result<HashSet<Package>> {
-        let mut cmd = Command::new(BINARY);
-        cmd.args(["list", "--columns=application"]);
-        if !include_implicit {
-            cmd.arg("--app");
-        }
-        if !self.systemwide {
-            cmd.arg("--user");
-        }
-
-        let output = String::from_utf8(cmd.output()?.stdout)?;
-        Ok(output
-            .lines()
-            .map(Package::from)
-            .collect::<HashSet<Package>>())
     }
 }

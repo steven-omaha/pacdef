@@ -1,12 +1,6 @@
 use anyhow::{bail, Context, Result};
-use std::collections::HashSet;
 
 use crate::{backend::backend_trait::Switches, Package};
-
-#[derive(Debug, Clone)]
-pub struct Rustup {
-    pub(crate) packages: HashSet<Package>,
-}
 
 #[derive(Debug)]
 pub enum Repotype {
@@ -26,14 +20,6 @@ pub struct RustupPackage {
     /// If it is a toolchain, it will not have a component name.
     /// If it is a component, this will be its name.
     pub component: Option<String>,
-}
-
-impl Rustup {
-    pub fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
-    }
 }
 
 impl Repotype {

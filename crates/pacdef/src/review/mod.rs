@@ -6,7 +6,8 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use crate::backend::{Backend, ToDoPerBackend};
+use crate::backend::backend_trait::Backend;
+use crate::backend::todo_per_backend::ToDoPerBackend;
 use crate::ui::{get_user_confirmation, read_single_char_from_terminal};
 use crate::{Group, Package};
 
@@ -27,11 +28,11 @@ pub fn review(
         return Ok(());
     }
 
-    'outer: for (backend, packages) in todo_per_backend.into_iter() {
+    'outer: for (backend, packages) in todo_per_backend {
         let mut actions = vec![];
         for package in packages {
             println!("{}: {package}", backend.get_section());
-            match get_action_for_package(package, &groups, &mut actions, &*backend)? {
+            match get_action_for_package(package, &groups, &mut actions, &backend)? {
                 ContinueWithReview::Yes => continue,
                 ContinueWithReview::No => return Ok(()),
                 ContinueWithReview::NoAndApply => {
@@ -161,9 +162,8 @@ fn print_enumerated_groups(groups: &[Rc<Group>]) {
     }
 }
 
-#[allow(clippy::as_conversions)] // this cannot introduce errors for any reasonably sized numbers.
 fn get_amount_of_digits_for_number(number: usize) -> usize {
-    (number as f64).log10().trunc() as usize + 1
+    number.to_string().len()
 }
 
 fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {

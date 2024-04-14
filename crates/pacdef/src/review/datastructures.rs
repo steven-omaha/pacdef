@@ -1,7 +1,6 @@
 use std::rc::Rc;
 
-use crate::backend::Backend;
-use crate::{Group, Package};
+use crate::{backend::AnyBackend, Group, Package};
 
 use super::strategy::Strategy;
 
@@ -26,7 +25,7 @@ pub(super) enum ReviewIntention {
 
 #[derive(Debug)]
 pub(super) struct ReviewsPerBackend {
-    items: Vec<(Box<dyn Backend>, Vec<ReviewAction>)>,
+    items: Vec<(AnyBackend, Vec<ReviewAction>)>,
 }
 
 impl ReviewsPerBackend {
@@ -38,7 +37,7 @@ impl ReviewsPerBackend {
         self.items.iter().all(|(_, vec)| vec.is_empty())
     }
 
-    pub(super) fn push(&mut self, value: (Box<dyn Backend>, Vec<ReviewAction>)) {
+    pub(super) fn push(&mut self, value: (AnyBackend, Vec<ReviewAction>)) {
         self.items.push(value);
     }
 
@@ -77,9 +76,9 @@ impl ReviewsPerBackend {
 }
 
 impl IntoIterator for ReviewsPerBackend {
-    type Item = (Box<dyn Backend>, Vec<ReviewAction>);
+    type Item = (AnyBackend, Vec<ReviewAction>);
 
-    type IntoIter = std::vec::IntoIter<(Box<dyn Backend>, Vec<ReviewAction>)>;
+    type IntoIter = std::vec::IntoIter<(AnyBackend, Vec<ReviewAction>)>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.items.into_iter()

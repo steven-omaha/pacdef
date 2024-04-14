@@ -10,7 +10,19 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Fedora {
-    pub(crate) packages: HashSet<Package>,
+    pub packages: HashSet<Package>,
+}
+impl Fedora {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+        }
+    }
+}
+impl Default for Fedora {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "dnf";
@@ -120,14 +132,6 @@ impl Backend for Fedora {
 
     fn make_dependency(&self, _: &[Package]) -> Result<()> {
         panic!("Not supported by the package manager!")
-    }
-}
-
-impl Fedora {
-    pub fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
     }
 }
 

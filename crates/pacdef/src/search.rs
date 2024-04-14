@@ -63,8 +63,8 @@ fn print_triples(mut vec: Vec<(&Group, &Section, &Package)>) {
 }
 
 fn save_group_and_section_name(g0: &mut String, g: &Group, s0: &mut String, s: &Section) {
-    *g0 = g.name.clone();
-    *s0 = s.name.clone();
+    g0.clone_from(&g.name);
+    s0.clone_from(&s.name);
 }
 
 fn print_separator_unless_exhausted(

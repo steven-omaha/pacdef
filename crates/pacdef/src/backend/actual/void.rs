@@ -12,7 +12,19 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Void {
-    pub(crate) packages: HashSet<Package>,
+    pub packages: HashSet<Package>,
+}
+impl Void {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+        }
+    }
+}
+impl Default for Void {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "xbps-install";
@@ -122,13 +134,5 @@ impl Backend for Void {
         cmd.arg(format!("{package}"));
 
         run_external_command(cmd)
-    }
-}
-
-impl Void {
-    pub(crate) fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
     }
 }

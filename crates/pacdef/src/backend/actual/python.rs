@@ -9,10 +9,52 @@ use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::{Group, Package};
 
+macro_rules! ERROR{
+    ($bin:expr) => {
+        panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx.", $bin)
+    };
+}
+
 #[derive(Debug, Clone)]
 pub struct Python {
-    pub(crate) binary: String,
-    pub(crate) packages: HashSet<Package>,
+    pub binary: String,
+    pub packages: HashSet<Package>,
+}
+impl Python {
+    pub fn new() -> Self {
+        Self {
+            binary: BINARY.to_string(),
+            packages: HashSet::new(),
+        }
+    }
+
+    fn get_switches_runtime(&self) -> Switches {
+        match self.get_binary() {
+            "pip" => &["list", "--format", "json", "--not-required", "--user"],
+            "pipx" => &["list", "--json"],
+            _ => ERROR!(self.get_binary()),
+        }
+    }
+    fn get_switches_explicit(&self) -> Switches {
+        match self.get_binary() {
+            "pip" => &["list", "--format", "json", "--user"],
+            "pipx" => &["list", "--json"],
+            _ => ERROR!(self.get_binary()),
+        }
+    }
+
+    fn extract_packages(&self, output: Value) -> Result<HashSet<Package>> {
+        match self.get_binary() {
+            "pip" => extract_pacdef_packages(output),
+            "pipx" => extract_pacdef_packages_pipx(output),
+            _ => ERROR!(self.get_binary()),
+        }
+    }
+}
+impl Default for Python {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "pip";
@@ -25,12 +67,6 @@ const SWITCHES_NOCONFIRM: Switches = &[]; // not needed
 const SWITCHES_REMOVE: Switches = &["uninstall"];
 
 const SUPPORTS_AS_DEPENDENCY: bool = false;
-
-macro_rules!  ERROR{
-    ($bin:expr) => {
-        panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx.", $bin)
-    };
-}
 
 impl Backend for Python {
     impl_backend_constants!();
@@ -62,38 +98,6 @@ fn run_pip_command(cmd: &mut Command, args: &[&str]) -> Result<Value> {
     let output = String::from_utf8(cmd.output()?.stdout)?;
     let val: Value = serde_json::from_str(&output)?;
     Ok(val)
-}
-
-impl Python {
-    pub(crate) fn new() -> Self {
-        Self {
-            binary: BINARY.to_string(),
-            packages: HashSet::new(),
-        }
-    }
-
-    fn get_switches_runtime(&self) -> Switches {
-        match self.get_binary() {
-            "pip" => &["list", "--format", "json", "--not-required", "--user"],
-            "pipx" => &["list", "--json"],
-            _ => ERROR!(self.get_binary()),
-        }
-    }
-    fn get_switches_explicit(&self) -> Switches {
-        match self.get_binary() {
-            "pip" => &["list", "--format", "json", "--user"],
-            "pipx" => &["list", "--json"],
-            _ => ERROR!(self.get_binary()),
-        }
-    }
-
-    fn extract_packages(&self, output: Value) -> Result<HashSet<Package>> {
-        match self.get_binary() {
-            "pip" => extract_pacdef_packages(output),
-            "pipx" => extract_pacdef_packages_pipx(output),
-            _ => ERROR!(self.get_binary()),
-        }
-    }
 }
 
 fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
