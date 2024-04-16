@@ -20,7 +20,6 @@ use crate::{
 /// - no matching packages could be found.
 pub fn search_packages(regex_str: &str, groups: &Groups) -> Result<()> {
     if groups.is_empty() {
-        eprintln!("WARNING: no group files found");
         bail!(crate::errors::Error::NoPackagesFound);
     }
 
