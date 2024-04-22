@@ -12,8 +12,24 @@ use std::process::Command;
 use self::helpers::{
     group_components_by_toolchains, install_components, toolchain_of_component_was_already_removed,
 };
-pub use self::types::Rustup;
 use self::types::{Repotype, RustupPackage};
+
+#[derive(Debug, Clone)]
+pub struct Rustup {
+    pub packages: HashSet<Package>,
+}
+impl Rustup {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+        }
+    }
+}
+impl Default for Rustup {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 const BINARY: Text = "rustup";
 const SECTION: Text = "rustup";

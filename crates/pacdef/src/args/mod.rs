@@ -1,10 +1,10 @@
+use self::datastructure::Arguments;
+
 mod cli;
-mod datastructure;
+pub mod datastructure;
 mod parsing;
 #[cfg(test)]
 mod tests;
-
-pub use datastructure::*;
 
 /// Get and parse the CLI arguments.
 #[must_use]

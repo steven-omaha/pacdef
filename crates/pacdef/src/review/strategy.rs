@@ -2,12 +2,14 @@ use std::rc::Rc;
 
 use anyhow::Result;
 
-use crate::backend::Backend;
-use crate::{Group, Package};
+use crate::{
+    backend::{backend_trait::Backend, AnyBackend},
+    Group, Package,
+};
 
 #[derive(Debug)]
 pub(super) struct Strategy {
-    backend: Box<dyn Backend>,
+    backend: AnyBackend,
     delete: Vec<Package>,
     as_dependency: Vec<Package>,
     assign_group: Vec<(Package, Rc<Group>)>,
@@ -15,7 +17,7 @@ pub(super) struct Strategy {
 
 impl Strategy {
     pub(super) fn new(
-        backend: Box<dyn Backend>,
+        backend: AnyBackend,
         delete: Vec<Package>,
         as_dependency: Vec<Package>,
         assign_group: Vec<(Package, Rc<Group>)>,

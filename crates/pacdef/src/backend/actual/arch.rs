@@ -12,9 +12,23 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Arch {
-    pub(crate) binary: String,
-    pub(crate) aur_rm_args: Vec<String>,
-    pub(crate) packages: HashSet<Package>,
+    pub binary: String,
+    pub aur_rm_args: Vec<String>,
+    pub packages: HashSet<Package>,
+}
+impl Arch {
+    pub fn new() -> Self {
+        Self {
+            binary: BINARY.to_string(),
+            aur_rm_args: vec![],
+            packages: HashSet::new(),
+        }
+    }
+}
+impl Default for Arch {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "pacman";
@@ -116,14 +130,4 @@ fn convert_to_pacdef_packages(packages: HashSet<String>) -> HashSet<Package> {
 
 fn get_db_handle() -> Result<Alpm> {
     Alpm::new("/", "/var/lib/pacman").context("connecting to DB using expected default values")
-}
-
-impl Arch {
-    pub(crate) fn new() -> Self {
-        Self {
-            binary: BINARY.to_string(),
-            aur_rm_args: vec![],
-            packages: HashSet::new(),
-        }
-    }
 }

@@ -7,8 +7,12 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, ensure, Context, Result};
 use const_format::formatcp;
 
-use crate::args::{self, PackageAction};
-use crate::backend::{Backend, Backends, ToDoPerBackend};
+use crate::args::datastructure::{
+    Arguments, Edit, Force, GroupAction, Groups, Noconfirm, OutputDir, PackageAction, Regex,
+};
+use crate::backend::backend_trait::Backend;
+use crate::backend::todo_per_backend::ToDoPerBackend;
+use crate::backend::AnyBackend;
 use crate::cmd::run_edit_command;
 use crate::env::should_print_debug_info;
 use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
@@ -21,7 +25,7 @@ use crate::{review, Error};
 /// Most data that is required during runtime of the program.
 pub struct Pacdef {
     /// The command line arguments. Is an `Option` so that we can take ownership later without cloning.
-    args: Option<args::Arguments>,
+    args: Option<Arguments>,
     /// The config of the program.
     config: Config,
     /// The hashset of all groups.
@@ -32,7 +36,7 @@ impl Pacdef {
     /// Creates a new [`Pacdef`]. `config` should be passed from [`Config::load`], and `args` from
     /// [`args::get`].
     #[must_use]
-    pub const fn new(args: args::Arguments, config: Config, groups: HashSet<Group>) -> Self {
+    pub const fn new(args: Arguments, config: Config, groups: HashSet<Group>) -> Self {
         Self {
             args: Some(args),
             config,
@@ -52,47 +56,46 @@ impl Pacdef {
     /// # Panics
     ///
     /// This function panics if the `args` field is `None`.
-    #[allow(clippy::unit_arg)]
     pub fn run_action_from_arg(mut self) -> Result<()> {
         match self
             .args
             .take()
             .expect("if there were no args we would not get to here")
         {
-            args::Arguments::Group(group_args) => self.run_group_subcommand(&group_args),
-            args::Arguments::Package(package_args) => self.run_package_subcommand(&package_args),
-            args::Arguments::Version => Ok(self.show_version()),
+            Arguments::Group(group_args) => self.run_group_subcommand(&group_args),
+            Arguments::Package(package_args) => self.run_package_subcommand(&package_args),
+            Arguments::Version => {
+                self.show_version();
+
+                Ok(())
+            }
         }
     }
 
-    fn run_group_subcommand(self, args: &args::GroupAction) -> Result<()> {
-        use args::GroupAction::*;
-
+    fn run_group_subcommand(self, args: &GroupAction) -> Result<()> {
         match args {
-            Edit(args::Groups(groups)) => self.edit_groups(groups),
-            Export(args::Groups(groups), args::OutputDir(dir), args::Force(force)) => {
+            GroupAction::Edit(Groups(groups)) => self.edit_groups(groups),
+            GroupAction::Export(Groups(groups), OutputDir(dir), Force(force)) => {
                 self.export_groups(groups, dir.as_ref(), *force)
             }
-            Import(args::Groups(groups)) => self.import_groups(groups),
-            List => self.show_groups(),
-            New(args::Groups(groups), args::Edit(edit)) => self.new_groups(groups, *edit),
-            Remove(args::Groups(groups)) => self.remove_groups(groups),
-            Show(args::Groups(groups)) => self.show_group_content(groups),
+            GroupAction::Import(Groups(groups)) => self.import_groups(groups),
+            GroupAction::List => self.show_groups(),
+            GroupAction::New(Groups(groups), Edit(edit)) => self.new_groups(groups, *edit),
+            GroupAction::Remove(Groups(groups)) => self.remove_groups(groups),
+            GroupAction::Show(Groups(groups)) => self.show_group_content(groups),
         }
     }
 
     fn run_package_subcommand(mut self, args: &PackageAction) -> Result<()> {
-        use args::PackageAction::*;
-
         match args {
-            Clean(args::Noconfirm(noconfirm)) => self.clean_packages(*noconfirm),
-            Review => review::review(self.get_unmanaged_packages()?, self.groups),
-            Search(args::Regex(regex)) => {
+            PackageAction::Clean(Noconfirm(noconfirm)) => self.clean_packages(*noconfirm),
+            PackageAction::Review => review::review(self.get_unmanaged_packages()?, self.groups),
+            PackageAction::Search(Regex(regex)) => {
                 self.warn_about_groups_that_arent_symlinks();
                 search::search_packages(regex, &self.groups)
             }
-            Sync(args::Noconfirm(noconfirm)) => self.install_packages(*noconfirm),
-            Unmanaged => self.show_unmanaged_packages(),
+            PackageAction::Sync(Noconfirm(noconfirm)) => self.install_packages(*noconfirm),
+            PackageAction::Unmanaged => self.show_unmanaged_packages(),
         }
     }
 
@@ -103,7 +106,7 @@ impl Pacdef {
             eprintln!("WARNING: no group files found");
         }
 
-        for mut backend in Backends::iter() {
+        for mut backend in AnyBackend::iter() {
             if self
                 .config
                 .disabled_backends
@@ -116,39 +119,33 @@ impl Pacdef {
                 continue;
             }
 
-            self.overwrite_values_from_config(&mut *backend);
+            self.overwrite_values_from_config(&mut backend);
             backend.load(&self.groups);
 
             match backend.get_missing_packages_sorted() {
                 Ok(diff) => to_install.push((backend, diff)),
-                Err(error) => show_backend_query_error(&error, &*backend),
+                Err(error) => show_backend_query_error(&error, &backend),
             };
         }
 
         Ok(to_install)
     }
 
-    fn overwrite_values_from_config(&mut self, backend: &mut dyn Backend) {
+    fn overwrite_values_from_config(&mut self, backend: &mut AnyBackend) {
         #[cfg(feature = "arch")]
         {
-            if let Some(arch) = backend.as_any_mut().downcast_mut::<crate::backend::Arch>() {
-                arch.binary = self.config.aur_helper.clone();
-                arch.aur_rm_args = self.config.aur_rm_args.clone();
+            if let AnyBackend::Arch(arch) = backend {
+                arch.binary.clone_from(&self.config.aur_helper);
+                arch.aur_rm_args.clone_from(&self.config.aur_rm_args);
             }
         }
 
-        if let Some(flatpak) = backend
-            .as_any_mut()
-            .downcast_mut::<crate::backend::Flatpak>()
-        {
+        if let AnyBackend::Flatpak(flatpak) = backend {
             flatpak.systemwide = self.config.flatpak_systemwide;
         }
 
-        if let Some(python) = backend
-            .as_any_mut()
-            .downcast_mut::<crate::backend::Python>()
-        {
-            python.binary = self.config.pip_binary.clone();
+        if let AnyBackend::Python(python) = backend {
+            python.binary.clone_from(&self.config.pip_binary);
         }
     }
 
@@ -204,7 +201,6 @@ impl Pacdef {
         Ok(())
     }
 
-    #[allow(clippy::unused_self)]
     fn show_version(self) {
         println!("{}", get_name_and_version());
     }
@@ -237,7 +233,7 @@ impl Pacdef {
 
         let mut result = ToDoPerBackend::new();
 
-        for mut backend in Backends::iter() {
+        for mut backend in AnyBackend::iter() {
             if self
                 .config
                 .disabled_backends
@@ -250,12 +246,12 @@ impl Pacdef {
                 continue;
             }
 
-            self.overwrite_values_from_config(&mut *backend);
+            self.overwrite_values_from_config(&mut backend);
             backend.load(&self.groups);
 
             match backend.get_unmanaged_packages_sorted() {
                 Ok(unmanaged) => result.push((backend, unmanaged)),
-                Err(error) => show_backend_query_error(&error, &*backend),
+                Err(error) => show_backend_query_error(&error, &backend),
             };
         }
         Ok(result)
@@ -265,7 +261,6 @@ impl Pacdef {
     ///
     /// This methods cannot return an error. It returns a `Result` to be consistent
     /// with other methods.
-    #[allow(clippy::unnecessary_wraps)]
     fn show_groups(self) -> Result<()> {
         self.warn_about_groups_that_arent_symlinks();
 
@@ -354,7 +349,6 @@ impl Pacdef {
         Ok(())
     }
 
-    #[allow(clippy::unused_self)]
     fn import_groups(&self, file_names: &[String]) -> Result<()> {
         let files = get_absolutized_file_paths(file_names)?;
         let groups_dir = get_group_dir()?;
@@ -410,7 +404,6 @@ impl Pacdef {
     /// - a group with the same name already exists,
     /// - the editor cannot be run, or
     /// - if we do not have permission to write to the group dir.
-    #[allow(clippy::unused_self)]
     fn new_groups(&self, new_groups: &[String], edit: bool) -> Result<()> {
         let group_path = get_group_dir()?;
 
@@ -585,8 +578,7 @@ fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Resu
 
 /// Show the error chain for an error that has occurred when a backend was queried
 /// if the `RUST_BACKTRACE` env variable is set to `1` or `full`.
-#[allow(clippy::option_if_let_else)]
-fn show_backend_query_error(error: &anyhow::Error, backend: &dyn Backend) {
+fn show_backend_query_error(error: &anyhow::Error, backend: &AnyBackend) {
     let section = backend.get_section();
     if should_print_debug_info() {
         eprintln!("WARNING: skipping backend '{section}':");
@@ -628,7 +620,7 @@ pub const fn get_version_string() -> &'static str {
 /// Get a vector with the names of all backends, sorted alphabetically.
 fn get_included_backends() -> Vec<&'static str> {
     let mut result = vec![];
-    for backend in Backends::iter() {
+    for backend in AnyBackend::iter() {
         result.push(backend.get_section());
     }
     result.sort_unstable();

@@ -14,13 +14,11 @@ pub struct Section {
 }
 
 impl Section {
-    pub(crate) fn new(name: String, packages: HashSet<Package>) -> Self {
+    pub fn new(name: String, packages: HashSet<Package>) -> Self {
         Self { name, packages }
     }
 
-    pub(crate) fn try_from_lines<'a>(
-        iter: &mut Peekable<impl Iterator<Item = &'a str>>,
-    ) -> Result<Self> {
+    pub fn try_from_lines<'a>(iter: &mut Peekable<impl Iterator<Item = &'a str>>) -> Result<Self> {
         let name = find_next_section_name(iter)?;
 
         let mut packages = HashSet::new();

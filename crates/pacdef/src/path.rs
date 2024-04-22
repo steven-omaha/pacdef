@@ -28,7 +28,7 @@ pub fn get_group_dir() -> Result<PathBuf> {
 /// # Errors
 ///
 /// This function will return an error if `$XDG_CONFIG_HOME` cannot be determined.
-pub(crate) fn get_pacdef_base_dir() -> Result<PathBuf> {
+pub fn get_pacdef_base_dir() -> Result<PathBuf> {
     let mut dir = get_xdg_config_home().context("getting XDG_CONFIG_HOME")?;
     dir.push("pacdef");
     Ok(dir)
@@ -40,7 +40,7 @@ pub(crate) fn get_pacdef_base_dir() -> Result<PathBuf> {
 ///
 /// This function will return an error if neither the `$CARGO_HOME` nor
 /// the `$HOME` environment variables are set.
-pub(crate) fn get_cargo_home() -> Result<PathBuf> {
+pub fn get_cargo_home() -> Result<PathBuf> {
     if let Ok(config) = env::var("CARGO_HOME") {
         Ok(config.into())
     } else {
@@ -72,7 +72,7 @@ fn get_xdg_config_home() -> Result<PathBuf> {
 /// # Errors
 ///
 /// This function will return an error if the `$HOME` variable is not set.
-pub(crate) fn get_home_dir() -> Result<PathBuf> {
+pub fn get_home_dir() -> Result<PathBuf> {
     Ok(env::var("HOME").context("getting $HOME variable")?.into())
 }
 
@@ -106,7 +106,7 @@ pub fn get_config_path_old_version() -> Result<PathBuf> {
 /// # Errors
 ///
 /// This function returns an error if `$PATH` is not set.
-pub(crate) fn binary_in_path(name: &str) -> Result<bool> {
+pub fn binary_in_path(name: &str) -> Result<bool> {
     let paths = env::var_os("PATH").context("getting $PATH")?;
     for dir in env::split_paths(&paths) {
         let full_path = dir.join(name);
@@ -123,7 +123,7 @@ pub(crate) fn binary_in_path(name: &str) -> Result<bool> {
 ///
 /// Panics if at least one element in `base_path` does not match the corresponding
 /// element in `full_path`.
-pub(crate) fn get_relative_path<P>(full_path: P, base_path: P) -> PathBuf
+pub fn get_relative_path<P>(full_path: P, base_path: P) -> PathBuf
 where
     P: AsRef<Path>,
 {
@@ -138,7 +138,11 @@ where
 }
 
 /// For each file argument, return the absolute path to the file.
-pub(crate) fn get_absolutized_file_paths(arg_match: &[String]) -> Result<Vec<PathBuf>> {
+///
+/// # Errors
+///
+/// Returns an error if any of the files cannot be absolutized.
+pub fn get_absolutized_file_paths(arg_match: &[String]) -> Result<Vec<PathBuf>> {
     let mut result = vec![];
 
     for item in arg_match {

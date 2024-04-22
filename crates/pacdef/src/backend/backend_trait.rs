@@ -1,7 +1,5 @@
-use std::any::Any;
 use std::cmp::{Eq, Ord};
 use std::collections::{HashMap, HashSet};
-use std::fmt::Debug;
 use std::hash::Hash;
 use std::process::Command;
 use std::rc::Rc;
@@ -11,11 +9,12 @@ use anyhow::{Context, Result};
 use crate::cmd::run_external_command;
 use crate::{Group, Package};
 
-pub(in crate::backend) type Switches = &'static [&'static str];
-pub(in crate::backend) type Text = &'static str;
+pub type Switches = &'static [&'static str];
+pub type Text = &'static str;
 
 /// The trait of a struct that is used as a backend.
-pub trait Backend: Debug {
+#[enum_dispatch::enum_dispatch]
+pub trait Backend {
     /// Return the actual binary. Iff the backend supports different
     /// binaries, you will need to overwrite this implementation to return
     /// the binary that was loaded at runtime. See
@@ -47,7 +46,7 @@ pub trait Backend: Debug {
 
     /// Get CLI switches for the package manager to mark packages as
     /// dependency. This is not supported by all package managers. See
-    /// [`Backend::supports_as_dependency`].
+    /// [`Backend::supports_as_dependency()`].
     fn get_switches_make_dependency(&self) -> Switches;
 
     /// Load all packages from a set of groups. The backend will visit all groups,
@@ -173,9 +172,6 @@ pub trait Backend: Debug {
         diff.sort_unstable();
         Ok(diff)
     }
-
-    /// Return a mutable reference to self as `Any`. Required for downcasting.
-    fn as_any_mut(&mut self) -> &mut dyn Any;
 
     /// Whether the underlying package manager supports dependency packages.
     fn supports_as_dependency(&self) -> bool;

@@ -5,8 +5,10 @@ use std::hash::Hash;
 /// optionally a `repo`.
 #[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 pub struct Package {
-    pub(crate) name: String,
-    pub(crate) repo: Option<String>,
+    /// The name of the package
+    pub name: String,
+    /// Optionally, which repository the package belongs to
+    pub repo: Option<String>,
 }
 
 fn remove_comment_and_trim_whitespace(s: &str) -> &str {
@@ -51,7 +53,7 @@ impl Package {
     /// Try to parse a string (from a line in a group file) and return a package.
     /// From the string, any possible comment is removed and whitespace is trimmed.
     /// Returns `None` if there is nothing left after trimming.
-    pub(crate) fn try_from<S>(s: S) -> Option<Self>
+    pub fn try_from<S>(s: S) -> Option<Self>
     where
         S: AsRef<str>,
     {
@@ -116,11 +118,10 @@ mod tests {
         assert_eq!(repo, None);
     }
 
-    #[allow(clippy::unwrap_used)]
     #[test]
     fn from() {
         let x = "myrepo/somepackage  #  ".to_string();
-        let p = Package::try_from(x).unwrap();
+        let p = Package::try_from(x).expect("this should be a valid package line");
         assert_eq!(p.name, "somepackage");
         assert_eq!(p.repo, Some("myrepo".to_string()));
     }

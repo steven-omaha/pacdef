@@ -47,10 +47,6 @@ macro_rules! impl_backend_constants {
                 })
         }
 
-        fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-            self
-        }
-
         fn supports_as_dependency(&self) -> bool {
             SUPPORTS_AS_DEPENDENCY
         }

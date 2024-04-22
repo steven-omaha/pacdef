@@ -12,7 +12,19 @@ use crate::{Group, Package};
 
 #[derive(Debug, Clone)]
 pub struct Debian {
-    pub(crate) packages: HashSet<Package>,
+    pub packages: HashSet<Package>,
+}
+impl Debian {
+    pub fn new() -> Self {
+        Self {
+            packages: HashSet::new(),
+        }
+    }
+}
+impl Default for Debian {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 const BINARY: Text = "apt";
@@ -92,13 +104,5 @@ impl Backend for Debian {
         }
 
         run_external_command(cmd)
-    }
-}
-
-impl Debian {
-    pub(crate) fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
     }
 }

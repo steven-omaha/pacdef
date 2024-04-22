@@ -1,6 +1,4 @@
-/*!
-This library contains all logic that happens in `pacdef` under the hood.
-*/
+//! This library contains all logic that happens in `pacdef`.
 
 #![warn(
     clippy::as_conversions,
@@ -23,7 +21,7 @@ This library contains all logic that happens in `pacdef` under the hood.
 )]
 
 mod args;
-mod backend;
+pub(crate) mod backend;
 mod cmd;
 mod config;
 mod core;
@@ -40,6 +38,4 @@ pub use crate::config::Config;
 pub use crate::core::Pacdef;
 pub use crate::errors::Error;
 pub use crate::grouping::Group;
-pub(crate) use crate::grouping::Package;
-
-extern crate pacdef_macros;
+pub use crate::grouping::Package;

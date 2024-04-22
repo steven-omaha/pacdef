@@ -18,13 +18,13 @@ use super::{Package, Section};
 pub struct Group {
     /// Name of the group (file name from which it was read, relative to the group
     /// base dir).
-    pub(crate) name: String,
+    pub name: String,
     /// The sections in the file which in turn hold the packages.
-    pub(crate) sections: HashSet<Section>,
+    pub sections: HashSet<Section>,
     /// The absolute path of the original file.
-    pub(crate) path: PathBuf,
+    pub path: PathBuf,
     /// Whether the main program should warn this group being loaded from a symlink.
-    pub(crate) warn_symlink: bool,
+    pub warn_symlink: bool,
 }
 
 impl Group {
@@ -177,7 +177,7 @@ impl Group {
     ///
     /// This function returns an error if the group file cannot be read, or if the
     /// file cannot be written to.
-    pub(crate) fn save_packages(&self, section_header: &str, packages: &[Package]) -> Result<()> {
+    pub fn save_packages(&self, section_header: &str, packages: &[Package]) -> Result<()> {
         let mut content = read_to_string(&self.path)
             .with_context(|| format!("reading existing file contents from {:?}", &self.path))?;
 
