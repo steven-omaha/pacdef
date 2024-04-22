@@ -34,7 +34,7 @@ macro_rules! impl_backend_constants {
             &self.packages
         }
 
-        fn load(&mut self, groups: &HashSet<Group>) {
+        fn load(&mut self, groups: &crate::Groups) {
             let own_section_name = self.get_section();
 
             groups

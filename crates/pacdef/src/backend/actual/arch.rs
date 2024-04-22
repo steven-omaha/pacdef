@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::cmd::run_external_command;
-use crate::{Group, Package};
+use crate::Package;
 
 #[derive(Debug, Clone)]
 pub struct Arch {

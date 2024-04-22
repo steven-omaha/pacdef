@@ -7,7 +7,7 @@ use anyhow::{ensure, Context, Result};
 
 use super::Package;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Section {
     pub name: String,
     pub packages: HashSet<Package>,

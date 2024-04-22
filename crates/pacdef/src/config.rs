@@ -3,7 +3,7 @@ use std::io::{ErrorKind, Write};
 use std::path::Path;
 
 use anyhow::{bail, Context, Result};
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 // Update the master README if fields change.
 /// Config for the program, as listed in `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.

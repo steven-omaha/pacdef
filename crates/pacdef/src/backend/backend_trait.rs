@@ -2,12 +2,11 @@ use std::cmp::{Eq, Ord};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use std::process::Command;
-use std::rc::Rc;
 
 use anyhow::{Context, Result};
 
 use crate::cmd::run_external_command;
-use crate::{Group, Package};
+use crate::{Group, Groups, Package};
 
 pub type Switches = &'static [&'static str];
 pub type Text = &'static str;
@@ -51,7 +50,7 @@ pub trait Backend {
 
     /// Load all packages from a set of groups. The backend will visit all groups,
     /// find its own section, and clone all packages into its own struct.
-    fn load(&mut self, groups: &HashSet<Group>);
+    fn load(&mut self, groups: &Groups);
 
     /// Get all managed packages for this backend, i.e. all packages
     /// under the corresponding section in all group files.
@@ -75,7 +74,7 @@ pub trait Backend {
 
     /// Assign each of the packages to an individual group by editing the
     /// group files.
-    fn assign_group(&self, to_assign: Vec<(Package, Rc<Group>)>) -> Result<()> {
+    fn assign_group(&self, to_assign: Vec<(Package, Group)>) -> Result<()> {
         let group_package_map = to_hashmap(to_assign);
         let section_header = format!("[{}]", self.get_section());
 

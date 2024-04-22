@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use anyhow::Result;
 
 use crate::{
@@ -8,19 +6,19 @@ use crate::{
 };
 
 #[derive(Debug)]
-pub(super) struct Strategy {
+pub struct Strategy {
     backend: AnyBackend,
     delete: Vec<Package>,
     as_dependency: Vec<Package>,
-    assign_group: Vec<(Package, Rc<Group>)>,
+    assign_group: Vec<(Package, Group)>,
 }
 
 impl Strategy {
-    pub(super) fn new(
+    pub fn new(
         backend: AnyBackend,
         delete: Vec<Package>,
         as_dependency: Vec<Package>,
-        assign_group: Vec<(Package, Rc<Group>)>,
+        assign_group: Vec<(Package, Group)>,
     ) -> Self {
         Self {
             backend,
@@ -30,7 +28,7 @@ impl Strategy {
         }
     }
 
-    pub(super) fn execute(self) -> Result<()> {
+    pub fn execute(self) -> Result<()> {
         if !self.delete.is_empty() {
             self.backend.remove_packages(&self.delete, false)?;
         }
@@ -46,7 +44,7 @@ impl Strategy {
         Ok(())
     }
 
-    pub(super) fn show(&self) {
+    pub fn show(&self) {
         if self.nothing_to_do() {
             return;
         }
@@ -75,7 +73,7 @@ impl Strategy {
         }
     }
 
-    pub(super) fn nothing_to_do(&self) -> bool {
+    pub fn nothing_to_do(&self) -> bool {
         self.delete.is_empty() && self.as_dependency.is_empty() && self.assign_group.is_empty()
     }
 }

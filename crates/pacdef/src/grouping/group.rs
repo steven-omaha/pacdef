@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fmt::Display;
 use std::fs::{create_dir, read_to_string, File};
 use std::hash::Hash;
@@ -13,8 +13,11 @@ use crate::path::get_relative_path;
 
 use super::{Package, Section};
 
+/// A set of groups
+pub type Groups = BTreeSet<Group>;
+
 /// Representation of a group file.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Group {
     /// Name of the group (file name from which it was read, relative to the group
     /// base dir).
@@ -37,8 +40,8 @@ impl Group {
     ///
     /// This function will return an error if any of the files under `group_dir` cannot
     /// be accessed.
-    pub fn load(group_dir: &Path, warn_not_symlinks: bool) -> Result<HashSet<Self>> {
-        let mut result = HashSet::new();
+    pub fn load(group_dir: &Path, warn_not_symlinks: bool) -> Result<Groups> {
+        let mut result = Groups::new();
 
         if !group_dir.is_dir() {
             // we only need to create the innermost dir. The rest was already created from when

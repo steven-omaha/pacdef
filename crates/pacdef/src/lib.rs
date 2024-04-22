@@ -20,22 +20,25 @@
     missing_docs
 )]
 
-mod args;
 pub(crate) mod backend;
+#[allow(missing_docs)]
+pub mod cli;
+
 mod cmd;
 mod config;
+#[allow(clippy::unused_self, clippy::unnecessary_wraps)]
 mod core;
 mod env;
 mod errors;
 mod grouping;
-pub mod path;
 mod review;
 mod search;
 mod ui;
 
-pub use crate::args::get as get_args;
+pub mod path;
+
 pub use crate::config::Config;
-pub use crate::core::Pacdef;
 pub use crate::errors::Error;
 pub use crate::grouping::Group;
+pub use crate::grouping::Groups;
 pub use crate::grouping::Package;
