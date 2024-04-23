@@ -1,5 +1,5 @@
 use std::error::Error as ErrorTrait;
-use std::fmt::{Display, Write};
+use std::fmt::Display;
 use std::path::PathBuf;
 
 /// Error types for pacdef.
@@ -23,26 +23,19 @@ pub enum Error {
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::NoPackagesFound => f.write_str("no packages matching query"),
-            Self::ConfigFileNotFound => f.write_str("config file not found"),
-            Self::GroupFileNotFound(name) => f.write_str(&format!("group file '{name}' not found")),
-            Self::GroupAlreadyExists(path) => f.write_str(&format!(
-                "group file '{}' already exists",
-                path.to_string_lossy()
-            )),
-            Self::InvalidGroupName(name) => {
-                f.write_str(&format!("group name '{name}' is not valid"))
+            Self::NoPackagesFound => write!(f, "no packages matching query"),
+            Self::ConfigFileNotFound => write!(f, "config file not found"),
+            Self::GroupFileNotFound(name) => write!(f, "group file '{name}' not found"),
+            Self::GroupAlreadyExists(path) => {
+                write!(f, "group file '{}' already exists", path.to_string_lossy())
             }
+            Self::InvalidGroupName(name) => write!(f, "group name '{name}' is not valid"),
             Self::MultipleGroupsNotFound(vec) => {
-                f.write_str("could not find the following groups:\n")?;
-                let mut iter = vec.iter().peekable();
-                while let Some(group) = iter.next() {
-                    f.write_str(&format!("  {group}"))?;
-                    if iter.peek().is_some() {
-                        f.write_char('\n')?;
-                    }
-                }
-                Ok(())
+                write!(
+                    f,
+                    "could not find the following groups: [{}]",
+                    vec.join(", ")
+                )
             }
         }
     }

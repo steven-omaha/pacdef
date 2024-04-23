@@ -31,7 +31,27 @@ Check out https://github.com/steven-omaha/pacdef/blob/main/README.md#configurati
 This message will not appear again.
 ------";
 
+struct PacdefLogger;
+
+impl log::Log for PacdefLogger {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            eprintln!("{} - {}", record.level(), record.args());
+        }
+    }
+
+    fn flush(&self) {}
+}
+
 fn main() -> ExitCode {
+    log::set_boxed_logger(Box::new(PacdefLogger))
+        .map(|()| log::set_max_level(log::LevelFilter::Info))
+        .expect("no other loggers should have been set");
+
     handle_final_result(main_inner())
 }
 
@@ -43,7 +63,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
         Ok(_) => ExitCode::SUCCESS,
         Err(ref e) => {
             if let Some(root_error) = e.root_cause().downcast_ref::<PacdefError>() {
-                eprintln!("{root_error}");
+                log::error!("{root_error}");
                 ExitCode::FAILURE
             } else {
                 result.report()
@@ -75,10 +95,14 @@ fn main_inner() -> Result<()> {
     let groups = Group::load(&group_dir, config.warn_not_symlinks)
         .with_context(|| format!("loading groups under {}", group_dir.to_string_lossy()))?;
 
+    if groups.is_empty() {
+        log::warn!("no group files found");
+    }
+
     for group in groups.iter() {
         if group.warn_symlink {
-            eprintln!(
-                "WARNING: group file {} is not a symlink",
+            log::warn!(
+                "group file {} is not a symlink",
                 group.path.to_string_lossy()
             );
         }

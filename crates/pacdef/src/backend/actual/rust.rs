@@ -47,9 +47,7 @@ impl Backend for Rust {
         let content = match read_to_string(file) {
             Ok(string) => string,
             Err(err) if err.kind() == NotFound => {
-                eprintln!(
-                    "WARNING: no crates file found for cargo. Assuming no crates installed yet."
-                );
+                log::warn!("no crates file found for cargo. Assuming no crates installed yet.");
                 return Ok(HashSet::new());
             }
             Err(err) => bail!(err),

@@ -41,7 +41,7 @@ fn insert_package(package: Package, packages: &mut HashSet<Package>) {
     let newly_inserted = packages.insert(package);
 
     if !newly_inserted {
-        eprintln!("warning: {package_name} occurs twice in the same section");
+        log::warn!("{package_name} occurs twice in the same section");
     }
 }
 

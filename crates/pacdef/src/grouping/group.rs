@@ -153,13 +153,13 @@ impl Group {
                 }
                 Err(e) => {
                     let err = e.root_cause();
-                    eprintln!("WARNING: could not process a section under group '{name}': {err}");
+                    log::warn!("could not process a section under group '{name}': {err}");
                 }
             }
         }
 
         if sections.is_empty() {
-            eprintln!("WARNING: no sections found in group '{name}'");
+            log::warn!("no sections found in group '{name}'");
         }
 
         let path = path.into();

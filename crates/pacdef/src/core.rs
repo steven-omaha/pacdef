@@ -78,10 +78,6 @@ impl GroupArguments {
 
 impl EditGroupAction {
     fn run(self, groups: &Groups) -> Result<()> {
-        if groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
         let group_files: Vec<_> = find_groups_by_name(&self.edit_groups, groups)
             .context("getting group files for args")?
             .into_iter()
@@ -171,7 +167,7 @@ impl ImportGroupAction {
                 .context("filename is not valid UTF-8")?;
 
             if !target.exists() {
-                eprintln!("file {target_name} does not exist, skipping");
+                log::warn!("file {target_name} does not exist, skipping");
                 continue;
             }
 
@@ -179,7 +175,7 @@ impl ImportGroupAction {
             link.push(target_name);
 
             if link.exists() {
-                eprintln!("group {target_name} already exists, skipping");
+                log::warn!("group {target_name} already exists, skipping");
             } else {
                 symlink(target, link)?;
             }
@@ -195,10 +191,6 @@ impl ListGroupAction {
     /// This methods cannot return an error. It returns a `Result` to be consistent
     /// with other methods.
     fn run(self, groups: &Groups) -> Result<()> {
-        if groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
         let mut vec: Vec<_> = groups.iter().collect();
         vec.sort_unstable();
         for g in vec {
@@ -264,10 +256,6 @@ impl NewGroupAction {
 
 impl RemoveGroupAction {
     fn run(self, groups: &Groups) -> Result<()> {
-        if groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
         let found = find_groups_by_name(&self.remove_groups, groups)?;
 
         for group in found {
@@ -280,10 +268,6 @@ impl RemoveGroupAction {
 
 impl ShowGroupAction {
     fn run(self, groups: &Groups) -> Result<()> {
-        if groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
         let mut errors = vec![];
         let mut found_groups = vec![];
 
@@ -416,10 +400,6 @@ impl UnmanagedPackageAction {
 fn get_missing_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
     let mut to_install = ToDoPerBackend::new();
 
-    if groups.is_empty() {
-        eprintln!("WARNING: no group files found");
-    }
-
     for mut backend in AnyBackend::iter() {
         if config
             .disabled_backends
@@ -470,10 +450,6 @@ fn overwrite_values_from_config(backend: &mut AnyBackend, config: &Config) {
 ///
 /// This function will propagate errors from the individual backends.
 fn get_unmanaged_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
-    if groups.is_empty() {
-        eprintln!("WARNING: no group files found");
-    }
-
     let mut result = ToDoPerBackend::new();
 
     for mut backend in AnyBackend::iter() {
@@ -579,12 +555,12 @@ fn find_groups_by_name<'a>(names: &[String], groups: &'a Groups) -> Result<Vec<&
 fn show_backend_query_error(error: &anyhow::Error, backend: &AnyBackend) {
     let section = backend.get_section();
     if should_print_debug_info() {
-        eprintln!("WARNING: skipping backend '{section}':");
-        for err in error.chain() {
-            eprintln!("  {err}");
-        }
+        log::warn!(
+            "skipping backend '{section}': {}",
+            error.chain().map(|x| x.to_string()).collect::<String>()
+        );
     } else {
-        eprintln!("WARNING: skipping backend '{section}': {error}");
+        log::warn!("skipping backend '{section}': {error}");
     }
 }
 
