@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
-use crate::{Group, Package};
+use crate::Package;
 
 macro_rules! ERROR{
     ($bin:expr) => {

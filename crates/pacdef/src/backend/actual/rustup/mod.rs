@@ -4,7 +4,7 @@ mod types;
 use crate::backend::backend_trait::{Backend, Switches, Text};
 use crate::backend::macros::impl_backend_constants;
 use crate::cmd::run_external_command;
-use crate::{Group, Package};
+use crate::Package;
 use anyhow::{bail, Context, Result};
 use std::collections::HashSet;
 use std::process::Command;

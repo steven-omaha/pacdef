@@ -19,8 +19,10 @@ use std::process::{ExitCode, Termination};
 
 use anyhow::{bail, Context, Result};
 
+use clap::Parser;
+use pacdef::cli::MainArguments;
 use pacdef::path::{get_config_path, get_config_path_old_version, get_group_dir};
-use pacdef::{get_args, Config, Error as PacdefError, Group, Pacdef};
+use pacdef::{Config, Error as PacdefError, Group};
 
 const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
 You seem to have used version 0.x of pacdef before.
@@ -51,7 +53,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
 }
 
 fn main_inner() -> Result<()> {
-    let args = get_args();
+    let main_arguments = MainArguments::parse();
 
     let config_file = get_config_path().context("getting config file")?;
 
@@ -73,8 +75,16 @@ fn main_inner() -> Result<()> {
     let groups = Group::load(&group_dir, config.warn_not_symlinks)
         .with_context(|| format!("loading groups under {}", group_dir.to_string_lossy()))?;
 
-    let pacdef = Pacdef::new(args, config, groups);
-    pacdef.run_action_from_arg().context("running action")
+    for group in groups.iter() {
+        if group.warn_symlink {
+            eprintln!(
+                "WARNING: group file {} is not a symlink",
+                group.path.to_string_lossy()
+            );
+        }
+    }
+
+    main_arguments.run(&groups, &config)
 }
 
 fn load_default_config(config_file: &Path) -> Result<Config> {

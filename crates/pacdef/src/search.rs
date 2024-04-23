@@ -1,11 +1,13 @@
-use std::collections::HashSet;
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
 use anyhow::{bail, Result};
 use regex::Regex;
 
-use crate::grouping::{Group, Package, Section};
+use crate::{
+    grouping::{Group, Package, Section},
+    Groups,
+};
 
 /// Find all packages in all groups whose name match the regex from the
 /// command-line arguments. Print the name of the packages per group and
@@ -16,7 +18,7 @@ use crate::grouping::{Group, Package, Section};
 /// This function will return an error if
 /// - an invalid regex was provided, or
 /// - no matching packages could be found.
-pub fn search_packages(regex_str: &str, groups: &HashSet<Group>) -> Result<()> {
+pub fn search_packages(regex_str: &str, groups: &Groups) -> Result<()> {
     if groups.is_empty() {
         eprintln!("WARNING: no group files found");
         bail!(crate::errors::Error::NoPackagesFound);

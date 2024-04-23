@@ -14,5 +14,6 @@ mod package;
 mod section;
 
 pub use group::Group;
+pub use group::Groups;
 pub use package::Package;
 pub use section::Section;

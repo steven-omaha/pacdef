@@ -2,26 +2,19 @@ mod datastructures;
 mod strategy;
 
 use std::io::{stdin, stdout, Write};
-use std::rc::Rc;
 
 use anyhow::Result;
 
 use crate::backend::backend_trait::Backend;
 use crate::backend::todo_per_backend::ToDoPerBackend;
 use crate::ui::{get_user_confirmation, read_single_char_from_terminal};
-use crate::{Group, Package};
+use crate::{Group, Groups, Package};
 
 use self::datastructures::{ContinueWithReview, ReviewAction, ReviewIntention, ReviewsPerBackend};
 use self::strategy::Strategy;
 
-pub fn review(
-    todo_per_backend: ToDoPerBackend,
-    groups: impl IntoIterator<Item = Group>,
-) -> Result<()> {
+pub fn review(todo_per_backend: ToDoPerBackend, groups: &Groups) -> Result<()> {
     let mut reviews = ReviewsPerBackend::new();
-    let mut groups: Vec<Rc<Group>> = groups.into_iter().map(Rc::new).collect();
-
-    groups.sort_unstable();
 
     if todo_per_backend.nothing_to_do_for_all_backends() {
         println!("nothing to do");
@@ -32,7 +25,7 @@ pub fn review(
         let mut actions = vec![];
         for package in packages {
             println!("{}: {package}", backend.get_section());
-            match get_action_for_package(package, &groups, &mut actions, &backend)? {
+            match get_action_for_package(package, groups, &mut actions, &backend)? {
                 ContinueWithReview::Yes => continue,
                 ContinueWithReview::No => return Ok(()),
                 ContinueWithReview::NoAndApply => {
@@ -76,7 +69,7 @@ pub fn review(
 
 fn get_action_for_package(
     package: Package,
-    groups: &[Rc<Group>],
+    groups: &Groups,
     reviews: &mut Vec<ReviewAction>,
     backend: &dyn Backend,
 ) -> Result<ContinueWithReview> {
@@ -92,7 +85,7 @@ fn get_action_for_package(
             }
             ReviewIntention::AssignGroup => {
                 if let Ok(Some(group)) = ask_group(groups) {
-                    reviews.push(ReviewAction::AssignGroup(package, group));
+                    reviews.push(ReviewAction::AssignGroup(package, group.clone()));
                     break;
                 };
             }
@@ -154,7 +147,7 @@ fn print_query(supports_as_dependency: bool) -> Result<()> {
     Ok(())
 }
 
-fn print_enumerated_groups(groups: &[Rc<Group>]) {
+fn print_enumerated_groups(groups: &Groups) {
     let number_digits = get_amount_of_digits_for_number(groups.len());
 
     for (i, group) in groups.iter().enumerate() {
@@ -166,7 +159,7 @@ fn get_amount_of_digits_for_number(number: usize) -> usize {
     number.to_string().len()
 }
 
-fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
+fn ask_group(groups: &Groups) -> Result<Option<&Group>> {
     print_enumerated_groups(groups);
     let mut buf = String::new();
     stdin().read_line(&mut buf)?;
@@ -179,7 +172,7 @@ fn ask_group(groups: &[Rc<Group>]) -> Result<Option<Rc<Group>>> {
     };
 
     if idx < groups.len() {
-        Ok(Some(groups[idx].clone()))
+        Ok(groups.iter().nth(idx))
     } else {
         Ok(None)
     }

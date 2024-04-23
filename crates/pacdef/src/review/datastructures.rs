@@ -1,18 +1,16 @@
-use std::rc::Rc;
-
 use crate::{backend::AnyBackend, Group, Package};
 
 use super::strategy::Strategy;
 
 #[derive(Debug, PartialEq)]
-pub(super) enum ReviewAction {
+pub enum ReviewAction {
     AsDependency(Package),
     Delete(Package),
-    AssignGroup(Package, Rc<Group>),
+    AssignGroup(Package, Group),
 }
 
 #[derive(Debug)]
-pub(super) enum ReviewIntention {
+pub enum ReviewIntention {
     AsDependency,
     AssignGroup,
     Delete,
@@ -24,20 +22,20 @@ pub(super) enum ReviewIntention {
 }
 
 #[derive(Debug)]
-pub(super) struct ReviewsPerBackend {
+pub struct ReviewsPerBackend {
     items: Vec<(AnyBackend, Vec<ReviewAction>)>,
 }
 
 impl ReviewsPerBackend {
-    pub(super) fn new() -> Self {
+    pub fn new() -> Self {
         Self { items: vec![] }
     }
 
-    pub(super) fn nothing_to_do(&self) -> bool {
+    pub fn nothing_to_do(&self) -> bool {
         self.items.iter().all(|(_, vec)| vec.is_empty())
     }
 
-    pub(super) fn push(&mut self, value: (AnyBackend, Vec<ReviewAction>)) {
+    pub fn push(&mut self, value: (AnyBackend, Vec<ReviewAction>)) {
         self.items.push(value);
     }
 
@@ -46,7 +44,7 @@ impl ReviewsPerBackend {
     ///
     /// If there are no actions for a `Backend`, then that `Backend` is removed from the return
     /// value.
-    pub(super) fn into_strategies(self) -> Vec<Strategy> {
+    pub fn into_strategies(self) -> Vec<Strategy> {
         let mut result = vec![];
 
         for (backend, actions) in self {
@@ -85,7 +83,7 @@ impl IntoIterator for ReviewsPerBackend {
     }
 }
 
-pub(super) enum ContinueWithReview {
+pub enum ContinueWithReview {
     Yes,
     No,
     NoAndApply,
@@ -94,7 +92,7 @@ pub(super) enum ContinueWithReview {
 fn extract_actions(
     actions: Vec<ReviewAction>,
     to_delete: &mut Vec<Package>,
-    assign_group: &mut Vec<(Package, Rc<Group>)>,
+    assign_group: &mut Vec<(Package, Group)>,
     as_dependency: &mut Vec<Package>,
 ) {
     for action in actions {

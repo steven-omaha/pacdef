@@ -1,49 +1,32 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::env::current_dir;
 use std::fs::{copy, create_dir_all, remove_file, rename, File};
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use anyhow::{bail, ensure, Context, Result};
 use const_format::formatcp;
 
-use crate::args::datastructure::{
-    Arguments, Edit, Force, GroupAction, Groups, Noconfirm, OutputDir, PackageAction, Regex,
-};
 use crate::backend::backend_trait::Backend;
 use crate::backend::todo_per_backend::ToDoPerBackend;
 use crate::backend::AnyBackend;
-use crate::cmd::run_edit_command;
-use crate::env::should_print_debug_info;
+use crate::cli::{
+    CleanPackageAction, EditGroupAction, ExportGroupAction, GroupAction, GroupArguments,
+    ImportGroupAction, ListGroupAction, MainArguments, MainSubcommand, NewGroupAction,
+    PackageAction, PackageArguments, RemoveGroupAction, ReviewPackageAction, SearchPackageAction,
+    ShowGroupAction, SyncPackageAction, UnmanagedPackageAction, VersionArguments,
+};
+use crate::cmd::{run_edit_command, run_external_command};
+use crate::env::{get_editor, should_print_debug_info};
 use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
-use crate::search;
+use crate::review::review;
+use crate::search::search_packages;
 use crate::ui::get_user_confirmation;
-use crate::Config;
 use crate::Group;
-use crate::{review, Error};
+use crate::{Config, Error, Groups};
 
-/// Most data that is required during runtime of the program.
-pub struct Pacdef {
-    /// The command line arguments. Is an `Option` so that we can take ownership later without cloning.
-    args: Option<Arguments>,
-    /// The config of the program.
-    config: Config,
-    /// The hashset of all groups.
-    groups: HashSet<Group>,
-}
-
-impl Pacdef {
-    /// Creates a new [`Pacdef`]. `config` should be passed from [`Config::load`], and `args` from
-    /// [`args::get`].
-    #[must_use]
-    pub const fn new(args: Arguments, config: Config, groups: HashSet<Group>) -> Self {
-        Self {
-            args: Some(args),
-            config,
-            groups,
-        }
-    }
-
+impl MainArguments {
     /// Run the action that was provided by the user as first argument.
     ///
     /// For convenience sake, all called functions take a `&self` argument, even if
@@ -52,305 +35,132 @@ impl Pacdef {
     /// # Errors
     ///
     /// This function propagates errors from the underlying functions.
-    ///
-    /// # Panics
-    ///
-    /// This function panics if the `args` field is `None`.
-    pub fn run_action_from_arg(mut self) -> Result<()> {
-        match self
-            .args
-            .take()
-            .expect("if there were no args we would not get to here")
-        {
-            Arguments::Group(group_args) => self.run_group_subcommand(&group_args),
-            Arguments::Package(package_args) => self.run_package_subcommand(&package_args),
-            Arguments::Version => {
-                self.show_version();
-
-                Ok(())
-            }
+    pub fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        match self.subcommand {
+            MainSubcommand::Group(group) => group.run(groups),
+            MainSubcommand::Package(package) => package.run(groups, config),
+            MainSubcommand::Version(version) => version.run(),
         }
     }
+}
 
-    fn run_group_subcommand(self, args: &GroupAction) -> Result<()> {
-        match args {
-            GroupAction::Edit(Groups(groups)) => self.edit_groups(groups),
-            GroupAction::Export(Groups(groups), OutputDir(dir), Force(force)) => {
-                self.export_groups(groups, dir.as_ref(), *force)
-            }
-            GroupAction::Import(Groups(groups)) => self.import_groups(groups),
-            GroupAction::List => self.show_groups(),
-            GroupAction::New(Groups(groups), Edit(edit)) => self.new_groups(groups, *edit),
-            GroupAction::Remove(Groups(groups)) => self.remove_groups(groups),
-            GroupAction::Show(Groups(groups)) => self.show_group_content(groups),
+impl VersionArguments {
+    /// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
+    /// Otherwise return `pacdef, <version>`.
+    fn run(self) -> Result<()> {
+        let backends = get_included_backends();
+        let mut result = format!("pacdef, version: {}\n", get_version_string());
+        result.push_str("supported backends:");
+        for b in backends {
+            result.push_str("\n  ");
+            result.push_str(b);
+        }
+
+        println!("{}", result);
+
+        Ok(())
+    }
+}
+
+impl GroupArguments {
+    fn run(self, groups: &Groups) -> Result<()> {
+        match self.group_action {
+            GroupAction::Edit(edit) => edit.run(groups),
+            GroupAction::Export(export) => export.run(groups),
+            GroupAction::Import(import) => import.run(),
+            GroupAction::List(list) => list.run(groups),
+            GroupAction::New(new) => new.run(),
+            GroupAction::Remove(remove) => remove.run(groups),
+            GroupAction::Show(show) => show.run(groups),
         }
     }
+}
 
-    fn run_package_subcommand(mut self, args: &PackageAction) -> Result<()> {
-        match args {
-            PackageAction::Clean(Noconfirm(noconfirm)) => self.clean_packages(*noconfirm),
-            PackageAction::Review => review::review(self.get_unmanaged_packages()?, self.groups),
-            PackageAction::Search(Regex(regex)) => {
-                self.warn_about_groups_that_arent_symlinks();
-                search::search_packages(regex, &self.groups)
-            }
-            PackageAction::Sync(Noconfirm(noconfirm)) => self.install_packages(*noconfirm),
-            PackageAction::Unmanaged => self.show_unmanaged_packages(),
-        }
-    }
-
-    fn get_missing_packages(&mut self) -> Result<ToDoPerBackend> {
-        let mut to_install = ToDoPerBackend::new();
-
-        if self.groups.is_empty() {
+impl EditGroupAction {
+    fn run(self, groups: &Groups) -> Result<()> {
+        if groups.is_empty() {
             eprintln!("WARNING: no group files found");
         }
 
-        for mut backend in AnyBackend::iter() {
-            if self
-                .config
-                .disabled_backends
-                .contains(&backend.get_section().to_string())
-            {
-                continue;
-            }
-
-            if !binary_in_path(backend.get_binary())? {
-                continue;
-            }
-
-            self.overwrite_values_from_config(&mut backend);
-            backend.load(&self.groups);
-
-            match backend.get_missing_packages_sorted() {
-                Ok(diff) => to_install.push((backend, diff)),
-                Err(error) => show_backend_query_error(&error, &backend),
-            };
-        }
-
-        Ok(to_install)
-    }
-
-    fn overwrite_values_from_config(&mut self, backend: &mut AnyBackend) {
-        #[cfg(feature = "arch")]
-        {
-            if let AnyBackend::Arch(arch) = backend {
-                arch.binary.clone_from(&self.config.aur_helper);
-                arch.aur_rm_args.clone_from(&self.config.aur_rm_args);
-            }
-        }
-
-        if let AnyBackend::Flatpak(flatpak) = backend {
-            flatpak.systemwide = self.config.flatpak_systemwide;
-        }
-
-        if let AnyBackend::Python(python) = backend {
-            python.binary.clone_from(&self.config.pip_binary);
-        }
-    }
-
-    fn install_packages(&mut self, noconfirm: bool) -> Result<()> {
-        self.warn_about_groups_that_arent_symlinks();
-
-        let to_install = self.get_missing_packages()?;
-
-        if to_install.nothing_to_do_for_all_backends() {
-            println!("nothing to do");
-            return Ok(());
-        }
-
-        println!("Would install the following packages:\n");
-        to_install.show().context("printing things to do")?;
-
-        println!();
-        if noconfirm {
-            println!("proceeding without confirmation");
-        } else if !get_user_confirmation()? {
-            return Ok(());
-        }
-
-        to_install.install_missing_packages(noconfirm)
-    }
-
-    fn warn_about_groups_that_arent_symlinks(&self) {
-        for group in &self.groups {
-            if group.warn_symlink {
-                eprintln!(
-                    "WARNING: group file {} is not a symlink",
-                    group.path.to_string_lossy()
-                );
-            }
-        }
-    }
-
-    fn edit_groups(&self, groups: &[String]) -> Result<()> {
-        self.warn_about_groups_that_arent_symlinks();
-
-        if self.groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
-        let group_files: Vec<_> = find_groups_by_name(groups, &self.groups)
+        let group_files: Vec<_> = find_groups_by_name(&self.edit_groups, groups)
             .context("getting group files for args")?
             .into_iter()
             .map(|g| g.path.as_path())
             .collect();
 
-        run_edit_command(&group_files).context("running editor")?;
+        let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
+        cmd.current_dir(
+            group_files[0]
+                .parent()
+                .context("getting parent dir of first file argument")?,
+        );
+        for group_file in group_files {
+            cmd.arg(group_file.to_string_lossy().to_string());
+        }
+        run_external_command(cmd)?;
 
         Ok(())
     }
+}
 
-    fn show_version(self) {
-        println!("{}", get_name_and_version());
-    }
-
-    fn show_unmanaged_packages(mut self) -> Result<()> {
-        let unmanaged_per_backend = &self.get_unmanaged_packages()?;
-
-        if unmanaged_per_backend.nothing_to_do_for_all_backends() {
-            return Ok(());
-        }
-
-        unmanaged_per_backend
-            .show()
-            .context("printing things to do")
-    }
-
-    /// Get a list of unmanaged packages per backend.
+impl ExportGroupAction {
+    /// Export pacdef groups by moving a group file to an output dir. The path of the
+    /// group file relative to the group base dir will be replicated under the output
+    /// directory.
     ///
-    /// This method loops through all enabled `Backend`s whose binary is in `PATH`.
+    /// By default, the output dir is the current working directory. `output_dir` may be
+    /// specified to the path of another directory, in which case `output_dir` must
+    /// exist.
+    ///
+    /// If `force` is `true`, the output file will be overwritten if it exists.
     ///
     /// # Errors
     ///
-    /// This function will propagate errors from the individual backends.
-    fn get_unmanaged_packages(&mut self) -> Result<ToDoPerBackend> {
-        self.warn_about_groups_that_arent_symlinks();
-
-        if self.groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
-        let mut result = ToDoPerBackend::new();
-
-        for mut backend in AnyBackend::iter() {
-            if self
-                .config
-                .disabled_backends
-                .contains(&backend.get_section().to_string())
-            {
-                continue;
-            }
-
-            if !binary_in_path(backend.get_binary())? {
-                continue;
-            }
-
-            self.overwrite_values_from_config(&mut backend);
-            backend.load(&self.groups);
-
-            match backend.get_unmanaged_packages_sorted() {
-                Ok(unmanaged) => result.push((backend, unmanaged)),
-                Err(error) => show_backend_query_error(&error, &backend),
-            };
-        }
-        Ok(result)
-    }
-
-    /// Print the alphabetically sorted names of all groups to stdout.
+    /// This function will return an error if
+    /// - the group file is a symlink (in which case exporting makes no sense),
+    /// - the output file exists and `force` is not `true`, or
+    /// - the user does not have permission to write to the output dir.
     ///
-    /// This methods cannot return an error. It returns a `Result` to be consistent
-    /// with other methods.
-    fn show_groups(self) -> Result<()> {
-        self.warn_about_groups_that_arent_symlinks();
+    /// # Limitations
+    ///
+    /// At the moment we cannot export nested group dirs. The user would have to
+    /// export every group file individually, or use a shell glob.
+    fn run(self, groups: &Groups) -> Result<()> {
+        let groups = find_groups_by_name(&self.export_groups, groups)?;
+        let output_dir = match self.output_dir {
+            Some(p) => p,
+            None => current_dir().context("no output dir specified, getting current directory")?,
+        };
 
-        if self.groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
-        let mut vec: Vec<_> = self.groups.iter().collect();
-        vec.sort_unstable();
-        for g in vec {
-            println!("{}", g.name);
-        }
-
-        Ok(())
-    }
-
-    fn clean_packages(&mut self, noconfirm: bool) -> Result<()> {
-        let to_remove = self.get_unmanaged_packages()?;
-
-        if to_remove.nothing_to_do_for_all_backends() {
-            println!("nothing to do");
-            return Ok(());
-        }
-
-        println!("Would remove the following packages:\n");
-        to_remove.show().context("printing things to do")?;
-
-        println!();
-        if noconfirm {
-            println!("proceeding without confirmation");
-        } else if !get_user_confirmation()? {
-            return Ok(());
-        }
-
-        to_remove.remove_unmanaged_packages(noconfirm)
-    }
-
-    fn show_group_content(&self, args: &[String]) -> Result<()> {
-        self.warn_about_groups_that_arent_symlinks();
-
-        if self.groups.is_empty() {
-            eprintln!("WARNING: no group files found");
-        }
-
-        let mut errors = vec![];
-        let mut groups = vec![];
-
-        // make sure all args exist before doing anything
-        for arg_group in args {
-            let possible_group = self.groups.iter().find(|g| g.name == **arg_group);
-
-            let Some(group) = possible_group else {
-                errors.push((*arg_group).clone());
-                continue;
-            };
-
-            groups.push(group);
-        }
-
-        // return an error if any arg was not found
         ensure!(
-            errors.is_empty(),
-            crate::Error::MultipleGroupsNotFound(errors)
+            output_dir.exists() && output_dir.is_dir(),
+            "output must be a directory and exist"
         );
 
-        let show_more_than_one_group = args.len() > 1;
+        for group in &groups {
+            ensure!(!&group.path.is_symlink(), "cannot export symlinks");
 
-        let mut iter = groups.into_iter().peekable();
+            let mut exported_path = output_dir.clone();
+            exported_path.push(PathBuf::from(&group.name));
 
-        while let Some(group) = iter.next() {
-            if show_more_than_one_group {
-                let name = &group.name;
-                println!("{name}");
-                for _ in 0..name.len() {
-                    print!("-");
-                }
-                println!();
-            }
+            ensure!(
+                !self.force && !exported_path.exists(),
+                "{exported_path:?} already exists"
+            );
 
-            println!("{group}");
-            if iter.peek().is_some() {
-                println!();
-            }
+            create_parent(&exported_path)
+                .with_context(|| format!("creating parent dir of {exported_path:?}"))?;
+            move_file(&group.path, &exported_path).context("moving file")?;
+            symlink(&exported_path, &group.path).context("creating symlink to exported file")?;
         }
 
         Ok(())
     }
+}
 
-    fn import_groups(&self, file_names: &[String]) -> Result<()> {
-        let files = get_absolutized_file_paths(file_names)?;
+impl ImportGroupAction {
+    fn run(self) -> Result<()> {
+        let files = get_absolutized_file_paths(&self.import_groups)?;
         let groups_dir = get_group_dir()?;
 
         for target in files {
@@ -377,21 +187,29 @@ impl Pacdef {
 
         Ok(())
     }
+}
 
-    fn remove_groups(&self, groups: &[String]) -> Result<()> {
-        if self.groups.is_empty() {
+impl ListGroupAction {
+    /// Print the alphabetically sorted names of all groups to stdout.
+    ///
+    /// This methods cannot return an error. It returns a `Result` to be consistent
+    /// with other methods.
+    fn run(self, groups: &Groups) -> Result<()> {
+        if groups.is_empty() {
             eprintln!("WARNING: no group files found");
         }
 
-        let found = find_groups_by_name(groups, &self.groups)?;
-
-        for group in found {
-            remove_file(&group.path)?;
+        let mut vec: Vec<_> = groups.iter().collect();
+        vec.sort_unstable();
+        for g in vec {
+            println!("{}", g.name);
         }
 
         Ok(())
     }
+}
 
+impl NewGroupAction {
     /// Create empty group files.
     ///
     /// If `edit` is `true`, the editor will be run to edit the files after they are
@@ -404,18 +222,19 @@ impl Pacdef {
     /// - a group with the same name already exists,
     /// - the editor cannot be run, or
     /// - if we do not have permission to write to the group dir.
-    fn new_groups(&self, new_groups: &[String], edit: bool) -> Result<()> {
+    fn run(&self) -> Result<()> {
         let group_path = get_group_dir()?;
 
         // prevent group names that resolve to directories
-        for name in new_groups {
+        for new_group in &self.new_groups {
             ensure!(
-                *name != "." && *name != "..",
-                crate::Error::InvalidGroupName(name.clone())
+                new_group != "." && new_group != "..",
+                crate::Error::InvalidGroupName(new_group.clone())
             );
         }
 
-        let paths: Vec<_> = new_groups
+        let paths: Vec<_> = self
+            .new_groups
             .iter()
             .map(|name| {
                 let mut base = group_path.clone();
@@ -435,70 +254,249 @@ impl Pacdef {
             File::create(file)?;
         }
 
-        if edit {
+        if self.edit {
             run_edit_command(&paths).context("running editor")?;
         }
 
         Ok(())
     }
+}
 
-    /// Export pacdef groups by moving a group file to an output dir. The path of the
-    /// group file relative to the group base dir will be replicated under the output
-    /// directory.
-    ///
-    /// By default, the output dir is the current working directory. `output_dir` may be
-    /// specified to the path of another directory, in which case `output_dir` must
-    /// exist.
-    ///
-    /// If `force` is `true`, the output file will be overwritten if it exists.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if
-    /// - the group file is a symlink (in which case exporting makes no sense),
-    /// - the output file exists and `force` is not `true`, or
-    /// - the user does not have permission to write to the output dir.
-    ///
-    /// # Limitations
-    ///
-    /// At the moment we cannot export nested group dirs. The user would have to
-    /// export every group file individually, or use a shell glob.
-    fn export_groups(
-        &self,
-        names: &[String],
-        output_dir: Option<&String>,
-        force: bool,
-    ) -> Result<()> {
-        let groups = find_groups_by_name(names, &self.groups)?;
-        let output_dir = match output_dir.map(PathBuf::from) {
-            Some(p) => p,
-            None => current_dir().context("no output dir specified, getting current directory")?,
-        };
+impl RemoveGroupAction {
+    fn run(self, groups: &Groups) -> Result<()> {
+        if groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
 
-        ensure!(
-            output_dir.exists() && output_dir.is_dir(),
-            "output must be a directory and exist"
-        );
+        let found = find_groups_by_name(&self.remove_groups, groups)?;
 
-        for group in &groups {
-            ensure!(!&group.path.is_symlink(), "cannot export symlinks");
-
-            let mut exported_path = output_dir.clone();
-            exported_path.push(PathBuf::from(&group.name));
-
-            ensure!(
-                !force && !exported_path.exists(),
-                "{exported_path:?} already exists"
-            );
-
-            create_parent(&exported_path)
-                .with_context(|| format!("creating parent dir of {exported_path:?}"))?;
-            move_file(&group.path, &exported_path).context("moving file")?;
-            symlink(&exported_path, &group.path).context("creating symlink to exported file")?;
+        for group in found {
+            remove_file(&group.path)?;
         }
 
         Ok(())
     }
+}
+
+impl ShowGroupAction {
+    fn run(self, groups: &Groups) -> Result<()> {
+        if groups.is_empty() {
+            eprintln!("WARNING: no group files found");
+        }
+
+        let mut errors = vec![];
+        let mut found_groups = vec![];
+
+        // make sure all args exist before doing anything
+        for show_group in &self.show_groups {
+            let possible_group = groups.iter().find(|group| group.name == *show_group);
+
+            let Some(group) = possible_group else {
+                errors.push(show_group.to_string());
+                continue;
+            };
+
+            found_groups.push(group);
+        }
+
+        // return an error if any arg was not found
+        ensure!(
+            errors.is_empty(),
+            crate::Error::MultipleGroupsNotFound(errors)
+        );
+
+        let show_more_than_one_group = self.show_groups.len() > 1;
+
+        let mut iter = found_groups.into_iter().peekable();
+
+        while let Some(group) = iter.next() {
+            if show_more_than_one_group {
+                let name = &group.name;
+                println!("{name}");
+                for _ in 0..name.len() {
+                    print!("-");
+                }
+                println!();
+            }
+
+            println!("{group}");
+            if iter.peek().is_some() {
+                println!();
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl PackageArguments {
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        match self.package_action {
+            PackageAction::Clean(clean) => clean.run(groups, config),
+            PackageAction::Review(review) => review.run(groups, config),
+            PackageAction::Search(search) => search.run(groups),
+            PackageAction::Sync(sync) => sync.run(groups, config),
+            PackageAction::Unmanaged(unmanaged) => unmanaged.run(groups, config),
+        }
+    }
+}
+
+impl CleanPackageAction {
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        let to_remove = get_unmanaged_packages(groups, config)?;
+
+        if to_remove.nothing_to_do_for_all_backends() {
+            println!("nothing to do");
+            return Ok(());
+        }
+
+        println!("Would remove the following packages:\n");
+        to_remove.show().context("printing things to do")?;
+
+        println!();
+        if self.no_confirm {
+            println!("proceeding without confirmation");
+        } else if !get_user_confirmation()? {
+            return Ok(());
+        }
+
+        to_remove.remove_unmanaged_packages(self.no_confirm)
+    }
+}
+
+impl ReviewPackageAction {
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        review(get_unmanaged_packages(groups, config)?, groups)
+    }
+}
+
+impl SearchPackageAction {
+    fn run(self, groups: &Groups) -> Result<()> {
+        search_packages(&self.regex, groups)
+    }
+}
+
+impl SyncPackageAction {
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        let to_install = get_missing_packages(groups, config)?;
+
+        if to_install.nothing_to_do_for_all_backends() {
+            println!("nothing to do");
+            return Ok(());
+        }
+
+        println!("Would install the following packages:\n");
+        to_install.show().context("printing things to do")?;
+
+        println!();
+        if self.no_confirm {
+            println!("proceeding without confirmation");
+        } else if !get_user_confirmation()? {
+            return Ok(());
+        }
+
+        to_install.install_missing_packages(self.no_confirm)
+    }
+}
+
+impl UnmanagedPackageAction {
+    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
+        let unmanaged_per_backend = &get_unmanaged_packages(groups, config)?;
+
+        if unmanaged_per_backend.nothing_to_do_for_all_backends() {
+            return Ok(());
+        }
+
+        unmanaged_per_backend
+            .show()
+            .context("printing things to do")
+    }
+}
+
+fn get_missing_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
+    let mut to_install = ToDoPerBackend::new();
+
+    if groups.is_empty() {
+        eprintln!("WARNING: no group files found");
+    }
+
+    for mut backend in AnyBackend::iter() {
+        if config
+            .disabled_backends
+            .contains(&backend.get_section().to_string())
+        {
+            continue;
+        }
+
+        if !binary_in_path(backend.get_binary())? {
+            continue;
+        }
+
+        overwrite_values_from_config(&mut backend, config);
+        backend.load(groups);
+
+        match backend.get_missing_packages_sorted() {
+            Ok(diff) => to_install.push((backend, diff)),
+            Err(error) => show_backend_query_error(&error, &backend),
+        };
+    }
+
+    Ok(to_install)
+}
+
+fn overwrite_values_from_config(backend: &mut AnyBackend, config: &Config) {
+    #[cfg(feature = "arch")]
+    {
+        if let AnyBackend::Arch(arch) = backend {
+            arch.binary.clone_from(&config.aur_helper);
+            arch.aur_rm_args.clone_from(&config.aur_rm_args);
+        }
+    }
+
+    if let AnyBackend::Flatpak(flatpak) = backend {
+        flatpak.systemwide = config.flatpak_systemwide;
+    }
+
+    if let AnyBackend::Python(python) = backend {
+        python.binary.clone_from(&config.pip_binary);
+    }
+}
+
+/// Get a list of unmanaged packages per backend.
+///
+/// This method loops through all enabled `Backend`s whose binary is in `PATH`.
+///
+/// # Errors
+///
+/// This function will propagate errors from the individual backends.
+fn get_unmanaged_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
+    if groups.is_empty() {
+        eprintln!("WARNING: no group files found");
+    }
+
+    let mut result = ToDoPerBackend::new();
+
+    for mut backend in AnyBackend::iter() {
+        if config
+            .disabled_backends
+            .contains(&backend.get_section().to_string())
+        {
+            continue;
+        }
+
+        if !binary_in_path(backend.get_binary())? {
+            continue;
+        }
+
+        overwrite_values_from_config(&mut backend, config);
+        backend.load(groups);
+
+        match backend.get_unmanaged_packages_sorted() {
+            Ok(unmanaged) => result.push((backend, unmanaged)),
+            Err(error) => show_backend_query_error(&error, &backend),
+        };
+    }
+    Ok(result)
 }
 
 /// Create the parent directory of the `path` if that directory does not exist.
@@ -558,7 +556,7 @@ where
 ///
 /// This function will return an error if any of the file names do not match one
 /// of group names.
-fn find_groups_by_name<'a>(names: &[String], groups: &'a HashSet<Group>) -> Result<Vec<&'a Group>> {
+fn find_groups_by_name<'a>(names: &[String], groups: &'a Groups) -> Result<Vec<&'a Group>> {
     let name_group_map: HashMap<&str, &Group> =
         groups.iter().map(|g| (g.name.as_str(), g)).collect();
 
@@ -588,20 +586,6 @@ fn show_backend_query_error(error: &anyhow::Error, backend: &AnyBackend) {
     } else {
         eprintln!("WARNING: skipping backend '{section}': {error}");
     }
-}
-
-/// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
-/// Otherwise return `pacdef, <version>`.
-fn get_name_and_version() -> String {
-    let backends = get_included_backends();
-    let mut result = format!("pacdef, version: {}\n", get_version_string());
-    result.push_str("supported backends:");
-    for b in backends {
-        result.push_str("\n  ");
-        result.push_str(b);
-    }
-
-    result
 }
 
 /// If the crate was compiled from git, return `<version> (<hash>)`. Otherwise

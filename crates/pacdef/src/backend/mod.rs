@@ -7,11 +7,11 @@ pub mod todo_per_backend;
 use crate::backend::backend_trait::Switches;
 use crate::backend::backend_trait::Text;
 use crate::Group;
+use crate::Groups;
 use crate::Package;
 use anyhow::Result;
 use backend_trait::Backend;
 use std::collections::HashSet;
-use std::rc::Rc;
 
 use self::actual::{
     fedora::Fedora, flatpak::Flatpak, python::Python, rust::Rust, rustup::Rustup, void::Void,
