@@ -179,13 +179,13 @@ The following key-value pairs can be set.
 The listed values are the defaults.
 
 ```toml
-aur_helper = paru  # AUR helper to use on Arch Linux (paru, yay, ...)
+aur_helper = "paru"  # AUR helper to use on Arch Linux (paru, yay, ...)
 aur_rm_args = []  # additional args to pass to AUR helper when removing packages (optional)
 disabled_backends = []  # backends that pacdef should not manage, e.g. ["python"], this can reduce runtime if the package manager is notoriously slow (like pip)
 
 warn_not_symlinks = true  # warn if a group file is not a symlink
 flatpak_systemwide = true  # whether flatpak packages should be installed system-wide or per user
-pip_binary = pip  # choose whether to use pipx instead of pip for python package management (see below, 'pitfalls while using pipx')
+pip_binary = "pip"  # choose whether to use pipx instead of pip for python package management (see below, 'pitfalls while using pipx')
 ```
 
 
