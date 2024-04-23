@@ -31,10 +31,26 @@ Check out https://github.com/steven-omaha/pacdef/blob/main/README.md#configurati
 This message will not appear again.
 ------";
 
+struct PacdefLogger;
+
+impl log::Log for PacdefLogger {
+    fn enabled(&self, _: &log::Metadata) -> bool {
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            eprintln!("{} - {}", record.level(), record.args());
+        }
+    }
+
+    fn flush(&self) {}
+}
+
 fn main() -> ExitCode {
-    pretty_env_logger::formatted_builder()
-        .filter_level(log::LevelFilter::Info)
-        .init();
+    log::set_boxed_logger(Box::new(PacdefLogger))
+        .map(|()| log::set_max_level(log::LevelFilter::Info))
+        .expect("no other loggers should have been set");
 
     handle_final_result(main_inner())
 }
