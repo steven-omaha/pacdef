@@ -25,9 +25,9 @@ use pacdef::path::{get_config_path, get_config_path_old_version, get_group_dir};
 use pacdef::{Config, Error as PacdefError, Group};
 
 const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
-You seem to have used version 0.x of pacdef before.
-Version 1.x changes the syntax of the config files and the command line arguments.
-Check out https://github.com/steven-omaha/pacdef for new syntax information.
+You seem to have used version 1.x of pacdef before.
+In version 2.0 the config file needed to be changed from yaml to toml.
+Check out https://github.com/steven-omaha/pacdef/blob/main/README.md#configuration for new syntax information.
 This message will not appear again.
 ------";
 

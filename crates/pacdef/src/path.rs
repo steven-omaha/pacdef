@@ -8,8 +8,8 @@ use std::{env, path::Path};
 use anyhow::{Context, Result};
 use path_absolutize::Absolutize;
 
-const CONFIG_FILE_NAME: &str = "pacdef.yaml";
-const CONFIG_FILE_NAME_OLD: &str = "pacdef.conf";
+const CONFIG_FILE_NAME: &str = "pacdef.toml";
+const CONFIG_FILE_NAME_OLD: &str = "pacdef.yaml";
 
 /// Get the group directory where all group files are located. This is
 /// `$XDG_CONFIG_HOME/pacdef/groups`, which defaults to `$HOME/.config/pacdef/groups`.
@@ -76,7 +76,7 @@ pub fn get_home_dir() -> Result<PathBuf> {
     Ok(env::var("HOME").context("getting $HOME variable")?.into())
 }
 
-/// Get the path to the pacdef config file. This is `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+/// Get the path to the pacdef config file. This is `$XDG_CONFIG_HOME/pacdef/pacdef.toml`.
 ///
 /// # Errors
 ///

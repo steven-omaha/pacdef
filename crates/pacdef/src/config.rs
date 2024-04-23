@@ -6,7 +6,7 @@ use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 
 // Update the master README if fields change.
-/// Config for the program, as listed in `$XDG_CONFIG_HOME/pacdef/pacdef.yaml`.
+/// Config for the program, as listed in `$XDG_CONFIG_HOME/pacdef/pacdef.toml`.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     /// The AUR helper to use for Arch Linux.
@@ -61,7 +61,7 @@ impl Config {
             }
         };
 
-        serde_yaml::from_str(&content).context("parsing yaml config")
+        toml::from_str(&content).context("parsing toml config")
     }
 
     /// Save the instance of [`Config`] to disk.
@@ -70,7 +70,7 @@ impl Config {
     ///
     /// This function will return an error if the config file cannot be saved to disk.
     pub fn save(&self, file: &Path) -> Result<()> {
-        let content = serde_yaml::to_string(&self).context("converting Config to yaml")?;
+        let content = toml::to_string(&self).context("converting Config to toml")?;
 
         let parent = file.parent().context("getting parent of config dir")?;
         if !parent.is_dir() {
