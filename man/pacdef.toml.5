@@ -23,29 +23,29 @@ If the file contains any content that is not a valid key-value pair, pacdef will
 The options together with their default values.
 
 .TP
-.B aur_helper: paru
+.B aur_helper = paru
 The AUR helper to use on Arch Linux
 
 .TP
-.B aur_rm_args: []
+.B aur_rm_args = []
 Additional arguments to pass to the AUR helper on Arch Linux when removing a package.
 Must be a list of strings.
 .br
 Example: [--recursive]
 
 .TP
-.B disabled_backends: []
+.B disabled_backends = []
 Backends that pacdef should ignore even if the binary exists on the system.
 This can reduce runtime if the package manager is notoriously slow (like pip).
 .br
 Example: [python, flatpak]
 
 .TP
-.B warn_not_symlinks: true
+.B warn_not_symlinks = true
 Warn if any group file is not a symlink and is not a child of a symlinked dir inside the group folder.
 
 .TP
-.B flatpak_systemwide: true
+.B flatpak_systemwide = true
 Whether flatpak packages should be installed system-wide or per user.
 
 .SH SEE ALSO
