@@ -1,27 +1,29 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::{Display, Write};
 use std::hash::Hash;
 use std::iter::Peekable;
 
 use anyhow::{ensure, Context, Result};
 
-use super::Package;
+use crate::prelude::*;
+
+pub type Sections = BTreeSet<Section>;
 
 #[derive(Debug, Clone)]
 pub struct Section {
     pub name: String,
-    pub packages: HashSet<Package>,
+    pub packages: Packages,
 }
 
 impl Section {
-    pub fn new(name: String, packages: HashSet<Package>) -> Self {
+    pub fn new(name: String, packages: Packages) -> Self {
         Self { name, packages }
     }
 
     pub fn try_from_lines<'a>(iter: &mut Peekable<impl Iterator<Item = &'a str>>) -> Result<Self> {
         let name = find_next_section_name(iter)?;
 
-        let mut packages = HashSet::new();
+        let mut packages = Packages::new();
 
         while next_line_might_be_package(iter) {
             if let Some(package) = Package::try_from(iter.next().expect("we checked this is some"))
@@ -36,7 +38,7 @@ impl Section {
     }
 }
 
-fn insert_package(package: Package, packages: &mut HashSet<Package>) {
+fn insert_package(package: Package, packages: &mut Packages) {
     let package_name = package.name.clone();
     let newly_inserted = packages.insert(package);
 

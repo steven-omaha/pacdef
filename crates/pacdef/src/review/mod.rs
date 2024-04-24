@@ -5,10 +5,8 @@ use std::io::{stdin, stdout, Write};
 
 use anyhow::Result;
 
-use crate::backend::backend_trait::Backend;
-use crate::backend::todo_per_backend::ToDoPerBackend;
+use crate::prelude::*;
 use crate::ui::{get_user_confirmation, read_single_char_from_terminal};
-use crate::{Group, Groups, Package};
 
 use self::datastructures::{ContinueWithReview, ReviewAction, ReviewIntention, ReviewsPerBackend};
 use self::strategy::Strategy;
@@ -24,7 +22,7 @@ pub fn review(todo_per_backend: ToDoPerBackend, groups: &Groups) -> Result<()> {
     'outer: for (backend, packages) in todo_per_backend {
         let mut actions = vec![];
         for package in packages {
-            println!("{}: {package}", backend.get_section());
+            println!("{}: {package}", backend.backend_info().section);
             match get_action_for_package(package, groups, &mut actions, &backend)? {
                 ContinueWithReview::Yes => continue,
                 ContinueWithReview::No => return Ok(()),

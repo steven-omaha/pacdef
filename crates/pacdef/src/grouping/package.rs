@@ -1,5 +1,8 @@
+use std::collections::BTreeSet;
 use std::fmt::{Display, Write};
 use std::hash::Hash;
+
+pub type Packages = BTreeSet<Package>;
 
 /// A struct to represent a single package, consisting of a `name`, and
 /// optionally a `repo`.

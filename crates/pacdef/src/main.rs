@@ -10,8 +10,7 @@
     clippy::unwrap_used,
     clippy::use_debug,
     clippy::use_self,
-    clippy::wildcard_dependencies,
-    missing_docs
+    clippy::wildcard_dependencies
 )]
 
 use std::path::Path;

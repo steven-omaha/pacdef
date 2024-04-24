@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Display;
 use std::fs::{create_dir, read_to_string, File};
 use std::hash::Hash;
@@ -11,10 +11,26 @@ use walkdir::WalkDir;
 
 use crate::path::get_relative_path;
 
-use super::{Package, Section};
+use crate::prelude::*;
 
 /// A set of groups
 pub type Groups = BTreeSet<Group>;
+
+pub type BackendPackages = BTreeMap<AnyBackend, Packages>;
+pub fn groups_to_backend_packages(groups: &Groups, config: &Config) -> Result<BackendPackages> {
+    let mut backend_packages = BackendPackages::new();
+
+    for group in groups {
+        for section in &group.sections {
+            backend_packages
+                .entry(AnyBackend::from_section(&section.name, config)?)
+                .or_default()
+                .extend(section.packages.iter().cloned());
+        }
+    }
+
+    Ok(backend_packages)
+}
 
 /// Representation of a group file.
 #[derive(Debug, Clone)]
@@ -23,7 +39,7 @@ pub struct Group {
     /// base dir).
     pub name: String,
     /// The sections in the file which in turn hold the packages.
-    pub sections: HashSet<Section>,
+    pub sections: Sections,
     /// The absolute path of the original file.
     pub path: PathBuf,
     /// Whether the main program should warn this group being loaded from a symlink.
@@ -143,7 +159,7 @@ impl Group {
         let name = extract_group_name(path, group_dir.as_ref());
 
         let mut lines = content.lines().peekable();
-        let mut sections = HashSet::new();
+        let mut sections = Sections::new();
 
         while lines.peek().is_some() {
             let result = Section::try_from_lines(&mut lines).context("reading section");

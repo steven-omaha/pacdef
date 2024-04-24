@@ -1,9 +1,6 @@
 use anyhow::Result;
 
-use crate::{
-    backend::{backend_trait::Backend, AnyBackend},
-    Group, Package,
-};
+use crate::prelude::*;
 
 #[derive(Debug)]
 pub struct Strategy {
@@ -49,7 +46,7 @@ impl Strategy {
             return;
         }
 
-        println!("[{}]", self.backend.get_section());
+        println!("[{}]", self.backend.backend_info().section);
 
         if !self.delete.is_empty() {
             println!("delete:");

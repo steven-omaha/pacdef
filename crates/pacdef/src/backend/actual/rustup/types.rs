@@ -1,6 +1,6 @@
 use anyhow::{bail, Context, Result};
 
-use crate::{backend::backend_trait::Switches, Package};
+use crate::prelude::*;
 
 #[derive(Debug)]
 pub enum Repotype {

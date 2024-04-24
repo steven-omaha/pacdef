@@ -2,8 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{Context, Result};
 
-use super::{AnyBackend, Backend};
-use crate::Package;
+use crate::prelude::*;
 
 /// A vector of tuples containing a Backends and a vector of unmanaged packages
 /// for that backend.
@@ -37,7 +36,7 @@ impl ToDoPerBackend {
 
             backend
                 .install_packages(packages, noconfirm)
-                .with_context(|| format!("installing packages for {}", backend.get_section()))?;
+                .with_context(|| format!("installing packages for {backend}"))?;
         }
         Ok(())
     }
@@ -50,7 +49,7 @@ impl ToDoPerBackend {
 
             backend
                 .remove_packages(packages, noconfirm)
-                .with_context(|| format!("removing packages for {}", backend.get_section()))?;
+                .with_context(|| format!("removing packages for {backend}"))?;
         }
         Ok(())
     }
@@ -65,7 +64,7 @@ impl ToDoPerBackend {
 
             let mut segment = String::new();
 
-            segment.write_str(&format!("[{}]", backend.get_section()))?;
+            segment.write_str(&format!("[{backend}]"))?;
             for package in packages {
                 segment.write_str(&format!("\n{package}"))?;
             }

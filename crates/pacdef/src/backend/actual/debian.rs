@@ -1,24 +1,16 @@
-use std::collections::HashSet;
-
 use anyhow::Result;
 use rust_apt::cache::PackageSort;
 use rust_apt::new_cache;
 
-use crate::backend::backend_trait::{Backend, Switches, Text};
-use crate::backend::macros::impl_backend_constants;
 use crate::backend::root::build_base_command_with_privileges;
 use crate::cmd::run_external_command;
-use crate::Package;
+use crate::prelude::*;
 
-#[derive(Debug, Clone)]
-pub struct Debian {
-    pub packages: HashSet<Package>,
-}
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Debian {}
 impl Debian {
     pub fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
+        Self {}
     }
 }
 impl Default for Debian {
@@ -27,36 +19,35 @@ impl Default for Debian {
     }
 }
 
-const BINARY: Text = "apt";
-const SECTION: Text = "debian";
-
-const SWITCHES_INFO: Switches = &["show"];
-const SWITCHES_INSTALL: Switches = &["install"];
-const SWITCHES_MAKE_DEPENDENCY: Switches = &[]; // not needed
-const SWITCHES_NOCONFIRM: Switches = &["--yes"];
-const SWITCHES_REMOVE: Switches = &["remove"];
-
-const SUPPORTS_AS_DEPENDENCY: bool = true;
-
 impl Backend for Debian {
-    impl_backend_constants!();
+    fn backend_info(&self) -> BackendInfo {
+        BackendInfo {
+            binary: "apt".to_string(),
+            section: "debian",
+            switches_info: &["show"],
+            switches_install: &["install"],
+            switches_noconfirm: &["--yes"],
+            switches_remove: &["remove"],
+            switches_make_dependency: Some(&[]),
+        }
+    }
 
-    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_all_installed_packages(&self) -> Result<Packages> {
         let cache = new_cache!()?;
         let sort = PackageSort::default().installed();
 
-        let mut result = HashSet::new();
+        let mut result = Packages::new();
         for pkg in cache.packages(&sort)? {
             result.insert(Package::from(pkg.name().to_string()));
         }
         Ok(result)
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
         let cache = new_cache!()?;
         let sort = PackageSort::default().installed().manually_installed();
 
-        let mut result = HashSet::new();
+        let mut result = Packages::new();
         for pkg in cache.packages(&sort)? {
             result.insert(Package::from(pkg.name().to_string()));
         }
@@ -75,12 +66,14 @@ impl Backend for Debian {
 
     /// Install the specified packages.
     fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
-        let mut cmd = build_base_command_with_privileges(self.get_binary());
+        let backend_info = self.backend_info();
 
-        cmd.args(self.get_switches_install());
+        let mut cmd = build_base_command_with_privileges(&backend_info.binary);
+
+        cmd.args(backend_info.switches_install);
 
         if noconfirm {
-            cmd.args(self.get_switches_noconfirm());
+            cmd.args(backend_info.switches_noconfirm);
         }
 
         for p in packages {
@@ -92,11 +85,13 @@ impl Backend for Debian {
 
     /// Remove the specified packages.
     fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
-        let mut cmd = build_base_command_with_privileges(self.get_binary());
-        cmd.args(self.get_switches_remove());
+        let backend_info = self.backend_info();
+
+        let mut cmd = build_base_command_with_privileges(&backend_info.binary);
+        cmd.args(backend_info.switches_remove);
 
         if noconfirm {
-            cmd.args(self.get_switches_noconfirm());
+            cmd.args(backend_info.switches_noconfirm);
         }
 
         for p in packages {

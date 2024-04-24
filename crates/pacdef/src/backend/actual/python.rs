@@ -1,13 +1,10 @@
-use std::collections::HashSet;
 use std::process::Command;
 
 use anyhow::Context;
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::backend::backend_trait::{Backend, Switches, Text};
-use crate::backend::macros::impl_backend_constants;
-use crate::Package;
+use crate::prelude::*;
 
 macro_rules! ERROR{
     ($bin:expr) => {
@@ -15,81 +12,68 @@ macro_rules! ERROR{
     };
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Python {
     pub binary: String,
-    pub packages: HashSet<Package>,
 }
 impl Python {
-    pub fn new() -> Self {
+    pub fn new(config: &Config) -> Self {
         Self {
-            binary: BINARY.to_string(),
-            packages: HashSet::new(),
+            binary: config.pip_binary.to_string(),
         }
     }
 
     fn get_switches_runtime(&self) -> Switches {
-        match self.get_binary() {
+        match self.backend_info().binary.as_str() {
             "pip" => &["list", "--format", "json", "--not-required", "--user"],
             "pipx" => &["list", "--json"],
-            _ => ERROR!(self.get_binary()),
+            _ => ERROR!(self.backend_info().binary),
         }
     }
     fn get_switches_explicit(&self) -> Switches {
-        match self.get_binary() {
+        match self.backend_info().binary.as_str() {
             "pip" => &["list", "--format", "json", "--user"],
             "pipx" => &["list", "--json"],
-            _ => ERROR!(self.get_binary()),
+            _ => ERROR!(self.backend_info().binary),
         }
     }
 
-    fn extract_packages(&self, output: Value) -> Result<HashSet<Package>> {
-        match self.get_binary() {
+    fn extract_packages(&self, output: Value) -> Result<Packages> {
+        match self.backend_info().binary.as_str() {
             "pip" => extract_pacdef_packages(output),
             "pipx" => extract_pacdef_packages_pipx(output),
-            _ => ERROR!(self.get_binary()),
+            _ => ERROR!(self.backend_info().binary),
         }
     }
 }
-impl Default for Python {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-const BINARY: Text = "pip";
-const SECTION: Text = "python";
-
-const SWITCHES_INFO: Switches = &["show"];
-const SWITCHES_INSTALL: Switches = &["install"];
-const SWITCHES_MAKE_DEPENDENCY: Switches = &[]; // not needed
-const SWITCHES_NOCONFIRM: Switches = &[]; // not needed
-const SWITCHES_REMOVE: Switches = &["uninstall"];
-
-const SUPPORTS_AS_DEPENDENCY: bool = false;
 
 impl Backend for Python {
-    impl_backend_constants!();
-
-    fn get_binary(&self) -> Text {
-        let r#box = self.binary.clone().into_boxed_str();
-        Box::leak(r#box)
+    fn backend_info(&self) -> BackendInfo {
+        BackendInfo {
+            binary: self.binary.clone(),
+            section: "python",
+            switches_info: &["show"],
+            switches_install: &["install"],
+            switches_noconfirm: &[],
+            switches_remove: &["uninstall"],
+            switches_make_dependency: None,
+        }
     }
 
-    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
-        let mut cmd = Command::new(self.get_binary());
+    fn get_all_installed_packages(&self) -> Result<Packages> {
+        let mut cmd = Command::new(self.backend_info().binary);
         let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
         self.extract_packages(output)
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
-        let mut cmd = Command::new(self.get_binary());
+    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
+        let mut cmd = Command::new(self.backend_info().binary);
         let output = run_pip_command(&mut cmd, self.get_switches_explicit())?;
         self.extract_packages(output)
     }
 
     fn make_dependency(&self, _packages: &[Package]) -> Result<()> {
-        panic!("not supported by {}", BINARY)
+        panic!("not supported by {}", self.binary)
     }
 }
 
@@ -100,7 +84,7 @@ fn run_pip_command(cmd: &mut Command, args: &[&str]) -> Result<Value> {
     Ok(val)
 }
 
-fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
+fn extract_pacdef_packages(value: Value) -> Result<Packages> {
     let result = value
         .as_array()
         .context("getting inner json array")?
@@ -111,7 +95,7 @@ fn extract_pacdef_packages(value: Value) -> Result<HashSet<Package>> {
     Ok(result)
 }
 
-fn extract_pacdef_packages_pipx(value: Value) -> Result<HashSet<Package>> {
+fn extract_pacdef_packages_pipx(value: Value) -> Result<Packages> {
     let result = value["venvs"]
         .as_object()
         .context("getting inner json object")?
