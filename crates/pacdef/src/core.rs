@@ -446,11 +446,6 @@ fn get_unmanaged_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBac
         };
 
         match managed_backend.get_unmanaged_packages_sorted() {
-            Ok(diff) => todo_unmanaged.push((any_backend.clone(), diff)),
-            Err(error) => show_backend_query_error(&error, any_backend),
-        };
-
-        match managed_backend.get_unmanaged_packages_sorted() {
             Ok(unmanaged) => todo_unmanaged.push((any_backend.clone(), unmanaged)),
             Err(error) => show_backend_query_error(&error, any_backend),
         };
