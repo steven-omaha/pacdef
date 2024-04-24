@@ -11,7 +11,7 @@ use crate::prelude::*;
 pub type Switches = &'static [&'static str];
 pub type Text = &'static str;
 
-// A bundle of small of bits of info associated with a backend.
+/// A bundle of small of bits of info associated with a backend.
 pub struct BackendInfo {
     /// The binary name when calling the backend.
     pub binary: String,

@@ -8,13 +8,14 @@ use std::fmt::Display;
 use crate::prelude::*;
 use anyhow::{Context, Result};
 
-// A backend with its associated managed packages
+/// A backend with its associated managed packages
 pub struct ManagedBackend {
     /// All managed packages for this backend, i.e. all packages
     /// under the corresponding section in all group files.
     pub packages: Packages,
     pub any_backend: AnyBackend,
 }
+
 impl ManagedBackend {
     /// Get unmanaged packages, sorted alphabetically.
     ///
