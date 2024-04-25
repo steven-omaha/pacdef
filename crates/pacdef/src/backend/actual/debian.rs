@@ -54,7 +54,7 @@ impl Backend for Debian {
         Ok(result)
     }
 
-    fn make_dependency(&self, packages: &[Package]) -> Result<()> {
+    fn make_dependency(&self, packages: &Packages) -> Result<()> {
         let mut cmd = build_base_command_with_privileges("apt-mark");
         cmd.arg("auto");
         for p in packages {
@@ -65,7 +65,7 @@ impl Backend for Debian {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = build_base_command_with_privileges(&backend_info.binary);
@@ -84,7 +84,7 @@ impl Backend for Debian {
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = build_base_command_with_privileges(&backend_info.binary);

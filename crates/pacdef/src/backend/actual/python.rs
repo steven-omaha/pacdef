@@ -72,7 +72,7 @@ impl Backend for Python {
         self.extract_packages(output)
     }
 
-    fn make_dependency(&self, _packages: &[Package]) -> Result<()> {
+    fn make_dependency(&self, _packages: &Packages) -> Result<()> {
         panic!("not supported by {}", self.binary)
     }
 }

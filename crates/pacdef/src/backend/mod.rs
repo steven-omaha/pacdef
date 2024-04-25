@@ -17,33 +17,35 @@ pub struct ManagedBackend {
 }
 
 impl ManagedBackend {
-    /// Get unmanaged packages, sorted alphabetically.
+    /// Get unmanaged packages
     ///
     /// # Errors
     ///
     /// Returns an error if the backend fails to get the explicitly installed packages.
-    pub fn get_unmanaged_packages_sorted(&self) -> Result<Vec<Package>> {
+    pub fn get_unmanaged_packages_sorted(&self) -> Result<Packages> {
         let installed = self
             .any_backend
             .get_explicitly_installed_packages()
             .context("could not get explicitly installed packages")?;
-        let mut diff: Vec<_> = installed.difference(&self.packages).cloned().collect();
-        diff.sort_unstable();
+
+        let diff = installed.difference(&self.packages).cloned().collect();
+
         Ok(diff)
     }
 
-    /// Get missing packages, sorted alphabetically.
+    /// Get missing packages
     ///
     /// # Errors
     ///
     /// Returns an error if the backend fails to get the installed packages.
-    pub fn get_missing_packages_sorted(&self) -> Result<Vec<Package>> {
+    pub fn get_missing_packages_sorted(&self) -> Result<Packages> {
         let installed = self
             .any_backend
             .get_all_installed_packages()
             .context("could not get installed packages")?;
-        let mut diff: Vec<_> = self.packages.difference(&installed).cloned().collect();
-        diff.sort_unstable();
+
+        let diff = self.packages.difference(&installed).cloned().collect();
+
         Ok(diff)
     }
 }

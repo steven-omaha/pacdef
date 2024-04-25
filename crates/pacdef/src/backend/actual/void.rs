@@ -79,7 +79,7 @@ impl Backend for Void {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = build_base_command_with_privileges(INSTALL_BINARY);
@@ -96,7 +96,7 @@ impl Backend for Void {
         run_external_command(cmd)
     }
 
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = build_base_command_with_privileges(REMOVE_BINARY);
@@ -113,7 +113,7 @@ impl Backend for Void {
         run_external_command(cmd)
     }
 
-    fn make_dependency(&self, packages: &[Package]) -> Result<()> {
+    fn make_dependency(&self, packages: &Packages) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = build_base_command_with_privileges(PKGDB_BINARY);

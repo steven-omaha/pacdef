@@ -48,9 +48,9 @@ impl ReviewsPerBackend {
         let mut result = vec![];
 
         for (backend, actions) in self {
-            let mut to_delete = vec![];
+            let mut to_delete = Packages::new();
             let mut assign_group = vec![];
-            let mut as_dependency = vec![];
+            let mut as_dependency = Packages::new();
 
             extract_actions(
                 actions,
@@ -91,15 +91,19 @@ pub enum ContinueWithReview {
 
 fn extract_actions(
     actions: Vec<ReviewAction>,
-    to_delete: &mut Vec<Package>,
+    to_delete: &mut Packages,
     assign_group: &mut Vec<(Package, Group)>,
-    as_dependency: &mut Vec<Package>,
+    as_dependency: &mut Packages,
 ) {
     for action in actions {
         match action {
-            ReviewAction::Delete(package) => to_delete.push(package),
+            ReviewAction::Delete(package) => {
+                to_delete.insert(package);
+            }
             ReviewAction::AssignGroup(package, group) => assign_group.push((package, group)),
-            ReviewAction::AsDependency(package) => as_dependency.push(package),
+            ReviewAction::AsDependency(package) => {
+                as_dependency.insert(package);
+            }
         }
     }
 }

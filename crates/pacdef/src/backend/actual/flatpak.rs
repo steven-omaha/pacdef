@@ -61,7 +61,7 @@ impl Backend for Flatpak {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(backend_info.binary);
@@ -79,12 +79,12 @@ impl Backend for Flatpak {
         run_external_command(cmd)
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<()> {
+    fn make_dependency(&self, _: &Packages) -> Result<()> {
         panic!("not supported by {}", self.backend_info().binary)
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(backend_info.binary);

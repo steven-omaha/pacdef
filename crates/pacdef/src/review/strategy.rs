@@ -5,16 +5,16 @@ use crate::prelude::*;
 #[derive(Debug)]
 pub struct Strategy {
     backend: AnyBackend,
-    delete: Vec<Package>,
-    as_dependency: Vec<Package>,
+    delete: Packages,
+    as_dependency: Packages,
     assign_group: Vec<(Package, Group)>,
 }
 
 impl Strategy {
     pub fn new(
         backend: AnyBackend,
-        delete: Vec<Package>,
-        as_dependency: Vec<Package>,
+        delete: Packages,
+        as_dependency: Packages,
         assign_group: Vec<(Package, Group)>,
     ) -> Self {
         Self {

@@ -55,7 +55,7 @@ impl Backend for Rust {
             .context("getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<()> {
+    fn make_dependency(&self, _: &Packages) -> Result<()> {
         panic!("not supported by {}", self.backend_info().binary)
     }
 }

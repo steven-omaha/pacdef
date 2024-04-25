@@ -1,12 +1,12 @@
+use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::fmt::{Display, Write};
-use std::hash::Hash;
 
 pub type Packages = BTreeSet<Package>;
 
 /// A struct to represent a single package, consisting of a `name`, and
 /// optionally a `repo`.
-#[derive(Debug, Eq, PartialOrd, Ord, Clone)]
+#[derive(Debug, Clone)]
 pub struct Package {
     /// The name of the package
     pub name: String,
@@ -54,7 +54,7 @@ impl Package {
     }
 
     /// Try to parse a string (from a line in a group file) and return a package.
-    /// From the string, any possible comment is removed and whitespace is trimmed.
+    /// From the string, any possible comment is removed and whitespace is trimmed.package
     /// Returns `None` if there is nothing left after trimming.
     pub fn try_from<S>(s: S) -> Option<Self>
     where
@@ -72,22 +72,25 @@ impl Package {
 
 impl PartialEq for Package {
     fn eq(&self, other: &Self) -> bool {
-        let self_repo = self.repo.as_ref();
-        let other_repo = other.repo.as_ref();
-
-        // iff both packages have repos, they must be identical, otherwise we don't care
-        let repos_are_identical =
-            self_repo.map_or(true, |sr| other_repo.map_or(true, |or| sr == or));
-
-        let names_are_identical = self.name == other.name;
-
-        names_are_identical && repos_are_identical
+        self.cmp(other).is_eq()
     }
 }
-
-impl Hash for Package {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
+impl Eq for Package {}
+impl PartialOrd for Package {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for Package {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.name
+            .cmp(&other.name)
+            .then(self.repo.as_ref().map_or(Ordering::Equal, |self_repo| {
+                other
+                    .repo
+                    .as_ref()
+                    .map_or(Ordering::Equal, |other_repo| self_repo.cmp(other_repo))
+            }))
     }
 }
 

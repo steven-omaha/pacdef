@@ -196,7 +196,7 @@ impl Group {
     ///
     /// This function returns an error if the group file cannot be read, or if the
     /// file cannot be written to.
-    pub fn save_packages(&self, section_header: &str, packages: &[Package]) -> Result<()> {
+    pub fn save_packages(&self, section_header: &str, packages: &Packages) -> Result<()> {
         let mut content = read_to_string(&self.path)
             .with_context(|| format!("reading existing file contents from {:?}", &self.path))?;
 
@@ -264,7 +264,7 @@ impl Display for Group {
 fn write_packages_to_existing_section(
     group_file_content: &mut String,
     section_header: &str,
-    packages: &[Package],
+    packages: &Packages,
 ) -> Result<()> {
     let idx_of_first_package_line_in_section =
         find_first_package_line_in_section(group_file_content, section_header)?;
@@ -306,7 +306,7 @@ fn find_first_package_line_in_section(
 fn add_new_section_with_packages(
     group_file_content: &mut String,
     section_header: &str,
-    packages: &[Package],
+    packages: &Packages,
 ) {
     group_file_content.push('\n');
     group_file_content.push_str(section_header);

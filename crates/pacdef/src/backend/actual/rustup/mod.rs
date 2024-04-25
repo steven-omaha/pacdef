@@ -67,11 +67,11 @@ impl Backend for Rustup {
             .context("Getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<()> {
+    fn make_dependency(&self, _: &Packages) -> Result<()> {
         panic!("Not supported by {}", self.backend_info().binary)
     }
 
-    fn install_packages(&self, packages: &[Package], _: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, _: bool) -> Result<()> {
         let packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
@@ -83,7 +83,7 @@ impl Backend for Rustup {
         Ok(())
     }
 
-    fn remove_packages(&self, packages: &[Package], _: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, _: bool) -> Result<()> {
         let rustup_packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =

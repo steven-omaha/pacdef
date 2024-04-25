@@ -51,7 +51,7 @@ impl Backend for Arch {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(&self.binary);
@@ -70,7 +70,7 @@ impl Backend for Arch {
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(&self.binary);

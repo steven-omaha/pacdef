@@ -1,6 +1,4 @@
-use std::cmp::{Eq, Ord};
-use std::collections::HashMap;
-use std::hash::Hash;
+use std::collections::BTreeMap;
 use std::process::Command;
 
 use anyhow::Result;
@@ -65,7 +63,12 @@ pub trait Backend {
     ///
     /// Returns an Error if any of the groups fails to save their given packages.
     fn assign_group(&self, to_assign: Vec<(Package, Group)>) -> Result<()> {
-        let group_package_map = to_hashmap(to_assign);
+        let mut group_package_map: BTreeMap<Group, Packages> = BTreeMap::new();
+
+        for (package, group) in to_assign {
+            group_package_map.entry(group).or_default().insert(package);
+        }
+
         let section_header = format!("[{}]", self.backend_info().section);
 
         for (group, packages) in group_package_map {
@@ -82,7 +85,7 @@ pub trait Backend {
     ///
     /// This function will return an error if the package manager cannot be run or it
     /// returns an error.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(self.backend_info().binary);
@@ -109,7 +112,7 @@ pub trait Backend {
     /// # Errors
     ///
     /// Returns an error if the external command fails.
-    fn make_dependency(&self, packages: &[Package]) -> Result<()> {
+    fn make_dependency(&self, packages: &Packages) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(backend_info.binary);
@@ -130,7 +133,7 @@ pub trait Backend {
     /// # Errors
     ///
     /// Returns an error if the external command fails.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(backend_info.binary);
@@ -161,25 +164,4 @@ pub trait Backend {
 
         run_external_command(cmd)
     }
-}
-
-/// For a vector of tuples containing a `V` and `K`, where a `K` may occur more than
-/// once and each `V` exactly once, create a `HashMap` that associates each `K` with
-/// a `Vec<V>`.
-fn to_hashmap<K, V>(to_assign: Vec<(V, K)>) -> HashMap<K, Vec<V>>
-where
-    K: Hash + Eq,
-    V: Ord,
-{
-    let mut map = HashMap::new();
-
-    for (value, key) in to_assign {
-        let inner: &mut Vec<V> = map.entry(key).or_default();
-        inner.push(value);
-    }
-
-    for vecs in map.values_mut() {
-        vecs.sort_unstable();
-    }
-    map
 }

@@ -74,7 +74,7 @@ impl Backend for Fedora {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new("sudo");
@@ -100,7 +100,7 @@ impl Backend for Fedora {
     }
 
     /// Show information from package manager for package.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new("sudo");
@@ -128,7 +128,7 @@ impl Backend for Fedora {
         run_external_command(cmd)
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<()> {
+    fn make_dependency(&self, _: &Packages) -> Result<()> {
         panic!("Not supported by the package manager!")
     }
 }
