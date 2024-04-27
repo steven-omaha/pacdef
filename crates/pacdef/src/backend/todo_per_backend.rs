@@ -2,8 +2,7 @@ use std::fmt::Write;
 
 use anyhow::{Context, Result};
 
-use super::{AnyBackend, Backend};
-use crate::Package;
+use crate::prelude::*;
 
 /// A vector of tuples containing a Backends and a vector of unmanaged packages
 /// for that backend.
@@ -11,17 +10,17 @@ use crate::Package;
 /// This struct is used to store a list of unmanaged packages or missing packages
 /// for all backends.
 #[derive(Debug)]
-pub struct ToDoPerBackend(Vec<(AnyBackend, Vec<Package>)>);
+pub struct ToDoPerBackend(Vec<(AnyBackend, Packages)>);
 impl ToDoPerBackend {
     pub fn new() -> Self {
         Self(vec![])
     }
 
-    pub fn push(&mut self, item: (AnyBackend, Vec<Package>)) {
+    pub fn push(&mut self, item: (AnyBackend, Packages)) {
         self.0.push(item);
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &(AnyBackend, Vec<Package>)> {
+    pub fn iter(&self) -> impl Iterator<Item = &(AnyBackend, Packages)> {
         self.0.iter()
     }
 
@@ -37,7 +36,7 @@ impl ToDoPerBackend {
 
             backend
                 .install_packages(packages, noconfirm)
-                .with_context(|| format!("installing packages for {}", backend.get_section()))?;
+                .with_context(|| format!("installing packages for {backend}"))?;
         }
         Ok(())
     }
@@ -50,7 +49,7 @@ impl ToDoPerBackend {
 
             backend
                 .remove_packages(packages, noconfirm)
-                .with_context(|| format!("removing packages for {}", backend.get_section()))?;
+                .with_context(|| format!("removing packages for {backend}"))?;
         }
         Ok(())
     }
@@ -65,7 +64,7 @@ impl ToDoPerBackend {
 
             let mut segment = String::new();
 
-            segment.write_str(&format!("[{}]", backend.get_section()))?;
+            segment.write_str(&format!("[{backend}]"))?;
             for package in packages {
                 segment.write_str(&format!("\n{package}"))?;
             }
@@ -95,7 +94,7 @@ impl Default for ToDoPerBackend {
 }
 
 impl IntoIterator for ToDoPerBackend {
-    type Item = (AnyBackend, Vec<Package>);
+    type Item = (AnyBackend, Packages);
 
     type IntoIter = std::vec::IntoIter<Self::Item>;
 

@@ -5,52 +5,37 @@ use alpm::Alpm;
 use alpm::PackageReason::Explicit;
 use anyhow::{Context, Result};
 
-use crate::backend::backend_trait::{Backend, Switches, Text};
-use crate::backend::macros::impl_backend_constants;
 use crate::cmd::run_external_command;
-use crate::Package;
+use crate::prelude::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Arch {
     pub binary: String,
     pub aur_rm_args: Vec<String>,
-    pub packages: HashSet<Package>,
 }
 impl Arch {
-    pub fn new() -> Self {
+    pub fn new(config: &Config) -> Self {
         Self {
-            binary: BINARY.to_string(),
-            aur_rm_args: vec![],
-            packages: HashSet::new(),
+            binary: config.aur_helper.clone(),
+            aur_rm_args: config.aur_rm_args.clone(),
         }
     }
 }
-impl Default for Arch {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-const BINARY: Text = "pacman";
-const SECTION: Text = "arch";
-
-const SWITCHES_INFO: Switches = &["--query", "--info"];
-const SWITCHES_INSTALL: Switches = &["--sync"];
-const SWITCHES_MAKE_DEPENDENCY: Switches = &["--database", "--asdeps"];
-const SWITCHES_NOCONFIRM: Switches = &["--noconfirm"];
-const SWITCHES_REMOVE: Switches = &["--remove", "--recursive"];
-
-const SUPPORTS_AS_DEPENDENCY: bool = true;
 
 impl Backend for Arch {
-    impl_backend_constants!();
-
-    fn get_binary(&self) -> Text {
-        let r#box = self.binary.clone().into_boxed_str();
-        Box::leak(r#box)
+    fn backend_info(&self) -> BackendInfo {
+        BackendInfo {
+            binary: self.binary.clone(),
+            section: "arch",
+            switches_info: &["--query", "--info"],
+            switches_install: &["--sync"],
+            switches_noconfirm: &["--noconfirm"],
+            switches_remove: &["--remove", "--recursive"],
+            switches_make_dependency: Some(&["--database", "--asdeps"]),
+        }
     }
 
-    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_all_installed_packages(&self) -> Result<Packages> {
         let alpm_packages = get_all_installed_packages_from_alpm()
             .context("getting all installed packages from alpm")?;
 
@@ -58,7 +43,7 @@ impl Backend for Arch {
         Ok(result)
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
         let alpm_packages = get_explicitly_installed_packages_from_alpm()
             .context("getting all installed packages from alpm")?;
         let result = convert_to_pacdef_packages(alpm_packages);
@@ -66,13 +51,15 @@ impl Backend for Arch {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+        let backend_info = self.backend_info();
+
         let mut cmd = Command::new(&self.binary);
 
-        cmd.args(self.get_switches_install());
+        cmd.args(backend_info.switches_install);
 
         if noconfirm {
-            cmd.args(self.get_switches_noconfirm());
+            cmd.args(backend_info.switches_noconfirm);
         }
 
         for p in packages {
@@ -83,14 +70,16 @@ impl Backend for Arch {
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+        let backend_info = self.backend_info();
+
         let mut cmd = Command::new(&self.binary);
 
-        cmd.args(self.get_switches_remove());
+        cmd.args(backend_info.switches_remove);
         cmd.args(&self.aur_rm_args);
 
         if noconfirm {
-            cmd.args(self.get_switches_noconfirm());
+            cmd.args(backend_info.switches_noconfirm);
         }
 
         for p in packages {
@@ -124,7 +113,7 @@ fn get_explicitly_installed_packages_from_alpm() -> Result<HashSet<String>> {
     Ok(result)
 }
 
-fn convert_to_pacdef_packages(packages: HashSet<String>) -> HashSet<Package> {
+fn convert_to_pacdef_packages(packages: HashSet<String>) -> Packages {
     packages.into_iter().map(Package::from).collect()
 }
 

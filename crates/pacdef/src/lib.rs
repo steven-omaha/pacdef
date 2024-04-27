@@ -35,10 +35,9 @@ mod review;
 mod search;
 mod ui;
 
+#[allow(unused_imports)]
+mod prelude;
+
 pub mod path;
 
-pub use crate::config::Config;
-pub use crate::errors::Error;
-pub use crate::grouping::Group;
-pub use crate::grouping::Groups;
-pub use crate::grouping::Package;
+pub use prelude::{Config, Error, Group};

@@ -5,6 +5,8 @@ use std::path::Path;
 use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 
+use crate::prelude::*;
+
 // Update the master README if fields change.
 /// Config for the program, as listed in `$XDG_CONFIG_HOME/pacdef/pacdef.toml`.
 #[derive(Debug, Serialize, Deserialize)]
@@ -55,7 +57,7 @@ impl Config {
             Ok(content) => content,
             Err(e) => {
                 if e.kind() == ErrorKind::NotFound {
-                    bail!(crate::Error::ConfigFileNotFound)
+                    bail!(Error::ConfigFileNotFound)
                 }
                 bail!("unexpected error occurred: {e:?}");
             }

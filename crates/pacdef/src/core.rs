@@ -8,23 +8,14 @@ use std::process::Command;
 use anyhow::{bail, ensure, Context, Result};
 use const_format::formatcp;
 
-use crate::backend::backend_trait::Backend;
-use crate::backend::todo_per_backend::ToDoPerBackend;
-use crate::backend::AnyBackend;
-use crate::cli::{
-    CleanPackageAction, EditGroupAction, ExportGroupAction, GroupAction, GroupArguments,
-    ImportGroupAction, ListGroupAction, MainArguments, MainSubcommand, NewGroupAction,
-    PackageAction, PackageArguments, RemoveGroupAction, ReviewPackageAction, SearchPackageAction,
-    ShowGroupAction, SyncPackageAction, UnmanagedPackageAction, VersionArguments,
-};
 use crate::cmd::{run_edit_command, run_external_command};
 use crate::env::{get_editor, should_print_debug_info};
+use crate::grouping::group::groups_to_backend_packages;
 use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
+use crate::prelude::*;
 use crate::review::review;
 use crate::search::search_packages;
 use crate::ui::get_user_confirmation;
-use crate::Group;
-use crate::{Config, Error, Groups};
 
 impl MainArguments {
     /// Run the action that was provided by the user as first argument.
@@ -39,7 +30,7 @@ impl MainArguments {
         match self.subcommand {
             MainSubcommand::Group(group) => group.run(groups),
             MainSubcommand::Package(package) => package.run(groups, config),
-            MainSubcommand::Version(version) => version.run(),
+            MainSubcommand::Version(version) => version.run(config),
         }
     }
 }
@@ -47,8 +38,8 @@ impl MainArguments {
 impl VersionArguments {
     /// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
     /// Otherwise return `pacdef, <version>`.
-    fn run(self) -> Result<()> {
-        let backends = get_included_backends();
+    fn run(self, config: &Config) -> Result<()> {
+        let backends = get_included_backends(config);
         let mut result = format!("pacdef, version: {}\n", get_version_string());
         result.push_str("supported backends:");
         for b in backends {
@@ -221,7 +212,7 @@ impl NewGroupAction {
         for new_group in &self.new_groups {
             ensure!(
                 new_group != "." && new_group != "..",
-                crate::Error::InvalidGroupName(new_group.clone())
+                Error::InvalidGroupName(new_group.clone())
             );
         }
 
@@ -236,10 +227,7 @@ impl NewGroupAction {
             .collect();
 
         for file in &paths {
-            ensure!(
-                !file.exists(),
-                crate::Error::GroupAlreadyExists(file.clone())
-            );
+            ensure!(!file.exists(), Error::GroupAlreadyExists(file.clone()));
         }
 
         for file in &paths {
@@ -284,10 +272,7 @@ impl ShowGroupAction {
         }
 
         // return an error if any arg was not found
-        ensure!(
-            errors.is_empty(),
-            crate::Error::MultipleGroupsNotFound(errors)
-        );
+        ensure!(errors.is_empty(), Error::MultipleGroupsNotFound(errors));
 
         let show_more_than_one_group = self.show_groups.len() > 1;
 
@@ -398,48 +383,36 @@ impl UnmanagedPackageAction {
 }
 
 fn get_missing_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
+    let backend_packages = groups_to_backend_packages(groups, config)?;
+
     let mut to_install = ToDoPerBackend::new();
 
-    for mut backend in AnyBackend::iter() {
+    for (any_backend, packages) in &backend_packages {
+        let backend_info = any_backend.backend_info();
+
         if config
             .disabled_backends
-            .contains(&backend.get_section().to_string())
+            .contains(&backend_info.section.to_string())
         {
             continue;
         }
 
-        if !binary_in_path(backend.get_binary())? {
+        if !binary_in_path(&backend_info.binary)? {
             continue;
         }
 
-        overwrite_values_from_config(&mut backend, config);
-        backend.load(groups);
+        let managed_backend = ManagedBackend {
+            packages: packages.clone(),
+            any_backend: any_backend.clone(),
+        };
 
-        match backend.get_missing_packages_sorted() {
-            Ok(diff) => to_install.push((backend, diff)),
-            Err(error) => show_backend_query_error(&error, &backend),
+        match managed_backend.get_missing_packages_sorted() {
+            Ok(diff) => to_install.push((any_backend.clone(), diff)),
+            Err(error) => show_backend_query_error(&error, any_backend),
         };
     }
 
     Ok(to_install)
-}
-
-fn overwrite_values_from_config(backend: &mut AnyBackend, config: &Config) {
-    #[cfg(feature = "arch")]
-    {
-        if let AnyBackend::Arch(arch) = backend {
-            arch.binary.clone_from(&config.aur_helper);
-            arch.aur_rm_args.clone_from(&config.aur_rm_args);
-        }
-    }
-
-    if let AnyBackend::Flatpak(flatpak) = backend {
-        flatpak.systemwide = config.flatpak_systemwide;
-    }
-
-    if let AnyBackend::Python(python) = backend {
-        python.binary.clone_from(&config.pip_binary);
-    }
 }
 
 /// Get a list of unmanaged packages per backend.
@@ -450,29 +423,35 @@ fn overwrite_values_from_config(backend: &mut AnyBackend, config: &Config) {
 ///
 /// This function will propagate errors from the individual backends.
 fn get_unmanaged_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
-    let mut result = ToDoPerBackend::new();
+    let backend_packages = groups_to_backend_packages(groups, config)?;
 
-    for mut backend in AnyBackend::iter() {
+    let mut todo_unmanaged = ToDoPerBackend::new();
+
+    for (any_backend, packages) in &backend_packages {
+        let backend_info = any_backend.backend_info();
         if config
             .disabled_backends
-            .contains(&backend.get_section().to_string())
+            .contains(&backend_info.section.to_string())
         {
             continue;
         }
 
-        if !binary_in_path(backend.get_binary())? {
+        if !binary_in_path(&backend_info.binary)? {
             continue;
         }
 
-        overwrite_values_from_config(&mut backend, config);
-        backend.load(groups);
+        let managed_backend = ManagedBackend {
+            packages: packages.clone(),
+            any_backend: any_backend.clone(),
+        };
 
-        match backend.get_unmanaged_packages_sorted() {
-            Ok(unmanaged) => result.push((backend, unmanaged)),
-            Err(error) => show_backend_query_error(&error, &backend),
+        match managed_backend.get_unmanaged_packages_sorted() {
+            Ok(unmanaged) => todo_unmanaged.push((any_backend.clone(), unmanaged)),
+            Err(error) => show_backend_query_error(&error, any_backend),
         };
     }
-    Ok(result)
+
+    Ok(todo_unmanaged)
 }
 
 /// Create the parent directory of the `path` if that directory does not exist.
@@ -553,14 +532,13 @@ fn find_groups_by_name<'a>(names: &[String], groups: &'a Groups) -> Result<Vec<&
 /// Show the error chain for an error that has occurred when a backend was queried
 /// if the `RUST_BACKTRACE` env variable is set to `1` or `full`.
 fn show_backend_query_error(error: &anyhow::Error, backend: &AnyBackend) {
-    let section = backend.get_section();
     if should_print_debug_info() {
         log::warn!(
-            "skipping backend '{section}': {}",
+            "skipping backend '{backend}': {}",
             error.chain().map(|x| x.to_string()).collect::<String>()
         );
     } else {
-        log::warn!("skipping backend '{section}': {error}");
+        log::warn!("skipping backend '{backend}': {error}");
     }
 }
 
@@ -578,10 +556,10 @@ pub const fn get_version_string() -> &'static str {
 }
 
 /// Get a vector with the names of all backends, sorted alphabetically.
-fn get_included_backends() -> Vec<&'static str> {
+fn get_included_backends(config: &Config) -> Vec<&'static str> {
     let mut result = vec![];
-    for backend in AnyBackend::iter() {
-        result.push(backend.get_section());
+    for backend in AnyBackend::all(config) {
+        result.push(backend.backend_info().section);
     }
     result.sort_unstable();
     result

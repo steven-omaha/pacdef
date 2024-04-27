@@ -1,13 +1,9 @@
 use std::iter::Peekable;
 use std::vec::IntoIter;
 
+use crate::prelude::*;
 use anyhow::{bail, Result};
 use regex::Regex;
-
-use crate::{
-    grouping::{Group, Package, Section},
-    Groups,
-};
 
 /// Find all packages in all groups whose name match the regex from the
 /// command-line arguments. Print the name of the packages per group and

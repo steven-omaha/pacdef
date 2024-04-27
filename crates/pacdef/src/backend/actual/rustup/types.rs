@@ -1,6 +1,6 @@
 use anyhow::{bail, Context, Result};
 
-use crate::{backend::backend_trait::Switches, Package};
+use crate::prelude::*;
 
 #[derive(Debug)]
 pub enum Repotype {
@@ -95,7 +95,7 @@ impl RustupPackage {
         (toolchains, components)
     }
 
-    pub fn from_pacdef_packages(packages: &[Package]) -> Result<Vec<Self>> {
+    pub fn from_pacdef_packages(packages: &Packages) -> Result<Vec<Self>> {
         let mut result = vec![];
 
         for package in packages {

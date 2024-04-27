@@ -1,12 +1,9 @@
 mod helpers;
 mod types;
 
-use crate::backend::backend_trait::{Backend, Switches, Text};
-use crate::backend::macros::impl_backend_constants;
 use crate::cmd::run_external_command;
-use crate::Package;
+use crate::prelude::*;
 use anyhow::{bail, Context, Result};
-use std::collections::HashSet;
 use std::process::Command;
 
 use self::helpers::{
@@ -14,15 +11,11 @@ use self::helpers::{
 };
 use self::types::{Repotype, RustupPackage};
 
-#[derive(Debug, Clone)]
-pub struct Rustup {
-    pub packages: HashSet<Package>,
-}
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Rustup {}
 impl Rustup {
     pub fn new() -> Self {
-        Self {
-            packages: HashSet::new(),
-        }
+        Self {}
     }
 }
 impl Default for Rustup {
@@ -31,38 +24,37 @@ impl Default for Rustup {
     }
 }
 
-const BINARY: Text = "rustup";
-const SECTION: Text = "rustup";
-
-const SWITCHES_INSTALL: Switches = &["component", "add"];
-const SWITCHES_INFO: Switches = &["component", "list", "--installed"];
-const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
-const SWITCHES_NOCONFIRM: Switches = &[];
-const SWITCHES_REMOVE: Switches = &["component", "remove"];
-
-const SUPPORTS_AS_DEPENDENCY: bool = false;
-
 impl Backend for Rustup {
-    impl_backend_constants!();
+    fn backend_info(&self) -> BackendInfo {
+        BackendInfo {
+            binary: "rustup".to_string(),
+            section: "rustup",
+            switches_install: &["component", "add"],
+            switches_info: &["component", "list", "--installed"],
+            switches_noconfirm: &[],
+            switches_remove: &["component", "remove"],
+            switches_make_dependency: None,
+        }
+    }
 
-    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_all_installed_packages(&self) -> Result<Packages> {
         let toolchains_vec = self
             .run_toolchain_command(Repotype::Toolchain.get_info_switches())
             .context("Getting installed toolchains")?;
 
-        let toolchains: HashSet<Package> = toolchains_vec
+        let toolchains: Packages = toolchains_vec
             .iter()
             .map(|name| ["toolchain", name].join("/").into())
             .collect();
 
-        let components: HashSet<Package> = self
+        let components: Packages = self
             .run_component_command(Repotype::Component.get_info_switches(), &toolchains_vec)
             .context("Getting installed components")?
             .iter()
             .map(|name| ["component", name].join("/").into())
             .collect();
 
-        let mut packages = HashSet::new();
+        let mut packages = Packages::new();
 
         packages.extend(toolchains);
         packages.extend(components);
@@ -70,16 +62,16 @@ impl Backend for Rustup {
         Ok(packages)
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
         self.get_all_installed_packages()
             .context("Getting all installed packages")
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<()> {
-        panic!("Not supported by {}", self.get_binary())
+    fn make_dependency(&self, _: &Packages) -> Result<()> {
+        panic!("Not supported by {}", self.backend_info().binary)
     }
 
-    fn install_packages(&self, packages: &[Package], _: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, _: bool) -> Result<()> {
         let packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
@@ -91,7 +83,7 @@ impl Backend for Rustup {
         Ok(())
     }
 
-    fn remove_packages(&self, packages: &[Package], _: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, _: bool) -> Result<()> {
         let rustup_packages = RustupPackage::from_pacdef_packages(packages)?;
 
         let (toolchains, components) =
@@ -110,7 +102,7 @@ impl Rustup {
         let mut val = Vec::new();
 
         for toolchain in toolchains {
-            let mut cmd = Command::new(self.get_binary());
+            let mut cmd = Command::new(self.backend_info().binary);
             cmd.args(args).arg(toolchain);
 
             let output = String::from_utf8(cmd.output()?.stdout)?;
@@ -124,7 +116,7 @@ impl Rustup {
     }
 
     fn run_toolchain_command(&self, args: &[&str]) -> Result<Vec<String>> {
-        let mut cmd = Command::new(self.get_binary());
+        let mut cmd = Command::new(self.backend_info().binary);
         cmd.args(args);
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
@@ -146,7 +138,7 @@ impl Rustup {
         if toolchains.is_empty() {
             return Ok(());
         }
-        let mut cmd = Command::new(self.get_binary());
+        let mut cmd = Command::new(self.backend_info().binary);
         cmd.args(Repotype::Toolchain.get_install_switches());
 
         for toolchain in toolchains {
@@ -166,7 +158,7 @@ impl Rustup {
         let components_by_toolchain = group_components_by_toolchains(components);
 
         for components_for_one_toolchain in components_by_toolchain {
-            let mut cmd = Command::new(self.get_binary());
+            let mut cmd = Command::new(self.backend_info().binary);
             cmd.args(Repotype::Component.get_install_switches());
 
             let the_toolchain = &components_for_one_toolchain
@@ -195,7 +187,7 @@ impl Rustup {
     fn remove_toolchains(&self, toolchains: Vec<RustupPackage>) -> Result<Vec<String>> {
         let mut removed_toolchains = vec![];
         if !toolchains.is_empty() {
-            let mut cmd = Command::new(self.get_binary());
+            let mut cmd = Command::new(self.backend_info().binary);
             cmd.args(Repotype::Toolchain.get_remove_switches());
 
             for toolchain_package in &toolchains {
@@ -216,7 +208,7 @@ impl Rustup {
         removed_toolchains: Vec<String>,
     ) -> Result<()> {
         for component_package in components {
-            let mut cmd = Command::new(self.get_binary());
+            let mut cmd = Command::new(self.backend_info().binary);
             cmd.args(Repotype::Component.get_remove_switches());
 
             if toolchain_of_component_was_already_removed(&removed_toolchains, &component_package) {

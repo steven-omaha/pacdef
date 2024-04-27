@@ -1,23 +1,18 @@
-use std::collections::HashSet;
 use std::process::Command;
 
 use anyhow::Result;
 
-use crate::backend::backend_trait::{Backend, Switches, Text};
-use crate::backend::macros::impl_backend_constants;
 use crate::cmd::run_external_command;
-use crate::Package;
+use crate::prelude::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Flatpak {
-    pub packages: HashSet<Package>,
     pub systemwide: bool,
 }
 impl Flatpak {
-    pub fn new() -> Self {
+    pub fn new(config: &Config) -> Self {
         Self {
-            packages: HashSet::new(),
-            systemwide: true,
+            systemwide: config.flatpak_systemwide,
         }
     }
 
@@ -29,8 +24,8 @@ impl Flatpak {
         }
     }
 
-    fn get_installed_packages(&self, include_implicit: bool) -> Result<HashSet<Package>> {
-        let mut cmd = Command::new(BINARY);
+    fn get_installed_packages(&self, include_implicit: bool) -> Result<Packages> {
+        let mut cmd = Command::new(self.backend_info().binary);
         cmd.args(["list", "--columns=application"]);
         if !include_implicit {
             cmd.arg("--app");
@@ -40,48 +35,41 @@ impl Flatpak {
         }
 
         let output = String::from_utf8(cmd.output()?.stdout)?;
-        Ok(output
-            .lines()
-            .map(Package::from)
-            .collect::<HashSet<Package>>())
+        Ok(output.lines().map(Package::from).collect::<Packages>())
     }
 }
-impl Default for Flatpak {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-const BINARY: Text = "flatpak";
-const SECTION: Text = "flatpak";
-
-const SWITCHES_INSTALL: Switches = &["install"];
-const SWITCHES_INFO: Switches = &["info"];
-const SWITCHES_MAKE_DEPENDENCY: Switches = &[];
-const SWITCHES_NOCONFIRM: Switches = &["--assumeyes"];
-const SWITCHES_REMOVE: Switches = &["uninstall"];
-
-const SUPPORTS_AS_DEPENDENCY: bool = false;
 
 impl Backend for Flatpak {
-    impl_backend_constants!();
+    fn backend_info(&self) -> BackendInfo {
+        BackendInfo {
+            binary: "flatpak".to_string(),
+            section: "flatpak",
+            switches_info: &["info"],
+            switches_install: &["install"],
+            switches_noconfirm: &["--assumeyes"],
+            switches_remove: &["uninstall"],
+            switches_make_dependency: None,
+        }
+    }
 
-    fn get_all_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_all_installed_packages(&self) -> Result<Packages> {
         self.get_installed_packages(true)
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<HashSet<Package>> {
+    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
         self.get_installed_packages(false)
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
-        let mut cmd = Command::new(self.get_binary());
-        cmd.args(self.get_switches_install());
+    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+        let backend_info = self.backend_info();
+
+        let mut cmd = Command::new(backend_info.binary);
+        cmd.args(backend_info.switches_install);
         cmd.args(self.get_switches_runtime());
 
         if noconfirm {
-            cmd.args(self.get_switches_noconfirm());
+            cmd.args(backend_info.switches_noconfirm);
         }
 
         for p in packages {
@@ -91,18 +79,20 @@ impl Backend for Flatpak {
         run_external_command(cmd)
     }
 
-    fn make_dependency(&self, _: &[Package]) -> Result<()> {
-        panic!("not supported by {}", BINARY)
+    fn make_dependency(&self, _: &Packages) -> Result<()> {
+        panic!("not supported by {}", self.backend_info().binary)
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &[Package], noconfirm: bool) -> Result<()> {
-        let mut cmd = Command::new(self.get_binary());
-        cmd.args(self.get_switches_remove());
+    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+        let backend_info = self.backend_info();
+
+        let mut cmd = Command::new(backend_info.binary);
+        cmd.args(backend_info.switches_remove);
         cmd.args(self.get_switches_runtime());
 
         if noconfirm {
-            cmd.args(self.get_switches_noconfirm());
+            cmd.args(backend_info.switches_noconfirm);
         }
 
         for p in packages {
@@ -114,8 +104,10 @@ impl Backend for Flatpak {
 
     /// Show information from package manager for package.
     fn show_package_info(&self, package: &Package) -> Result<()> {
-        let mut cmd = Command::new(self.get_binary());
-        cmd.args(self.get_switches_info());
+        let backend_info = self.backend_info();
+
+        let mut cmd = Command::new(backend_info.binary);
+        cmd.args(backend_info.switches_info);
         cmd.args(self.get_switches_runtime());
         cmd.arg(format!("{package}"));
 
