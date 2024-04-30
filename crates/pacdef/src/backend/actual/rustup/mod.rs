@@ -37,7 +37,7 @@ impl Backend for Rustup {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         let toolchains_vec = self
             .run_toolchain_command(Repotype::Toolchain.get_info_switches())
             .context("Getting installed toolchains")?;
@@ -63,7 +63,7 @@ impl Backend for Rustup {
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        self.get_all_installed_packages()
+        self.get_installed_packages()
             .context("Getting all installed packages")
     }
 

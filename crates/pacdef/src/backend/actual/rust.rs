@@ -33,7 +33,7 @@ impl Backend for Rust {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         let file = get_crates_file().context("getting path to crates file")?;
 
         let content = match read_to_string(file) {
@@ -51,7 +51,7 @@ impl Backend for Rust {
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        self.get_all_installed_packages()
+        self.get_installed_packages()
             .context("getting all installed packages")
     }
 

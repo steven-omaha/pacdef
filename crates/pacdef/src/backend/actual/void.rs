@@ -26,6 +26,12 @@ const QUERY_BINARY: Text = "xbps-query";
 const PKGDB_BINARY: Text = "xbps-pkgdb";
 
 impl Backend for Void {
+    type PackageId = String;
+    type RemoveOptions = ();
+    type InstallOptions = ();
+    typeQueryInfo = ;
+    
+
     fn backend_info(&self) -> BackendInfo {
         BackendInfo {
             binary: "xbps-install".to_string(),
@@ -38,7 +44,7 @@ impl Backend for Void {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         // Removes the package status and description from output
         let re_str_1 = r"^ii |^uu |^hr |^\?\? | .*";
         // Removes the package version from output

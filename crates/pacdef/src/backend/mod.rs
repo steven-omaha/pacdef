@@ -6,7 +6,7 @@ pub mod todo_per_backend;
 use std::fmt::Display;
 
 use crate::prelude::*;
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 /// A backend with its associated managed packages
 pub struct ManagedBackend {
@@ -41,7 +41,7 @@ impl ManagedBackend {
     pub fn get_missing_packages_sorted(&self) -> Result<Packages> {
         let installed = self
             .any_backend
-            .get_all_installed_packages()
+            .get_installed_packages()
             .context("could not get installed packages")?;
 
         let diff = self.packages.difference(&installed).cloned().collect();

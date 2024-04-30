@@ -52,7 +52,7 @@ impl Backend for Flatpak {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         self.get_installed_packages(true)
     }
 

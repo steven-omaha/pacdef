@@ -32,7 +32,7 @@ impl Backend for Debian {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         let cache = new_cache!()?;
         let sort = PackageSort::default().installed();
 

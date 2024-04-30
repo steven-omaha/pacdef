@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::fmt::{Display, Write};
 
-pub type Packages = BTreeSet<Package>;
+pub type Packages<T> = BTreeSet<T>;
 
 /// A struct to represent a single package, consisting of a `name`, and
 /// optionally a `repo`.

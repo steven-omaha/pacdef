@@ -53,7 +53,7 @@ impl Backend for Fedora {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         let mut cmd = Command::new(self.backend_info().binary);
         cmd.args(SWITCHES_FETCH_GLOBAL);
 

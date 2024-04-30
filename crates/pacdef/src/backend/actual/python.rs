@@ -60,7 +60,7 @@ impl Backend for Python {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         let mut cmd = Command::new(self.backend_info().binary);
         let output = run_pip_command(&mut cmd, self.get_switches_runtime())?;
         self.extract_packages(output)

@@ -1,15 +1,14 @@
 use std::collections::BTreeMap;
-use std::process::Command;
 
 use anyhow::Result;
 
-use crate::cmd::run_external_command;
 use crate::prelude::*;
 
 pub type Switches = &'static [&'static str];
 pub type Text = &'static str;
 
 /// A bundle of small of bits of info associated with a backend.
+/// todo specialize to each backend and remove from here
 pub struct BackendInfo {
     /// The binary name when calling the backend.
     pub binary: String,
@@ -33,50 +32,21 @@ pub struct BackendInfo {
 /// The trait of a struct that is used as a backend.
 #[enum_dispatch::enum_dispatch]
 pub trait Backend {
-    /// Return the [`BackendInfo`] associated with this backend.
-    fn backend_info(&self) -> BackendInfo;
+    type PackageId;
+    type InstallOptions;
+    type RemoveOptions;
+    type QueryInfo;
+    type Modification;
 
-    fn supports_as_dependency(&self) -> bool {
-        self.backend_info().switches_make_dependency.is_some()
-    }
-
-    /// Get all packages that are installed in the system.
+    /// Query all packages that are installed in the system.
     ///
     /// # Errors
     ///
     /// This function shall return an error if the installed packages cannot be
     /// determined.
-    fn get_all_installed_packages(&self) -> Result<Packages>;
-
-    /// Get all packages that were installed in the system explicitly.
-    ///
-    /// # Errors
-    ///
-    /// This function shall return an error if the explicitly installed packages
-    /// cannot be determined.
-    fn get_explicitly_installed_packages(&self) -> Result<Packages>;
-
-    /// Assign each of the packages to an individual group by editing the
-    /// group files.
-    ///
-    /// # Errors
-    ///
-    /// Returns an Error if any of the groups fails to save their given packages.
-    fn assign_group(&self, to_assign: Vec<(Package, Group)>) -> Result<()> {
-        let mut group_package_map: BTreeMap<Group, Packages> = BTreeMap::new();
-
-        for (package, group) in to_assign {
-            group_package_map.entry(group).or_default().insert(package);
-        }
-
-        let section_header = format!("[{}]", self.backend_info().section);
-
-        for (group, packages) in group_package_map {
-            group.save_packages(&section_header, &packages)?;
-        }
-
-        Ok(())
-    }
+    fn query_installed_packages(
+        config: &Config,
+    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
 
     /// Install the specified packages. If `noconfirm` is `true`, pass the corresponding
     /// switch to the package manager. Return the [`ExitStatus`] from the package manager.
@@ -85,83 +55,32 @@ pub trait Backend {
     ///
     /// This function will return an error if the package manager cannot be run or it
     /// returns an error.
-    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        noconfirm: bool,
+        config: &Config,
+    ) -> Result<()>;
 
-        let mut cmd = Command::new(self.backend_info().binary);
-        cmd.args(backend_info.switches_install);
-
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
-
-    /// Mark the packages as non-explicit / dependency using the underlying
-    /// package manager.
+    /// Modify the packages as specified by [`Self::PackageModification`].
     ///
-    /// # Panics
-    ///
-    /// This method shall panic when the backend does not support dependent packages.
+    /// This may not include installing or removing the package as [`Backend::install_packages()`]
+    /// and [`Backend::remove_packages()`] exist for this purpose.
     ///
     /// # Errors
     ///
-    /// Returns an error if the external command fails.
-    fn make_dependency(&self, packages: &Packages) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-
-        if let Some(switches_make_dependency) = backend_info.switches_make_dependency {
-            cmd.args(switches_make_dependency);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
+    /// Returns an error if the backend fails to modify the packages as required.
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        config: &Config,
+    ) -> Result<()>;
 
     /// Remove the specified packages.
     ///
     /// # Errors
     ///
     /// Returns an error if the external command fails.
-    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-        cmd.args(backend_info.switches_remove);
-
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
-
-    /// Show information from package manager for package.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the external command fails.
-    fn show_package_info(&self, package: &Package) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-        cmd.args(backend_info.switches_info);
-        cmd.arg(format!("{package}"));
-
-        run_external_command(cmd)
-    }
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        noconfirm: bool,
+    ) -> Result<()>;
 }

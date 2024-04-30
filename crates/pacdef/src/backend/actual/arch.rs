@@ -35,7 +35,7 @@ impl Backend for Arch {
         }
     }
 
-    fn get_all_installed_packages(&self) -> Result<Packages> {
+    fn get_installed_packages(&self) -> Result<Packages> {
         let alpm_packages = get_all_installed_packages_from_alpm()
             .context("getting all installed packages from alpm")?;
 
