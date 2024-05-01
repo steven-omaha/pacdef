@@ -7,16 +7,16 @@ use crate::backend::root::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Void;
+pub struct Xbps;
 
-pub struct VoidMakeDependency;
+pub struct XbpsMakeDependency;
 
-impl Backend for Void {
+impl Backend for Xbps {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
     type QueryInfo = ();
-    type Modification = VoidMakeDependency;
+    type Modification = XbpsMakeDependency;
 
     fn query_installed_packages(
         _: &Config,

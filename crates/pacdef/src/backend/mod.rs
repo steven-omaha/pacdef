@@ -56,13 +56,13 @@ pub enum AnyBackend {
     #[cfg(feature = "arch")]
     Arch(actual::arch::Arch),
     #[cfg(feature = "debian")]
-    Debian(actual::debian::Debian),
+    Debian(actual::apt::Debian),
     Flatpak(Flatpak),
     Fedora(Fedora),
     Python(Python),
     Rust(Rust),
     Rustup(Rustup),
-    Void(Void),
+    Void(Xbps),
 }
 impl AnyBackend {
     /// Returns an iterator of every variant of backend.
@@ -71,13 +71,13 @@ impl AnyBackend {
             #[cfg(feature = "arch")]
             Self::Arch(actual::arch::Arch::new(config)),
             #[cfg(feature = "debian")]
-            Self::Debian(actual::debian::Debian::new()),
+            Self::Debian(actual::apt::Debian::new()),
             Self::Flatpak(Flatpak::new(config)),
             Self::Fedora(Fedora::new()),
             Self::Python(Python::new(config)),
             Self::Rust(Rust::new()),
             Self::Rustup(Rustup::new()),
-            Self::Void(Void::new()),
+            Self::Void(Xbps::new()),
         ]
         .into_iter()
     }
@@ -87,13 +87,13 @@ impl AnyBackend {
             #[cfg(feature = "arch")]
             "arch" => Ok(Self::Arch(actual::arch::Arch::new(config))),
             #[cfg(feature = "debian")]
-            "debian" => Ok(Self::Debian(actual::debian::Debian::new())),
+            "debian" => Ok(Self::Debian(actual::apt::Debian::new())),
             "flatpak" => Ok(Self::Flatpak(Flatpak::new(config))),
             "fedora" => Ok(Self::Fedora(Fedora::new())),
             "python" => Ok(Self::Python(Python::new(config))),
             "rust" => Ok(Self::Rust(Rust::new())),
             "rustup" => Ok(Self::Rustup(Rustup::new())),
-            "void" => Ok(Self::Void(Void::new())),
+            "void" => Ok(Self::Void(Xbps::new())),
             _ => Err(anyhow::anyhow!(
                 "no matching backend for the section: {section}"
             )),

@@ -6,7 +6,7 @@ use crate::cmd::run_external_command;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Fedora;
+pub struct Dnf;
 
 /// These repositories are ignored when storing the packages
 /// as these are present by default on any sane fedora system
@@ -30,7 +30,7 @@ const SWITCHES_FETCH_GLOBAL: Switches = &[
     "%{from_repo}/%{name}",
 ];
 
-impl Backend for Fedora {
+impl Backend for Dnf {
     fn backend_info(&self) -> BackendInfo {
         BackendInfo {
             binary: "dnf".to_string(),

@@ -7,9 +7,9 @@ use crate::cmd::run_external_command;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Debian;
+pub struct Apt;
 
-impl Backend for Debian {
+impl Backend for Apt {
     fn backend_info(&self) -> BackendInfo {
         BackendInfo {
             binary: "apt".to_string(),

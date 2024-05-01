@@ -1,10 +1,11 @@
+#[cfg(feature = "debian")]
+pub mod apt;
 #[cfg(feature = "arch")]
 pub mod arch;
-#[cfg(feature = "debian")]
-pub mod debian;
-pub mod fedora;
+pub mod cargo;
+pub mod dnf;
 pub mod flatpak;
-pub mod python;
-pub mod rust;
+pub mod pip;
+pub mod pipx;
 pub mod rustup;
-pub mod void;
+pub mod xbps;

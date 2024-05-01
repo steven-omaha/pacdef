@@ -1,6 +1,7 @@
-use std::fs::read_to_string;
+use std::collections::BTreeSet;
 use std::io::ErrorKind::NotFound;
 use std::path::PathBuf;
+use std::{collections::BTreeMap, fs::read_to_string};
 
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
@@ -8,7 +9,54 @@ use serde_json::Value;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Rust;
+pub struct Cargo;
+
+impl Backend for Cargo {
+    type PackageId = String;
+    type RemoveOptions = ();
+    type InstallOptions = ();
+    type QueryInfo = ();
+    type Modification = ();
+
+    fn query_installed_packages(
+        config: &Config,
+    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        let file = get_crates_file().context("getting path to crates file")?;
+
+        let content = match read_to_string(file) {
+            Ok(string) => string,
+            Err(err) if err.kind() == NotFound => {
+                log::warn!("no crates file found for cargo. Assuming no crates installed yet.");
+                return Ok(BTreeMap::new());
+            }
+            Err(err) => bail!(err),
+        };
+
+        extract_packages(&json).context("extracting packages from crates file")
+    }
+
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+    }
+
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        config: &Config,
+    ) -> Result<()> {
+        unimplemented!()
+    }
+
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        todo!()
+    }
+}
 
 impl Backend for Rust {
     fn backend_info(&self) -> BackendInfo {
@@ -50,7 +98,9 @@ impl Backend for Rust {
     }
 }
 
-fn extract_packages(json: &Value) -> Result<Packages> {
+fn extract_packages(json: &Value) -> Result<BTreeSet<String>> {
+    let json: Value = serde_json::from_str(&content).context("parsing JSON from crates file")?;
+
     let result: Packages = json
         .get("installs")
         .context("get 'installs' field from json")?
