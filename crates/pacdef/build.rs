@@ -9,5 +9,5 @@ fn main() {
         _ => String::new(),
     };
 
-    println!("cargo:rustc-env=GIT_HASH={git_hash}");
+    println!("cargo::rustc-env=GIT_HASH={git_hash}");
 }
