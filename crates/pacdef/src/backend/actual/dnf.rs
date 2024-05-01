@@ -1,133 +1,115 @@
-use std::process::Command;
+use std::collections::BTreeMap;
 
 use anyhow::Result;
 
-use crate::cmd::run_external_command;
+use crate::backend::root::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Dnf;
 
-/// These repositories are ignored when storing the packages
-/// as these are present by default on any sane fedora system
-const DEFAULT_REPOS: [&str; 5] = ["koji", "fedora", "updates", "anaconda", "@"];
+pub struct DnfQueryInfo {
+    user: bool,
+}
 
-/// These switches are responsible for
-/// getting the packages explicitly installed by the user
-const SWITCHES_FETCH_USER: Switches = &[
-    "repoquery",
-    "--userinstalled",
-    "--queryformat",
-    "%{from_repo}/%{name}",
-];
-
-/// These switches are responsible for
-/// getting all the packages installed on the system
-const SWITCHES_FETCH_GLOBAL: Switches = &[
-    "repoquery",
-    "--installed",
-    "--queryformat",
-    "%{from_repo}/%{name}",
-];
+pub struct DnfInstallOptions {
+    repo: Option<String>,
+}
 
 impl Backend for Dnf {
-    fn backend_info(&self) -> BackendInfo {
-        BackendInfo {
-            binary: "dnf".to_string(),
-            section: "fedora",
-            switches_info: &["info"],
-            switches_install: &["install"],
-            switches_no_confirm: &["--assumeyes"],
-            switches_remove: &["remove"],
-            switches_make_dependency: None,
-        }
+    type PackageId = String;
+    type RemoveOptions = ();
+    type InstallOptions = DnfInstallOptions;
+    type QueryInfo = DnfQueryInfo;
+    type Modification = ();
+
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        let system_packages = run_args_for_stdout(
+            [
+                "dnf",
+                "repoquery",
+                "--installed",
+                "--queryformat",
+                "%{from_repo}/%{name}",
+            ]
+            .into_iter(),
+        )?;
+        let system_packages = system_packages.lines().map(parse_package);
+
+        let user_packages = run_args_for_stdout(
+            [
+                "dnf",
+                "repoquery",
+                "--userinstalled",
+                "--queryformat",
+                "%{from_repo}/%{name}",
+            ]
+            .into_iter(),
+        )?;
+        let user_packages = user_packages.lines().map(parse_package);
+
+        Ok(system_packages
+            .map(|x| (x, DnfQueryInfo { user: false }))
+            .chain(user_packages.map(|x| (x, DnfQueryInfo { user: true })))
+            .collect())
     }
 
-    fn get_installed_packages(&self) -> Result<Packages> {
-        let mut cmd = Command::new(self.backend_info().binary);
-        cmd.args(SWITCHES_FETCH_GLOBAL);
-
-        let output = String::from_utf8(cmd.output()?.stdout)?;
-        let packages = output.lines().map(create_package).collect();
-
-        Ok(packages)
-    }
-
-    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        let mut cmd = Command::new(self.backend_info().binary);
-        cmd.args(SWITCHES_FETCH_USER);
-
-        let output = String::from_utf8(cmd.output()?.stdout)?;
-        let packages = output.lines().map(create_package).collect();
-
-        Ok(packages)
-    }
-
-    /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new("sudo");
-        cmd.arg(backend_info.binary);
-        cmd.args(backend_info.switches_install);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(&p.name);
-            if let Some(repo) = p.repo.as_ref() {
-                cmd.args(["--repo", repo]);
-            }
-        }
-
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        _: &Config,
+    ) -> Result<()> {
         // add these two repositories as these are needed for many dependencies
-        cmd.args(["--repo", "updates"]);
-        cmd.args(["--repo", "fedora"]);
-
-        run_external_command(cmd)
+        run_args(
+            ["dnf", "install", "--repo", "updates", "--repo", "fedora"]
+                .into_iter()
+                .chain(Some("--assumeyes").filter(|_| no_confirm))
+                .chain(
+                    packages
+                        .iter()
+                        .flat_map(|(package_id, options)| match &options.repo {
+                            Some(repo) => vec![package_id, "--repo", repo.as_str()],
+                            None => vec![package_id.as_str()],
+                        }),
+                ),
+        )
     }
 
-    /// Show information from package manager for package.
-    fn remove_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new("sudo");
-        cmd.arg(backend_info.binary);
-        cmd.args(backend_info.switches_remove);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(&p.name);
-        }
-
-        run_external_command(cmd)
+    fn modify_packages(
+        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &Config,
+    ) -> Result<()> {
+        unimplemented!()
     }
 
-    fn show_package_info(&self, package: &Package) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-        cmd.args(backend_info.switches_info);
-        cmd.arg(&package.name);
-
-        run_external_command(cmd)
-    }
-
-    fn make_dependency(&self, _: &Packages) -> Result<()> {
-        panic!("Not supported by the package manager!")
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        _: &Config,
+    ) -> Result<()> {
+        run_args(
+            ["dnf", "remove"]
+                .into_iter()
+                .chain(Some("--assumeyes").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 }
 
-fn create_package(package: &str) -> Package {
-    if DEFAULT_REPOS.iter().any(|repo| package.contains(repo)) && !package.contains("copr") {
-        let package = package.split('/').nth(1).expect("Cannot be empty!");
-        package.into()
+fn parse_package(package: &str) -> String {
+    // These repositories are ignored when storing the packages
+    // as these are present by default on any sane fedora system
+    if ["koji", "fedora", "updates", "anaconda", "@"]
+        .iter()
+        .any(|repo| package.contains(repo))
+        && !package.contains("copr")
+    {
+        package
+            .split('/')
+            .nth(1)
+            .expect("Cannot be empty!")
+            .to_string()
     } else {
-        package.into()
+        package.to_string()
     }
 }
