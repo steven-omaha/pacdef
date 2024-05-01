@@ -53,9 +53,7 @@ impl ManagedBackend {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[enum_dispatch::enum_dispatch(Backend)]
 pub enum AnyBackend {
-    #[cfg(feature = "arch")]
     Arch(actual::arch::Arch),
-    #[cfg(feature = "debian")]
     Debian(actual::apt::Debian),
     Flatpak(Flatpak),
     Fedora(Fedora),
@@ -68,9 +66,7 @@ impl AnyBackend {
     /// Returns an iterator of every variant of backend.
     pub fn all(config: &Config) -> impl Iterator<Item = Self> {
         vec![
-            #[cfg(feature = "arch")]
             Self::Arch(actual::arch::Arch::new(config)),
-            #[cfg(feature = "debian")]
             Self::Debian(actual::apt::Debian::new()),
             Self::Flatpak(Flatpak::new(config)),
             Self::Fedora(Fedora::new()),
@@ -84,9 +80,7 @@ impl AnyBackend {
 
     pub fn from_section(section: &str, config: &Config) -> Result<Self> {
         match section {
-            #[cfg(feature = "arch")]
             "arch" => Ok(Self::Arch(actual::arch::Arch::new(config))),
-            #[cfg(feature = "debian")]
             "debian" => Ok(Self::Debian(actual::apt::Debian::new())),
             "flatpak" => Ok(Self::Flatpak(Flatpak::new(config))),
             "fedora" => Ok(Self::Fedora(Fedora::new())),

@@ -1,6 +1,4 @@
-#[cfg(feature = "debian")]
 pub mod apt;
-#[cfg(feature = "arch")]
 pub mod arch;
 pub mod cargo;
 pub mod dnf;

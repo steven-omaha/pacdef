@@ -1,6 +1,4 @@
-#[cfg(feature = "arch")]
 pub use crate::backend::actual::arch::Arch;
-#[cfg(feature = "debian")]
 pub use crate::backend::actual::apt::Debian;
 pub use crate::backend::actual::{
     dnf::Fedora, flatpak::Flatpak, python::Python, cargo::Rust, rustup::Rustup, xbps::Xbps,

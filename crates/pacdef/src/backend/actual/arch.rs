@@ -1,111 +1,73 @@
-use std::collections::HashSet;
-use std::process::Command;
-
-use alpm::Alpm;
-use alpm::PackageReason::Explicit;
+use alpm::{Alpm, PackageReason};
 use anyhow::{Context, Result};
+use std::collections::BTreeMap;
 
-use crate::cmd::run_external_command;
+use crate::backend::root::run_args;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Arch;
 
+pub struct ArchQueryInfo {
+    reason: PackageReason,
+}
+
+pub struct ArchMakeImplicit;
+
 impl Backend for Arch {
-    fn backend_info(&self) -> BackendInfo {
-        BackendInfo {
-            binary: self.binary.clone(),
-            section: "arch",
-            switches_info: &["--query", "--info"],
-            switches_install: &["--sync"],
-            switches_no_confirm: &["--no_confirm"],
-            switches_remove: &["--remove", "--recursive"],
-            switches_make_dependency: Some(&["--database", "--asdeps"]),
-        }
+    type PackageId = String;
+    type RemoveOptions = ();
+    type InstallOptions = ();
+    type QueryInfo = ArchQueryInfo;
+    type Modification = ArchMakeImplicit;
+
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        let alpm = Alpm::new("/", "/var/lib/pacman")
+            .context("connecting to DB using expected default values")?;
+
+        Ok(alpm
+            .localdb()
+            .pkgs()
+            .iter()
+            .map(|x| (x.name().to_string(), ArchQueryInfo { reason: x.reason() }))
+            .collect())
     }
 
-    fn get_installed_packages(&self) -> Result<Packages> {
-        let alpm_packages = get_all_installed_packages_from_alpm()
-            .context("getting all installed packages from alpm")?;
-
-        let result = convert_to_pacdef_packages(alpm_packages);
-        Ok(result)
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        run_args(
+            [config.aur_helper.as_str(), "--sync"]
+                .into_iter()
+                .chain(Some("--no_confirm").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        let alpm_packages = get_explicitly_installed_packages_from_alpm()
-            .context("getting all installed packages from alpm")?;
-        let result = convert_to_pacdef_packages(alpm_packages);
-        Ok(result)
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        config: &Config,
+    ) -> Result<()> {
+        run_args(
+            [config.aur_helper.as_str(), "--database", "--asdeps"]
+                .into_iter()
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
-    /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(&self.binary);
-
-        cmd.args(backend_info.switches_install);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        run_args(
+            [config.aur_helper.as_str(), "--remove", "--recursive"]
+                .into_iter()
+                .chain(config.aur_rm_args.iter().map(String::as_str))
+                .chain(Some("--no_confirm").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
-
-    /// Remove the specified packages.
-    fn remove_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(&self.binary);
-
-        cmd.args(backend_info.switches_remove);
-        cmd.args(&self.aur_rm_args);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
-}
-
-fn get_all_installed_packages_from_alpm() -> Result<HashSet<String>> {
-    let db = get_db_handle().context("getting DB handle")?;
-    let result = db
-        .localdb()
-        .pkgs()
-        .iter()
-        .map(|p| p.name().to_string())
-        .collect();
-    Ok(result)
-}
-
-fn get_explicitly_installed_packages_from_alpm() -> Result<HashSet<String>> {
-    let db = get_db_handle().context("getting DB handle")?;
-    let result = db
-        .localdb()
-        .pkgs()
-        .iter()
-        .filter(|p| p.reason() == Explicit)
-        .map(|p| p.name().to_string())
-        .collect();
-    Ok(result)
-}
-
-fn convert_to_pacdef_packages(packages: HashSet<String>) -> Packages {
-    packages.into_iter().map(Package::from).collect()
-}
-
-fn get_db_handle() -> Result<Alpm> {
-    Alpm::new("/", "/var/lib/pacman").context("connecting to DB using expected default values")
 }
