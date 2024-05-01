@@ -13,32 +13,6 @@ use std::{collections::BTreeMap, process::Command};
 use crate::prelude::*;
 use anyhow::Result;
 
-fn run_args_for_stdout<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<String> {
-    let we_are_root = {
-        let uid = unsafe { libc::geteuid() };
-        uid == 0
-    };
-
-    let mut cmd = if we_are_root {
-        Command::new("sudo")
-    } else {
-        Command::new(args.next().unwrap())
-    };
-
-    cmd.args(args);
-
-    let output = cmd.output()?;
-
-    if output.status.success() {
-        Ok(String::from_utf8(output.stdout)?)
-    } else {
-        Err(anyhow::anyhow!("command failed"))
-    }
-}
-
-fn run_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<()> {
-    run_args_for_stdout(args).map(|_| ())
-}
 
 /// A trait to represent any package manager backend
 #[enum_dispatch::enum_dispatch]

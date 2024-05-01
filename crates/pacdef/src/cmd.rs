@@ -1,55 +1,30 @@
-use std::path::Path;
 use std::process::Command;
 
-use anyhow::{ensure, Context, Result};
+use anyhow::Result;
 
-use crate::env::{get_editor, should_print_debug_info};
+pub fn run_args_for_stdout<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<String> {
+    let we_are_root = {
+        let uid = unsafe { libc::geteuid() };
+        uid == 0
+    };
 
-/// Run the editor and pass the provided files as arguments. The workdir is set
-/// to the parent of the first file.
-pub fn run_edit_command<P>(files: &[P]) -> Result<()>
-where
-    P: AsRef<Path>,
-{
-    fn inner(files: &[&Path]) -> Result<()> {
-        let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
-        cmd.current_dir(
-            files[0]
-                .parent()
-                .context("getting parent dir of first file argument")?,
-        );
-        for f in files {
-            cmd.arg(f.to_string_lossy().to_string());
-        }
-        run_external_command(cmd)
+    let mut cmd = if we_are_root {
+        Command::new("sudo")
+    } else {
+        Command::new(args.next().unwrap())
+    };
+
+    cmd.args(args);
+
+    let output = cmd.output()?;
+
+    if output.status.success() {
+        Ok(String::from_utf8(output.stdout)?)
+    } else {
+        Err(anyhow::anyhow!("command failed"))
     }
-
-    let files: Vec<_> = files.iter().map(|p| p.as_ref()).collect();
-    inner(&files)
 }
 
-/// Run an external command. Use the anyhow framework to bubble up errors if they occur. Will print
-/// the full command to be executed when pacdef is in debug mode.
-///
-/// # Errors
-///
-/// This function will return an error if the command cannot be run or if it returns a non-zero
-/// exit status. In case of an error the full command will be part of the error message.
-pub fn run_external_command(mut cmd: Command) -> Result<()> {
-    if should_print_debug_info() {
-        println!("will run the following command");
-        dbg!(&cmd);
-    }
-
-    let exit_status = cmd
-        .status()
-        .with_context(|| format!("running command [{cmd:?}]"))?;
-
-    let success = exit_status.success();
-    ensure!(
-        success,
-        "command [{cmd:?}] returned non-zero exit status {success}"
-    );
-    Ok(())
+pub fn run_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<()> {
+    run_args_for_stdout(args).map(|_| ())
 }
-

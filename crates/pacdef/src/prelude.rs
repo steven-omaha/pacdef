@@ -29,10 +29,7 @@ pub use crate::cli::UnmanagedPackageAction;
 pub use crate::cli::VersionArguments;
 pub use crate::config::Config;
 pub use crate::errors::Error;
-pub use crate::groups::{
-    group::{Group, Groups},
-    section::{Section, Sections},
-};
+pub use crate::groups::{Group, Groups};
 pub use crate::path::binary_in_path;
 pub use crate::path::get_absolutized_file_paths;
 pub use crate::path::get_cargo_home;

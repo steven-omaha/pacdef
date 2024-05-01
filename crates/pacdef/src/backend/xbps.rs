@@ -3,7 +3,7 @@ use std::process::Command;
 use anyhow::Result;
 use regex::Regex;
 
-use crate::backend::{run_args, run_args_for_stdout};
+use crate::cmd::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

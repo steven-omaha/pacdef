@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use anyhow::Result;
 
-use crate::backend::{run_args, run_args_for_stdout};
+use crate::cmd::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

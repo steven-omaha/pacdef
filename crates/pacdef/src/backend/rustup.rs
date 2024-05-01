@@ -1,5 +1,5 @@
-use crate::backend::run_args;
-use crate::backend::run_args_for_stdout;
+use crate::cmd::run_args;
+use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
 use anyhow::Result;
 use std::collections::BTreeMap;
@@ -48,7 +48,7 @@ impl Backend for Rustup {
 
             for component in components_stdpout.lines() {
                 packages.insert(
-                    RustupPackageId::Component(component.to_string(), toolchain),
+                    RustupPackageId::Component(component.to_string(), toolchain.to_string()),
                     (),
                 );
             }

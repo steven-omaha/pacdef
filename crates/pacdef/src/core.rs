@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env::current_dir;
 use std::fs::{copy, create_dir_all, remove_file, rename, File};
 use std::os::unix::fs::symlink;
@@ -8,9 +7,8 @@ use std::process::Command;
 use anyhow::{bail, ensure, Context, Result};
 use const_format::formatcp;
 
-use crate::cmd::{run_edit_command, run_external_command};
+use crate::cmd::run_args;
 use crate::env::{get_editor, should_print_debug_info};
-use crate::grouping::group::groups_to_backend_packages;
 use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
 use crate::prelude::*;
 use crate::review::review;
@@ -69,24 +67,28 @@ impl GroupArguments {
 
 impl EditGroupAction {
     fn run(self, groups: &Groups) -> Result<()> {
-        let group_files: Vec<_> = find_groups_by_name(&self.edit_groups, groups)
-            .context("getting group files for args")?
-            .into_iter()
-            .map(|g| g.path.as_path())
-            .collect();
+        let erroneous_group_names = self
+            .edit_groups
+            .iter()
+            .filter(|x| !groups.contains_key(*x))
+            .collect::<Vec<_>>();
 
-        let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
-        cmd.current_dir(
-            group_files[0]
-                .parent()
-                .context("getting parent dir of first file argument")?,
-        );
-        for group_file in group_files {
-            cmd.arg(group_file.to_string_lossy().to_string());
+        if erroneous_group_names.is_empty() {
+            let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
+            cmd.current_dir(
+                group_files[0]
+                    .parent()
+                    .context("getting parent dir of first file argument")?,
+            );
+            for group_file in group_files {
+                cmd.arg(group_file.to_string_lossy().to_string());
+            }
+            run_external_command(cmd)?;
+
+            Ok(())
+        } else {
+            return Error::MultipleGroupsNotFound(erroneous_group_names);
         }
-        run_external_command(cmd)?;
-
-        Ok(())
     }
 }
 
@@ -235,7 +237,28 @@ impl NewGroupAction {
         }
 
         if self.edit {
-            run_edit_command(&paths).context("running editor")?;
+            /// Run the editor and pass the provided files as arguments. The workdir is set
+            /// to the parent of the first file.
+            pub fn run_edit_command<P>(files: &[P]) -> Result<()>
+            where
+                P: AsRef<Path>,
+            {
+                fn inner(files: &[&Path]) -> Result<()> {
+                    let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
+                    cmd.current_dir(
+                        files[0]
+                            .parent()
+                            .context("getting parent dir of first file argument")?,
+                    );
+                    for f in files {
+                        cmd.arg(f.to_string_lossy().to_string());
+                    }
+                    run_external_command(cmd)
+                }
+
+                let files: Vec<_> = files.iter().map(|p| p.as_ref()).collect();
+                inner(&files)
+            }
         }
 
         Ok(())
@@ -503,30 +526,6 @@ where
         }
     };
     Ok(())
-}
-
-/// For the provided names, get the group with the same name.
-///
-/// # Errors
-///
-/// This function will return an error if any of the file names do not match one
-/// of group names.
-fn find_groups_by_name<'a>(names: &[String], groups: &'a Groups) -> Result<Vec<&'a Group>> {
-    let name_group_map: HashMap<&str, &Group> =
-        groups.iter().map(|g| (g.name.as_str(), g)).collect();
-
-    let mut result = Vec::new();
-
-    for file in names {
-        match name_group_map.get(file.as_str()) {
-            Some(group) => {
-                result.push(*group);
-            }
-            None => bail!(Error::GroupFileNotFound(file.clone())),
-        }
-    }
-
-    Ok(result)
 }
 
 /// Show the error chain for an error that has occurred when a backend was queried
