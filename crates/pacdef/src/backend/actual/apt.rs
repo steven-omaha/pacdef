@@ -1,93 +1,86 @@
+use std::collections::BTreeMap;
+
 use anyhow::Result;
-use rust_apt::cache::PackageSort;
+use rust_apt::cache::{PackageSort, Sort};
 use rust_apt::new_cache;
 
-use crate::backend::root::build_base_command_with_privileges;
-use crate::cmd::run_external_command;
+use crate::backend::root::run_args;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Apt;
 
+pub struct AptQueryInfo {
+    explicit: bool,
+}
+
+pub struct AptMakeImplicit;
+
 impl Backend for Apt {
-    fn backend_info(&self) -> BackendInfo {
-        BackendInfo {
-            binary: "apt".to_string(),
-            section: "debian",
-            switches_info: &["show"],
-            switches_install: &["install"],
-            switches_no_confirm: &["--yes"],
-            switches_remove: &["remove"],
-            switches_make_dependency: Some(&[]),
-        }
-    }
+    type PackageId = String;
+    type RemoveOptions = ();
+    type InstallOptions = ();
+    type QueryInfo = AptQueryInfo;
+    type Modification = AptMakeImplicit;
 
-    fn get_installed_packages(&self) -> Result<Packages> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         let cache = new_cache!()?;
-        let sort = PackageSort::default().installed();
 
-        let mut result = Packages::new();
-        for pkg in cache.packages(&sort)? {
-            result.insert(Package::from(pkg.name().to_string()));
-        }
-        Ok(result)
+        let packages = cache.packages(&PackageSort {
+            names: true,
+            upgradable: Sort::Enable,
+            virtual_pkgs: Sort::Enable,
+            installed: Sort::Enable,
+            auto_installed: Sort::Enable,
+            auto_removable: Sort::Enable,
+        })?;
+
+        Ok(packages
+            .map(|x| {
+                (
+                    x.name().to_string(),
+                    AptQueryInfo {
+                        explicit: !x.is_auto_installed(),
+                    },
+                )
+            })
+            .collect())
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        let cache = new_cache!()?;
-        let sort = PackageSort::default().installed().manually_installed();
-
-        let mut result = Packages::new();
-        for pkg in cache.packages(&sort)? {
-            result.insert(Package::from(pkg.name().to_string()));
-        }
-        Ok(result)
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        _: &Config,
+    ) -> Result<()> {
+        run_args(
+            ["apt", "install"]
+                .into_iter()
+                .chain(Some("--yes").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
-    fn make_dependency(&self, packages: &Packages) -> Result<()> {
-        let mut cmd = build_base_command_with_privileges("apt-mark");
-        cmd.arg("auto");
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &Config,
+    ) -> Result<()> {
+        run_args(
+            ["apt-mark", "auto"]
+                .into_iter()
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
-    /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = build_base_command_with_privileges(&backend_info.binary);
-
-        cmd.args(backend_info.switches_install);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
-
-    /// Remove the specified packages.
-    fn remove_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = build_base_command_with_privileges(&backend_info.binary);
-        cmd.args(backend_info.switches_remove);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        _: &Config,
+    ) -> Result<()> {
+        run_args(
+            ["apt", "remove"]
+                .into_iter()
+                .chain(Some("--yes").filter(|_| no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 }

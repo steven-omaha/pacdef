@@ -9,14 +9,14 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Xbps;
 
-pub struct XbpsMakeDependency;
+pub struct XbpsMakeImplicit;
 
 impl Backend for Xbps {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
     type QueryInfo = ();
-    type Modification = XbpsMakeDependency;
+    type Modification = XbpsMakeImplicit;
 
     fn query_installed_packages(
         _: &Config,
