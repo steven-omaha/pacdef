@@ -1,4 +1,3 @@
-use std::collections::BTreeSet;
 use std::io::ErrorKind::NotFound;
 use std::path::PathBuf;
 use std::{collections::BTreeMap, fs::read_to_string};
@@ -6,6 +5,7 @@ use std::{collections::BTreeMap, fs::read_to_string};
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
 
+use crate::backend::root::run_args;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -18,12 +18,10 @@ impl Backend for Cargo {
     type QueryInfo = ();
     type Modification = ();
 
-    fn query_installed_packages(
-        config: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         let file = get_crates_file().context("getting path to crates file")?;
 
-        let content = match read_to_string(file) {
+        let contents = match read_to_string(file) {
             Ok(string) => string,
             Err(err) if err.kind() == NotFound => {
                 log::warn!("no crates file found for cargo. Assuming no crates installed yet.");
@@ -32,76 +30,45 @@ impl Backend for Cargo {
             Err(err) => bail!(err),
         };
 
-        extract_packages(&json).context("extracting packages from crates file")
+        extract_packages(&contents).context("extracting packages from crates file")
     }
 
     fn install_packages(
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
-        no_confirm: bool,
-        config: &Config,
+        _: bool,
+        _: &Config,
     ) -> Result<()> {
+        run_args(
+            ["cargo", "install"]
+                .into_iter()
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
     fn modify_packages(
-        packages: &BTreeMap<Self::PackageId, Self::Modification>,
-        config: &Config,
+        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &Config,
     ) -> Result<()> {
         unimplemented!()
     }
 
     fn remove_packages(
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
-        no_confirm: bool,
-        config: &Config,
+        _: bool,
+        _: &Config,
     ) -> Result<()> {
-        todo!()
+        run_args(
+            ["cargo", "uninstall"]
+                .into_iter()
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 }
 
-impl Backend for Rust {
-    fn backend_info(&self) -> BackendInfo {
-        BackendInfo {
-            binary: "cargo".to_string(),
-            section: "rust",
-            switches_info: &["search", "--limit", "1"],
-            switches_install: &["install"],
-            switches_no_confirm: &[],
-            switches_remove: &["uninstall"],
-            switches_make_dependency: None,
-        }
-    }
+fn extract_packages(contents: &String) -> Result<BTreeMap<String, ()>> {
+    let json: Value = serde_json::from_str(contents).context("parsing JSON from crates file")?;
 
-    fn get_installed_packages(&self) -> Result<Packages> {
-        let file = get_crates_file().context("getting path to crates file")?;
-
-        let content = match read_to_string(file) {
-            Ok(string) => string,
-            Err(err) if err.kind() == NotFound => {
-                log::warn!("no crates file found for cargo. Assuming no crates installed yet.");
-                return Ok(Packages::new());
-            }
-            Err(err) => bail!(err),
-        };
-
-        let json: Value =
-            serde_json::from_str(&content).context("parsing JSON from crates file")?;
-        extract_packages(&json).context("extracting packages from crates file")
-    }
-
-    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        self.get_installed_packages()
-            .context("getting all installed packages")
-    }
-
-    fn make_dependency(&self, _: &Packages) -> Result<()> {
-        panic!("not supported by {}", self.backend_info().binary)
-    }
-}
-
-fn extract_packages(json: &Value) -> Result<BTreeSet<String>> {
-    let json: Value = serde_json::from_str(&content).context("parsing JSON from crates file")?;
-
-    let result: Packages = json
+    let result: BTreeMap<String, ()> = json
         .get("installs")
         .context("get 'installs' field from json")?
         .as_object()
@@ -113,7 +80,7 @@ fn extract_packages(json: &Value) -> Result<BTreeSet<String>> {
                 .next()
                 .expect("identifier is whitespace-delimited")
         })
-        .map(|name| Package::try_from(name).expect("name is valid"))
+        .map(|name| (name.to_string(), ()))
         .collect();
 
     Ok(result)
