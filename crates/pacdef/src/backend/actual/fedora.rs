@@ -47,7 +47,7 @@ impl Backend for Fedora {
             section: "fedora",
             switches_info: &["info"],
             switches_install: &["install"],
-            switches_noconfirm: &["--assumeyes"],
+            switches_no_confirm: &["--assumeyes"],
             switches_remove: &["remove"],
             switches_make_dependency: None,
         }
@@ -74,15 +74,15 @@ impl Backend for Fedora {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new("sudo");
         cmd.arg(backend_info.binary);
         cmd.args(backend_info.switches_install);
 
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
+        if no_confirm {
+            cmd.args(backend_info.switches_no_confirm);
         }
 
         for p in packages {
@@ -100,15 +100,15 @@ impl Backend for Fedora {
     }
 
     /// Show information from package manager for package.
-    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new("sudo");
         cmd.arg(backend_info.binary);
         cmd.args(backend_info.switches_remove);
 
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
+        if no_confirm {
+            cmd.args(backend_info.switches_no_confirm);
         }
 
         for p in packages {

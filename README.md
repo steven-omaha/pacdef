@@ -157,10 +157,10 @@ Usage on different machines:
 | `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
 | `group remove [<group>...]`       | remove a previously imported group                                    |
 | `group show [<group>...]`         | show contents of a group                                              |  
-| `package clean [--noconfirm]`     | remove all unmanaged packages                                         |
+| `package clean [--no_confirm]`     | remove all unmanaged packages                                         |
 | `package review`                  | for each unmanaged package interactively decide what to do            |
 | `package search <regex>`          | search for managed packages that match the search string              |
-| `package sync [--noconfirm]`      | install managed packages                                              |
+| `package sync [--no_confirm]`      | install managed packages                                              |
 | `package unmanaged`               | show all unmanaged packages                                           |
 | `version`                         | show version information, supported backends                          |
 

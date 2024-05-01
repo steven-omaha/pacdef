@@ -28,27 +28,27 @@ impl ToDoPerBackend {
         self.0.iter().all(|(_, diff)| diff.is_empty())
     }
 
-    pub fn install_missing_packages(&self, noconfirm: bool) -> Result<()> {
+    pub fn install_missing_packages(&self, no_confirm: bool) -> Result<()> {
         for (backend, packages) in &self.0 {
             if packages.is_empty() {
                 continue;
             }
 
             backend
-                .install_packages(packages, noconfirm)
+                .install_packages(packages, no_confirm)
                 .with_context(|| format!("installing packages for {backend}"))?;
         }
         Ok(())
     }
 
-    pub fn remove_unmanaged_packages(&self, noconfirm: bool) -> Result<()> {
+    pub fn remove_unmanaged_packages(&self, no_confirm: bool) -> Result<()> {
         for (backend, packages) in &self.0 {
             if packages.is_empty() {
                 continue;
             }
 
             backend
-                .remove_packages(packages, noconfirm)
+                .remove_packages(packages, no_confirm)
                 .with_context(|| format!("removing packages for {backend}"))?;
         }
         Ok(())

@@ -54,7 +54,7 @@ impl Backend for Python {
             section: "python",
             switches_info: &["show"],
             switches_install: &["install"],
-            switches_noconfirm: &[],
+            switches_no_confirm: &[],
             switches_remove: &["uninstall"],
             switches_make_dependency: None,
         }

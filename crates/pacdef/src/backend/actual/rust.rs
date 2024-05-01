@@ -27,7 +27,7 @@ impl Backend for Rust {
             section: "rust",
             switches_info: &["search", "--limit", "1"],
             switches_install: &["install"],
-            switches_noconfirm: &[],
+            switches_no_confirm: &[],
             switches_remove: &["uninstall"],
             switches_make_dependency: None,
         }

@@ -21,7 +21,7 @@ pub struct BackendInfo {
     pub switches_install: Switches,
     /// CLI switches for the package manager to perform `sync` and `clean` without
     /// confirmation.
-    pub switches_noconfirm: Switches,
+    pub switches_no_confirm: Switches,
     /// CLI switches for the package manager to remove packages.
     pub switches_remove: Switches,
     /// CLI switches for the package manager to mark packages as
@@ -48,7 +48,7 @@ pub trait Backend {
         config: &Config,
     ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
 
-    /// Install the specified packages. If `noconfirm` is `true`, pass the corresponding
+    /// Install the specified packages. If `no_confirm` is `true`, pass the corresponding
     /// switch to the package manager. Return the [`ExitStatus`] from the package manager.
     ///
     /// # Errors
@@ -57,7 +57,7 @@ pub trait Backend {
     /// returns an error.
     fn install_packages(
         packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
-        noconfirm: bool,
+        no_confirm: bool,
         config: &Config,
     ) -> Result<()>;
 
@@ -81,6 +81,6 @@ pub trait Backend {
     /// Returns an error if the external command fails.
     fn remove_packages(
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
-        noconfirm: bool,
+        no_confirm: bool,
     ) -> Result<()>;
 }

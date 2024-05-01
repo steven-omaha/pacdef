@@ -29,7 +29,7 @@ impl Backend for Arch {
             section: "arch",
             switches_info: &["--query", "--info"],
             switches_install: &["--sync"],
-            switches_noconfirm: &["--noconfirm"],
+            switches_no_confirm: &["--no_confirm"],
             switches_remove: &["--remove", "--recursive"],
             switches_make_dependency: Some(&["--database", "--asdeps"]),
         }
@@ -51,15 +51,15 @@ impl Backend for Arch {
     }
 
     /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(&self.binary);
 
         cmd.args(backend_info.switches_install);
 
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
+        if no_confirm {
+            cmd.args(backend_info.switches_no_confirm);
         }
 
         for p in packages {
@@ -70,7 +70,7 @@ impl Backend for Arch {
     }
 
     /// Remove the specified packages.
-    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
 
         let mut cmd = Command::new(&self.binary);
@@ -78,8 +78,8 @@ impl Backend for Arch {
         cmd.args(backend_info.switches_remove);
         cmd.args(&self.aur_rm_args);
 
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
+        if no_confirm {
+            cmd.args(backend_info.switches_no_confirm);
         }
 
         for p in packages {

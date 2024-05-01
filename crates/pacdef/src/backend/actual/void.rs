@@ -13,6 +13,14 @@ impl Void {
     pub fn new() -> Self {
         Self {}
     }
+
+    fn no_confirm_flag(no_confirm: bool) -> &str {
+        if no_confirm {
+            "-y"
+        } else {
+""
+        }
+    }
 }
 impl Default for Void {
     fn default() -> Self {
@@ -20,38 +28,24 @@ impl Default for Void {
     }
 }
 
-const INSTALL_BINARY: Text = "xbps-install";
-const REMOVE_BINARY: Text = "xbps-remove";
-const QUERY_BINARY: Text = "xbps-query";
-const PKGDB_BINARY: Text = "xbps-pkgdb";
+pub struct MakeDependency;
 
 impl Backend for Void {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
-    typeQueryInfo = ;
-    
+    type Modification = MakeDependency;
 
-    fn backend_info(&self) -> BackendInfo {
-        BackendInfo {
-            binary: "xbps-install".to_string(),
-            section: "void",
-            switches_info: &[],
-            switches_install: &["-S"],
-            switches_noconfirm: &["-y"],
-            switches_remove: &["-R"],
-            switches_make_dependency: Some(&["-m", "auto"]),
-        }
-    }
-
-    fn get_installed_packages(&self) -> Result<Packages> {
+    fn query_installed_packages(
+        config: &Config,
+    ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
         // Removes the package status and description from output
         let re_str_1 = r"^ii |^uu |^hr |^\?\? | .*";
         // Removes the package version from output
         let re_str_2 = r"-[^-]*$";
         let re1 = Regex::new(re_str_1)?;
         let re2 = Regex::new(re_str_2)?;
-        let mut cmd = Command::new(QUERY_BINARY);
+        let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
         let output = String::from_utf8(cmd.output()?.stdout)?;
 
@@ -66,33 +60,28 @@ impl Backend for Void {
         Ok(packages)
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        // Removes the package version from output
-        let re_str = r"-[^-]*$";
-        let re = Regex::new(re_str)?;
-        let mut cmd = Command::new(QUERY_BINARY);
-        cmd.args(["-m"]);
-        let output = String::from_utf8(cmd.output()?.stdout)?;
+    fn install_packages(
+        packages: &std::collections::BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        BackendInfo {
+            binary: "xbps-install".to_string(),
+            section: "void",
+            switches_info: &[],
+            switches_install: &["-S"],
+            switches_no_confirm: &["-y"],
+            switches_remove: &["-R"],
+            switches_make_dependency: Some(&["-m", "auto"]),
+        };
 
-        let packages = output
-            .lines()
-            .map(|line| {
-                let result = re.replace_all(line, "").to_string();
-                result.into()
-            })
-            .collect();
-        Ok(packages)
-    }
+        let cmd = format!("xbps-install -S {} {}", Self::no_confirm_flag(no_confirm))
 
-    /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = build_base_command_with_privileges(INSTALL_BINARY);
+        let mut cmd = build_base_command_with_privileges("xbps-install");
         cmd.args(backend_info.switches_install);
 
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
+        if no_confirm {
+            cmd.args(backend_info.switches_no_confirm);
         }
 
         for p in packages {
@@ -102,14 +91,17 @@ impl Backend for Void {
         run_external_command(cmd)
     }
 
-    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn remove_packages(
+        packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+    ) -> Result<()> {
         let backend_info = self.backend_info();
 
-        let mut cmd = build_base_command_with_privileges(REMOVE_BINARY);
+        let mut cmd = build_base_command_with_privileges("xbps-remove");
         cmd.args(backend_info.switches_remove);
 
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
+        if no_confirm {
+            cmd.args(backend_info.switches_no_confirm);
         }
 
         for p in packages {
@@ -119,10 +111,13 @@ impl Backend for Void {
         run_external_command(cmd)
     }
 
-    fn make_dependency(&self, packages: &Packages) -> Result<()> {
+    fn modify_packages(
+        packages: &std::collections::BTreeMap<Self::PackageId, Self::Modification>,
+        config: &Config,
+    ) -> Result<()> {
         let backend_info = self.backend_info();
 
-        let mut cmd = build_base_command_with_privileges(PKGDB_BINARY);
+        let mut cmd = build_base_command_with_privileges("xbps-pkgdb");
         cmd.args(
             backend_info
                 .switches_make_dependency
@@ -132,17 +127,6 @@ impl Backend for Void {
         for p in packages {
             cmd.arg(format!("{p}"));
         }
-
-        run_external_command(cmd)
-    }
-
-    /// Show information from package manager for package.
-    fn show_package_info(&self, package: &Package) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(QUERY_BINARY);
-        cmd.args(backend_info.switches_info);
-        cmd.arg(format!("{package}"));
 
         run_external_command(cmd)
     }

@@ -31,7 +31,7 @@ impl Backend for Rustup {
             section: "rustup",
             switches_install: &["component", "add"],
             switches_info: &["component", "list", "--installed"],
-            switches_noconfirm: &[],
+            switches_no_confirm: &[],
             switches_remove: &["component", "remove"],
             switches_make_dependency: None,
         }
