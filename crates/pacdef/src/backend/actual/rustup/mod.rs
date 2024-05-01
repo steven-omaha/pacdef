@@ -13,16 +13,6 @@ use self::types::{Repotype, RustupPackage};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Rustup {}
-impl Rustup {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-impl Default for Rustup {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl Backend for Rustup {
     fn backend_info(&self) -> BackendInfo {

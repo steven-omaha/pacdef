@@ -6,17 +6,7 @@ use crate::cmd::run_external_command;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Fedora {}
-impl Fedora {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-impl Default for Fedora {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct Fedora;
 
 /// These repositories are ignored when storing the packages
 /// as these are present by default on any sane fedora system

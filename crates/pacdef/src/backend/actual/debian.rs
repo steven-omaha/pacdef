@@ -7,17 +7,7 @@ use crate::cmd::run_external_command;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Debian {}
-impl Debian {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-impl Default for Debian {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct Debian;
 
 impl Backend for Debian {
     fn backend_info(&self) -> BackendInfo {

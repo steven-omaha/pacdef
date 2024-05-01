@@ -1,116 +1,164 @@
-use std::process::Command;
+use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
 
-use crate::cmd::run_external_command;
+use crate::backend::root::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Flatpak {
-    pub systemwide: bool,
-}
-impl Flatpak {
-    pub fn new(config: &Config) -> Self {
-        Self {
-            systemwide: config.flatpak_systemwide,
-        }
-    }
+pub struct Flatpak;
 
-    fn get_switches_runtime(&self) -> Switches {
-        if self.systemwide {
-            &[]
-        } else {
-            &["--user"]
-        }
-    }
-
-    fn get_installed_packages(&self, include_implicit: bool) -> Result<Packages> {
-        let mut cmd = Command::new(self.backend_info().binary);
-        cmd.args(["list", "--columns=application"]);
-        if !include_implicit {
-            cmd.arg("--app");
-        }
-        if !self.systemwide {
-            cmd.arg("--user");
-        }
-
-        let output = String::from_utf8(cmd.output()?.stdout)?;
-        Ok(output.lines().map(Package::from).collect::<Packages>())
-    }
+struct FlatpakQueryInfo {
+    explicit: bool,
+    systemwide: bool,
 }
 
 impl Backend for Flatpak {
-    fn backend_info(&self) -> BackendInfo {
-        BackendInfo {
-            binary: "flatpak".to_string(),
-            section: "flatpak",
-            switches_info: &["info"],
-            switches_install: &["install"],
-            switches_no_confirm: &["--assumeyes"],
-            switches_remove: &["uninstall"],
-            switches_make_dependency: None,
-        }
+    type PackageId = String;
+    type RemoveOptions = ();
+    type InstallOptions = ();
+    type QueryInfo = FlatpakQueryInfo;
+    type Modification = ();
+
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        let sys_explicit_btree = run_args_for_stdout(
+            [
+                "flatpak",
+                "list",
+                "--system",
+                "--app",
+                "--columns=application",
+            ]
+            .into_iter(),
+        )?
+        .lines()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
+        let sys_all_btree = run_args_for_stdout(
+            ["flatpak", "list", "--system", "--columns=application"].into_iter(),
+        )?
+        .lines()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
+
+        let user_explicit_btree = run_args_for_stdout(
+            [
+                "flatpak",
+                "list",
+                "--user",
+                "--app",
+                "--columns=application",
+            ]
+            .into_iter(),
+        )?
+        .lines()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
+        let user_all_btree = run_args_for_stdout(
+            ["flatpak", "list", "--user", "--columns=application"].into_iter(),
+        )?
+        .lines()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
+
+        let sys_explicit = sys_explicit_btree.iter().map(|x| {
+            (
+                x.clone(),
+                FlatpakQueryInfo {
+                    explicit: true,
+                    systemwide: true,
+                },
+            )
+        });
+        let sys_implicit = sys_all_btree
+            .iter()
+            .filter(|x| !sys_explicit_btree.contains(*x))
+            .map(|x| {
+                (
+                    x.clone(),
+                    FlatpakQueryInfo {
+                        explicit: false,
+                        systemwide: true,
+                    },
+                )
+            });
+        let user_explicit = user_explicit_btree.iter().map(|x| {
+            (
+                x.clone(),
+                FlatpakQueryInfo {
+                    explicit: true,
+                    systemwide: false,
+                },
+            )
+        });
+        let user_implicit = user_all_btree
+            .iter()
+            .filter(|x| !user_explicit_btree.contains(*x))
+            .map(|x| {
+                (
+                    x.clone(),
+                    FlatpakQueryInfo {
+                        explicit: false,
+                        systemwide: false,
+                    },
+                )
+            });
+
+        let all = sys_explicit
+            .chain(sys_implicit)
+            .chain(user_explicit)
+            .chain(user_implicit)
+            .collect();
+
+        Ok(all)
     }
 
-    fn get_installed_packages(&self) -> Result<Packages> {
-        self.get_installed_packages(true)
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        run_args(
+            [
+                "flatpak",
+                "install",
+                if config.flatpak_systemwide {
+                    "--system"
+                } else {
+                    "--user"
+                },
+            ]
+            .into_iter()
+            .chain(Some("--assumeyes").filter(|_| no_confirm))
+            .chain(packages.keys().map(String::as_str)),
+        )
     }
 
-    fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        self.get_installed_packages(false)
+    fn modify_packages(
+        _: &BTreeMap<Self::PackageId, Self::Modification>,
+        _: &Config,
+    ) -> Result<()> {
+        unimplemented!()
     }
 
-    /// Install the specified packages.
-    fn install_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-        cmd.args(backend_info.switches_install);
-        cmd.args(self.get_switches_runtime());
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
-
-    fn make_dependency(&self, _: &Packages) -> Result<()> {
-        panic!("not supported by {}", self.backend_info().binary)
-    }
-
-    /// Remove the specified packages.
-    fn remove_packages(&self, packages: &Packages, no_confirm: bool) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-        cmd.args(backend_info.switches_remove);
-        cmd.args(self.get_switches_runtime());
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
-    }
-
-    /// Show information from package manager for package.
-    fn show_package_info(&self, package: &Package) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = Command::new(backend_info.binary);
-        cmd.args(backend_info.switches_info);
-        cmd.args(self.get_switches_runtime());
-        cmd.arg(format!("{package}"));
-
-        run_external_command(cmd)
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()> {
+        run_args(
+            [
+                "flatpak",
+                "uninstall",
+                if config.flatpak_systemwide {
+                    "--system"
+                } else {
+                    "--user"
+                },
+            ]
+            .into_iter()
+            .chain(Some("--assumeyes").filter(|_| no_confirm))
+            .chain(packages.keys().map(String::as_str)),
+        )
     }
 }

@@ -9,18 +9,7 @@ use crate::cmd::run_external_command;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Arch {
-    pub binary: String,
-    pub aur_rm_args: Vec<String>,
-}
-impl Arch {
-    pub fn new(config: &Config) -> Self {
-        Self {
-            binary: config.aur_helper.clone(),
-            aur_rm_args: config.aur_rm_args.clone(),
-        }
-    }
-}
+pub struct Arch;
 
 impl Backend for Arch {
     fn backend_info(&self) -> BackendInfo {

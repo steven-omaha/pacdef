@@ -6,23 +6,12 @@ use serde_json::Value;
 
 use crate::prelude::*;
 
-macro_rules! ERROR{
-    ($bin:expr) => {
-        panic!("Cannot use {} for package management in python. Please use a valid package manager like pip or pipx.", $bin)
-    };
-}
+const ERROR_MESSAGE: &str ="Cannot use {} for package management in python. Please use a valid package manager like pip or pipx.";
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Python {
-    pub binary: String,
-}
-impl Python {
-    pub fn new(config: &Config) -> Self {
-        Self {
-            binary: config.pip_binary.to_string(),
-        }
-    }
+pub struct Python;
 
+impl Python {
     fn get_switches_runtime(&self) -> Switches {
         match self.backend_info().binary.as_str() {
             "pip" => &["list", "--format", "json", "--not-required", "--user"],

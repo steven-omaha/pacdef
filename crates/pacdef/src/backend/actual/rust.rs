@@ -8,17 +8,7 @@ use serde_json::Value;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Rust {}
-impl Rust {
-    pub fn new() -> Self {
-        Self {}
-    }
-}
-impl Default for Rust {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct Rust;
 
 impl Backend for Rust {
     fn backend_info(&self) -> BackendInfo {

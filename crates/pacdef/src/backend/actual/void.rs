@@ -7,34 +7,16 @@ use crate::backend::root::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Void {}
-impl Void {
-    pub fn new() -> Self {
-        Self {}
-    }
+pub struct Void;
 
-    fn no_confirm_flag(no_confirm: bool) -> Option<&'static str> {
-        if no_confirm {
-            Some("-y")
-        } else {
-            None
-        }
-    }
-}
-impl Default for Void {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-pub struct MakeDependency;
+pub struct VoidMakeDependency;
 
 impl Backend for Void {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
     type QueryInfo = ();
-    type Modification = MakeDependency;
+    type Modification = VoidMakeDependency;
 
     fn query_installed_packages(
         _: &Config,
@@ -68,7 +50,7 @@ impl Backend for Void {
         run_args(
             ["xbps-install", "-S"]
                 .into_iter()
-                .chain(Self::no_confirm_flag(no_confirm))
+                .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
         )
     }
@@ -76,11 +58,12 @@ impl Backend for Void {
     fn remove_packages(
         packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
+        _: &Config,
     ) -> Result<()> {
         run_args(
             ["xbps-remove", "-R"]
                 .into_iter()
-                .chain(Self::no_confirm_flag(no_confirm))
+                .chain(Some("-y").filter(|_| no_confirm))
                 .chain(packages.keys().map(String::as_str)),
         )
     }

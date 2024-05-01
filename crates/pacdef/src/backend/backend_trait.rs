@@ -82,5 +82,6 @@ pub trait Backend {
     fn remove_packages(
         packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
+        config: &Config,
     ) -> Result<()>;
 }
