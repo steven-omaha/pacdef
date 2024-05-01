@@ -21,9 +21,7 @@ impl Backend for Rustup {
     type QueryInfo = ();
     type Modification = ();
 
-    fn query_installed_packages(
-        config: &Config,
-    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+    fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
         let mut packages = BTreeMap::new();
 
         let toolchains_stdout = run_args_for_stdout(["rustup", "toolchain", "list"].into_iter())?;

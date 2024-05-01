@@ -8,7 +8,7 @@ use crate::prelude::*;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Flatpak;
 
-struct FlatpakQueryInfo {
+pub struct FlatpakQueryInfo {
     explicit: bool,
     systemwide: bool,
 }

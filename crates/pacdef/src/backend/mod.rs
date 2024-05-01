@@ -1,9 +1,8 @@
 pub mod actual;
-pub mod backend_trait;
 mod root;
 pub mod todo_per_backend;
 
-use std::fmt::Display;
+use std::collections::BTreeMap;
 
 use crate::prelude::*;
 use anyhow::Result;
@@ -50,52 +49,59 @@ impl ManagedBackend {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-#[enum_dispatch::enum_dispatch(Backend)]
-pub enum AnyBackend {
-    Arch(actual::arch::Arch),
-    Debian(actual::apt::Debian),
-    Flatpak(Flatpak),
-    Fedora(Fedora),
-    Python(Python),
-    Rust(Rust),
-    Rustup(Rustup),
-    Void(Xbps),
-}
-impl AnyBackend {
-    /// Returns an iterator of every variant of backend.
-    pub fn all(config: &Config) -> impl Iterator<Item = Self> {
-        vec![
-            Self::Arch(actual::arch::Arch::new(config)),
-            Self::Debian(actual::apt::Debian::new()),
-            Self::Flatpak(Flatpak::new(config)),
-            Self::Fedora(Fedora::new()),
-            Self::Python(Python::new(config)),
-            Self::Rust(Rust::new()),
-            Self::Rustup(Rustup::new()),
-            Self::Void(Xbps::new()),
-        ]
-        .into_iter()
-    }
+/// A trait to represent any package manager backend
+#[enum_dispatch::enum_dispatch]
+pub trait Backend {
+    type PackageId;
+    type InstallOptions;
+    type RemoveOptions;
+    type QueryInfo;
+    type Modification;
 
-    pub fn from_section(section: &str, config: &Config) -> Result<Self> {
-        match section {
-            "arch" => Ok(Self::Arch(actual::arch::Arch::new(config))),
-            "debian" => Ok(Self::Debian(actual::apt::Debian::new())),
-            "flatpak" => Ok(Self::Flatpak(Flatpak::new(config))),
-            "fedora" => Ok(Self::Fedora(Fedora::new())),
-            "python" => Ok(Self::Python(Python::new(config))),
-            "rust" => Ok(Self::Rust(Rust::new())),
-            "rustup" => Ok(Self::Rustup(Rustup::new())),
-            "void" => Ok(Self::Void(Xbps::new())),
-            _ => Err(anyhow::anyhow!(
-                "no matching backend for the section: {section}"
-            )),
-        }
-    }
-}
-impl Display for AnyBackend {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.backend_info().section)
-    }
+    /// Query all packages that are installed in the system.
+    ///
+    /// # Errors
+    ///
+    /// This function shall return an error if the installed packages cannot be
+    /// determined.
+    fn query_installed_packages(
+        config: &Config,
+    ) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>>;
+
+    /// Install the specified packages. If `no_confirm` is `true`, pass the corresponding
+    /// switch to the package manager. Return the [`ExitStatus`] from the package manager.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the package manager cannot be run or it
+    /// returns an error.
+    fn install_packages(
+        packages: &BTreeMap<Self::PackageId, Self::InstallOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()>;
+
+    /// Modify the packages as specified by [`Self::PackageModification`].
+    ///
+    /// This may not include installing or removing the package as [`Backend::install_packages()`]
+    /// and [`Backend::remove_packages()`] exist for this purpose.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the backend fails to modify the packages as required.
+    fn modify_packages(
+        packages: &BTreeMap<Self::PackageId, Self::Modification>,
+        config: &Config,
+    ) -> Result<()>;
+
+    /// Remove the specified packages.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the external command fails.
+    fn remove_packages(
+        packages: &BTreeMap<Self::PackageId, Self::RemoveOptions>,
+        no_confirm: bool,
+        config: &Config,
+    ) -> Result<()>;
 }
