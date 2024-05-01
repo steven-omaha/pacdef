@@ -10,5 +10,4 @@ sections.
 */
 
 pub mod group;
-pub mod package;
 pub mod section;

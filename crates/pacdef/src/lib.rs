@@ -30,7 +30,7 @@ mod config;
 mod core;
 mod env;
 mod errors;
-mod grouping;
+mod groups;
 mod review;
 mod search;
 mod ui;

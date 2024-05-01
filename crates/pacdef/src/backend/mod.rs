@@ -1,52 +1,43 @@
-pub mod actual;
-mod root;
-pub mod todo_per_backend;
+pub mod apt;
+pub mod arch;
+pub mod cargo;
+pub mod dnf;
+pub mod flatpak;
+pub mod pip;
+pub mod pipx;
+pub mod rustup;
+pub mod xbps;
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, process::Command};
 
 use crate::prelude::*;
 use anyhow::Result;
 
-/// A backend with its associated managed packages
-pub struct ManagedBackend {
-    /// All managed packages for this backend, i.e. all packages
-    /// under the corresponding section in all group files.
-    pub packages: Packages,
-    pub any_backend: AnyBackend,
+fn run_args_for_stdout<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<String> {
+    let we_are_root = {
+        let uid = unsafe { libc::geteuid() };
+        uid == 0
+    };
+
+    let mut cmd = if we_are_root {
+        Command::new("sudo")
+    } else {
+        Command::new(args.next().unwrap())
+    };
+
+    cmd.args(args);
+
+    let output = cmd.output()?;
+
+    if output.status.success() {
+        Ok(String::from_utf8(output.stdout)?)
+    } else {
+        Err(anyhow::anyhow!("command failed"))
+    }
 }
 
-impl ManagedBackend {
-    /// Get unmanaged packages
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the backend fails to get the explicitly installed packages.
-    pub fn get_unmanaged_packages_sorted(&self) -> Result<Packages> {
-        let installed = self
-            .any_backend
-            .get_explicitly_installed_packages()
-            .context("could not get explicitly installed packages")?;
-
-        let diff = installed.difference(&self.packages).cloned().collect();
-
-        Ok(diff)
-    }
-
-    /// Get missing packages
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the backend fails to get the installed packages.
-    pub fn get_missing_packages_sorted(&self) -> Result<Packages> {
-        let installed = self
-            .any_backend
-            .get_installed_packages()
-            .context("could not get installed packages")?;
-
-        let diff = self.packages.difference(&installed).cloned().collect();
-
-        Ok(diff)
-    }
+fn run_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<()> {
+    run_args_for_stdout(args).map(|_| ())
 }
 
 /// A trait to represent any package manager backend

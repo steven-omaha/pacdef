@@ -2,7 +2,7 @@ use alpm::{Alpm, PackageReason};
 use anyhow::{Context, Result};
 use std::collections::BTreeMap;
 
-use crate::backend::root::run_args;
+use crate::backend::run_args;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

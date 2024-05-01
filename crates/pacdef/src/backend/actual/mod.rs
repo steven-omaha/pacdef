@@ -1,9 +1,0 @@
-pub mod apt;
-pub mod arch;
-pub mod cargo;
-pub mod dnf;
-pub mod flatpak;
-pub mod pip;
-pub mod pipx;
-pub mod rustup;
-pub mod xbps;

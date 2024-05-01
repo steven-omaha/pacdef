@@ -4,7 +4,7 @@ use anyhow::Result;
 use rust_apt::cache::{PackageSort, Sort};
 use rust_apt::new_cache;
 
-use crate::backend::root::run_args;
+use crate::backend::run_args;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

@@ -1,15 +1,13 @@
-pub use crate::backend::actual::apt::{Apt, AptMakeImplicit, AptQueryInfo};
-pub use crate::backend::actual::arch::{Arch, ArchMakeImplicit, ArchQueryInfo};
-pub use crate::backend::actual::cargo::Cargo;
-pub use crate::backend::actual::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
-pub use crate::backend::actual::flatpak::{Flatpak, FlatpakQueryInfo};
-pub use crate::backend::actual::pip::{Pip, PipQueryInfo};
-pub use crate::backend::actual::pipx::Pipx;
-pub use crate::backend::actual::rustup::Rustup;
-pub use crate::backend::actual::xbps::{Xbps, XbpsMakeImplicit};
-pub use crate::backend::todo_per_backend::ToDoPerBackend;
+pub use crate::backend::apt::{Apt, AptMakeImplicit, AptQueryInfo};
+pub use crate::backend::arch::{Arch, ArchMakeImplicit, ArchQueryInfo};
+pub use crate::backend::cargo::Cargo;
+pub use crate::backend::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};
+pub use crate::backend::flatpak::{Flatpak, FlatpakQueryInfo};
+pub use crate::backend::pip::{Pip, PipQueryInfo};
+pub use crate::backend::pipx::Pipx;
+pub use crate::backend::rustup::Rustup;
+pub use crate::backend::xbps::{Xbps, XbpsMakeImplicit};
 pub use crate::backend::Backend;
-pub use crate::backend::ManagedBackend;
 pub use crate::cli::CleanPackageAction;
 pub use crate::cli::EditGroupAction;
 pub use crate::cli::ExportGroupAction;
@@ -31,7 +29,7 @@ pub use crate::cli::UnmanagedPackageAction;
 pub use crate::cli::VersionArguments;
 pub use crate::config::Config;
 pub use crate::errors::Error;
-pub use crate::grouping::{
+pub use crate::groups::{
     group::{Group, Groups},
     section::{Section, Sections},
 };

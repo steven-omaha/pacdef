@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, fs::read_to_string};
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
 
-use crate::backend::root::run_args;
+use crate::backend::run_args;
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
