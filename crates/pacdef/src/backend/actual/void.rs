@@ -3,8 +3,7 @@ use std::process::Command;
 use anyhow::Result;
 use regex::Regex;
 
-use crate::backend::root::build_base_command_with_privileges;
-use crate::cmd::run_external_command;
+use crate::backend::root::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -14,11 +13,11 @@ impl Void {
         Self {}
     }
 
-    fn no_confirm_flag(no_confirm: bool) -> &str {
+    fn no_confirm_flag(no_confirm: bool) -> Option<&'static str> {
         if no_confirm {
-            "-y"
+            Some("-y")
         } else {
-""
+            None
         }
     }
 }
@@ -34,100 +33,66 @@ impl Backend for Void {
     type PackageId = String;
     type RemoveOptions = ();
     type InstallOptions = ();
+    type QueryInfo = ();
     type Modification = MakeDependency;
 
     fn query_installed_packages(
-        config: &Config,
+        _: &Config,
     ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
-        // Removes the package status and description from output
-        let re_str_1 = r"^ii |^uu |^hr |^\?\? | .*";
-        // Removes the package version from output
-        let re_str_2 = r"-[^-]*$";
-        let re1 = Regex::new(re_str_1)?;
-        let re2 = Regex::new(re_str_2)?;
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
-        let output = String::from_utf8(cmd.output()?.stdout)?;
+        let stdout = run_args_for_stdout(["xbps-query", "-l"].into_iter())?;
 
-        let packages = output
+        // Removes the package status and description from output
+        let re1 = Regex::new(r"^ii |^uu |^hr |^\?\? | .*")?;
+        // Removes the package version from output
+        let re2 = Regex::new(r"-[^-]*$")?;
+
+        let packages = stdout
             .lines()
             .map(|line| {
-                let result = re1.replace_all(line, "");
-                let result = re2.replace_all(&result, "");
-                result.to_string().into()
+                let mid_result = re1.replace_all(line, "");
+
+                (re2.replace_all(&mid_result, "").to_string(), ())
             })
             .collect();
+
         Ok(packages)
     }
 
     fn install_packages(
         packages: &std::collections::BTreeMap<Self::PackageId, Self::InstallOptions>,
         no_confirm: bool,
-        config: &Config,
+        _: &Config,
     ) -> Result<()> {
-        BackendInfo {
-            binary: "xbps-install".to_string(),
-            section: "void",
-            switches_info: &[],
-            switches_install: &["-S"],
-            switches_no_confirm: &["-y"],
-            switches_remove: &["-R"],
-            switches_make_dependency: Some(&["-m", "auto"]),
-        };
-
-        let cmd = format!("xbps-install -S {} {}", Self::no_confirm_flag(no_confirm))
-
-        let mut cmd = build_base_command_with_privileges("xbps-install");
-        cmd.args(backend_info.switches_install);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
+        run_args(
+            ["xbps-install", "-S"]
+                .into_iter()
+                .chain(Self::no_confirm_flag(no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
     fn remove_packages(
         packages: &std::collections::BTreeMap<Self::PackageId, Self::RemoveOptions>,
         no_confirm: bool,
     ) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = build_base_command_with_privileges("xbps-remove");
-        cmd.args(backend_info.switches_remove);
-
-        if no_confirm {
-            cmd.args(backend_info.switches_no_confirm);
-        }
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
+        run_args(
+            ["xbps-remove", "-R"]
+                .into_iter()
+                .chain(Self::no_confirm_flag(no_confirm))
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 
     fn modify_packages(
         packages: &std::collections::BTreeMap<Self::PackageId, Self::Modification>,
-        config: &Config,
+        _: &Config,
     ) -> Result<()> {
-        let backend_info = self.backend_info();
-
-        let mut cmd = build_base_command_with_privileges("xbps-pkgdb");
-        cmd.args(
-            backend_info
-                .switches_make_dependency
-                .expect("void should support make make dependency"),
-        );
-
-        for p in packages {
-            cmd.arg(format!("{p}"));
-        }
-
-        run_external_command(cmd)
+        run_args(
+            ["xbps-pkgdb", "-m", "auto"]
+                .into_iter()
+                .chain(packages.keys().map(String::as_str)),
+        )
     }
 }
