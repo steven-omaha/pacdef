@@ -58,6 +58,7 @@ pub struct PackagesQuery {
 
 macro_rules! impl_append {
     () => {
+        #[allow(dead_code)]
         pub fn append(&mut self, other: &mut Self) {
             self.apt.append(&mut other.apt);
             self.arch.append(&mut other.arch);
@@ -71,9 +72,10 @@ macro_rules! impl_append {
         }
     };
 }
-macro_rules! impl_to_packages_ids {
+macro_rules! impl_into_packages_ids {
     () => {
-        pub fn to_packages_ids(self) -> PackagesIds {
+        #[allow(dead_code)]
+        pub fn into_packages_ids(self) -> PackagesIds {
             PackagesIds {
                 apt: self.apt.into_keys().collect(),
                 arch: self.arch.into_keys().collect(),
@@ -90,6 +92,7 @@ macro_rules! impl_to_packages_ids {
 }
 macro_rules! impl_is_empty {
     () => {
+        #[allow(dead_code)]
         pub fn is_empty(&self) -> bool {
             self.apt.is_empty()
                 && self.arch.is_empty()
@@ -110,17 +113,17 @@ impl PackagesIds {
 impl PackagesInstall {
     impl_append!();
     impl_is_empty!();
-    impl_to_packages_ids!();
+    impl_into_packages_ids!();
 }
 impl PackagesRemove {
     impl_append!();
     impl_is_empty!();
-    impl_to_packages_ids!();
+    impl_into_packages_ids!();
 }
 impl PackagesQuery {
     impl_append!();
     impl_is_empty!();
-    impl_to_packages_ids!();
+    impl_into_packages_ids!();
 }
 
 impl PackagesIds {
@@ -245,7 +248,7 @@ impl PackagesIds {
     //todo this could be improved by making the config for disabled_backends more strongly typed
     pub fn clear_backends(&mut self, backend_names: &Vec<String>) {
         for backend_name in backend_names {
-            let backend = match AnyBackend::from_str(&backend_name) {
+            let backend = match AnyBackend::from_str(backend_name) {
                 Ok(x) => x,
                 Err(e) => {
                     log::warn!("{e}");
@@ -271,8 +274,8 @@ impl PackagesIds {
         let installed = PackagesQuery::installed(config)?;
 
         let mut missing = requested
-            .to_packages_ids()
-            .difference(&installed.to_packages_ids());
+            .into_packages_ids()
+            .difference(&installed.into_packages_ids());
 
         missing.clear_backends(&config.disabled_backends);
 
@@ -284,8 +287,8 @@ impl PackagesIds {
         let installed = PackagesQuery::installed(config)?;
 
         let mut missing = installed
-            .to_packages_ids()
-            .difference(&requested.to_packages_ids());
+            .into_packages_ids()
+            .difference(&requested.into_packages_ids());
 
         missing.clear_backends(&config.disabled_backends);
 

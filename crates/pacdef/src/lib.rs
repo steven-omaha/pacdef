@@ -28,7 +28,6 @@ mod cmd;
 mod config;
 #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
 mod core;
-mod env;
 mod errors;
 mod groups;
 mod packages;

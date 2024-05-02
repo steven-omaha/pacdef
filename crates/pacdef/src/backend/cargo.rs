@@ -65,7 +65,7 @@ impl Backend for Cargo {
     }
 }
 
-fn extract_packages(contents: &String) -> Result<BTreeMap<String, ()>> {
+fn extract_packages(contents: &str) -> Result<BTreeMap<String, ()>> {
     let json: Value = serde_json::from_str(contents).context("parsing JSON from crates file")?;
 
     let result: BTreeMap<String, ()> = json

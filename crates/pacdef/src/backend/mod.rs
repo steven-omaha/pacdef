@@ -25,22 +25,22 @@ pub enum AnyBackend {
     Xbps(Xbps),
 }
 impl AnyBackend {
-    pub const ALL: [AnyBackend; 8] = [
-        AnyBackend::Apt(Apt),
-        AnyBackend::Cargo(Cargo),
-        AnyBackend::Dnf(Dnf),
-        AnyBackend::Flatpak(Flatpak),
-        AnyBackend::Pip(Pip),
-        AnyBackend::Pipx(Pipx),
-        AnyBackend::Rustup(Rustup),
-        AnyBackend::Xbps(Xbps),
+    pub const ALL: [Self; 8] = [
+        Self::Apt(Apt),
+        Self::Cargo(Cargo),
+        Self::Dnf(Dnf),
+        Self::Flatpak(Flatpak),
+        Self::Pip(Pip),
+        Self::Pipx(Pipx),
+        Self::Rustup(Rustup),
+        Self::Xbps(Xbps),
     ];
 }
 impl FromStr for AnyBackend {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
-        AnyBackend::ALL
+        Self::ALL
             .iter()
             .find(|x| x.to_string() == s)
             .copied()

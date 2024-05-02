@@ -27,7 +27,7 @@ impl Backend for Rustup {
 
         let toolchains_stdout = run_args_for_stdout(["rustup", "toolchain", "list"].into_iter())?;
         let toolchains = toolchains_stdout.lines().map(|x| {
-            x.split(" ")
+            x.split(' ')
                 .next()
                 .expect("output shouldn't contain empty lines")
                 .to_string()

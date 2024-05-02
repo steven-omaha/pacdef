@@ -1,7 +1,6 @@
-use std::io::{self, Read, Write};
+use std::io::Write;
 
 use anyhow::{Context, Result};
-use termios::*;
 
 pub fn get_user_confirmation() -> Result<bool> {
     print!("Continue? [Y/n] ");
@@ -13,37 +12,4 @@ pub fn get_user_confirmation() -> Result<bool> {
         .context("reading stdin")?;
 
     Ok(reply.trim().is_empty() || reply.to_lowercase().contains('y'))
-}
-
-/// Read a single byte from stdin and interpret it as `char`. Use the
-/// `termios` library to switch the terminal to raw mode before reading,
-/// and restore the original terminal mode afterwards.
-///
-/// # Errors
-///
-/// This function will return an error if the data cannot be read or the
-/// terminal settings cannot be changed.
-pub fn read_single_char_from_terminal() -> Result<char> {
-    // 0 is the file descriptor for stdin
-    let fd = 0;
-    let termios = Termios::from_fd(fd).context("getting stdin fd")?;
-    let mut new_termios = termios;
-    new_termios.c_lflag &= !(ICANON | ECHO);
-    new_termios.c_cc[VMIN] = 1;
-    new_termios.c_cc[VTIME] = 0;
-    tcsetattr(fd, TCSANOW, &new_termios).context("setting terminal mode")?;
-
-    let mut input_buffer = [0u8; 1];
-    io::stdin()
-        .read_exact(&mut input_buffer[..])
-        .context("reading one byte from stdin")?;
-    let result: char = input_buffer[0].into();
-
-    // stdin is not echoed automatically in this terminal mode
-    println!("{result}");
-
-    // restore previous settings
-    tcsetattr(fd, TCSANOW, &termios).context("restoring terminal mode")?;
-
-    Ok(result)
 }

@@ -12,6 +12,7 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Pip;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct PipQueryInfo {
     explicit: bool,

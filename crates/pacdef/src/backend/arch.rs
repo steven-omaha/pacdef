@@ -8,6 +8,7 @@ use crate::prelude::*;
 #[derive(Debug, Clone, derive_more::Display)]
 pub struct Arch;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ArchQueryInfo {
     reason: PackageReason,

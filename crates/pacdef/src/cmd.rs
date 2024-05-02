@@ -14,7 +14,7 @@ where
     let mut cmd = if we_are_root {
         Command::new("sudo")
     } else {
-        Command::new(args.next().unwrap())
+        Command::new(args.next().expect("cannot run an empty set of args"))
     };
 
     cmd.args(args);

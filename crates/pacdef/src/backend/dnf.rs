@@ -8,6 +8,7 @@ use crate::prelude::*;
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Dnf;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct DnfQueryInfo {
     user: bool,
@@ -62,6 +63,7 @@ impl Backend for Dnf {
         _: &Config,
     ) -> Result<()> {
         // add these two repositories as these are needed for many dependencies
+        #[allow(clippy::option_if_let_else)]
         run_args(
             ["dnf", "install", "--repo", "updates", "--repo", "fedora"]
                 .into_iter()
