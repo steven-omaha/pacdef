@@ -21,7 +21,6 @@ pub struct MainArguments {
 pub enum MainSubcommand {
     Clean(CleanPackageAction),
     Review(ReviewPackageAction),
-    Search(SearchPackageAction),
     Sync(SyncPackageAction),
     Unmanaged(UnmanagedPackageAction),
     Version(VersionArguments),
@@ -40,15 +39,6 @@ pub struct CleanPackageAction {
 #[command(visible_alias("r"))]
 /// review unmanaged packages
 pub struct ReviewPackageAction {}
-
-#[derive(Args)]
-#[command(arg_required_else_help(true), visible_alias("se"))]
-/// search for packages which match a provided regex
-pub struct SearchPackageAction {
-    #[arg(required(true))]
-    /// the regular expression the package must match
-    pub regex: String,
-}
 
 #[derive(Args)]
 #[command(visible_alias("sy"))]

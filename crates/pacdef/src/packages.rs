@@ -7,21 +7,6 @@ use std::{
 
 use crate::prelude::*;
 
-pub struct Groups {
-    groups: BTreeMap<String, PackagesInstall>,
-}
-impl Groups {
-    pub fn to_packages_install(&self) -> PackagesInstall {
-        let mut packages = PackagesInstall::default();
-
-        for group in self.groups.values() {
-            packages.append(&mut group.clone());
-        }
-
-        packages
-    }
-}
-
 #[derive(Debug, Clone, Default)]
 pub struct PackagesIds {
     pub apt: BTreeSet<<Apt as Backend>::PackageId>,

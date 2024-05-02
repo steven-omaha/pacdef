@@ -30,9 +30,9 @@ mod config;
 mod core;
 mod env;
 mod errors;
+mod groups;
 mod packages;
 mod review;
-mod search;
 mod ui;
 
 #[allow(unused_imports)]
@@ -40,4 +40,5 @@ mod prelude;
 
 pub mod path;
 
+pub use prelude::Groups;
 pub use prelude::{Config, Error};

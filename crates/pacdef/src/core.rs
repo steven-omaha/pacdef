@@ -9,7 +9,6 @@ use crate::cmd::run_args;
 use crate::env::{get_editor, should_print_debug_info};
 use crate::prelude::*;
 use crate::review::review;
-use crate::search::search_packages;
 use crate::ui::get_user_confirmation;
 
 impl MainArguments {
@@ -25,7 +24,6 @@ impl MainArguments {
         match self.subcommand {
             MainSubcommand::Clean(clean) => clean.run(groups, config),
             MainSubcommand::Review(review) => review.run(groups, config),
-            MainSubcommand::Search(search) => search.run(groups),
             MainSubcommand::Sync(sync) => sync.run(groups, config),
             MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(groups, config),
             MainSubcommand::Version(version) => version.run(config),
@@ -69,12 +67,6 @@ impl CleanPackageAction {
 impl ReviewPackageAction {
     fn run(self, _: &Groups, _: &Config) -> Result<()> {
         review()
-    }
-}
-
-impl SearchPackageAction {
-    fn run(self, groups: &Groups) -> Result<()> {
-        search_packages(&self.regex, groups)
     }
 }
 
