@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::{
     collections::{BTreeMap, BTreeSet},
+    fmt::Display,
     str::FromStr,
 };
 
@@ -119,6 +120,18 @@ impl PackagesQuery {
 }
 
 impl PackagesIds {
+    pub fn is_empty(&self) -> bool {
+        self.apt.is_empty()
+            && self.arch.is_empty()
+            && self.cargo.is_empty()
+            && self.dnf.is_empty()
+            && self.flatpak.is_empty()
+            && self.pip.is_empty()
+            && self.pipx.is_empty()
+            && self.rustup.is_empty()
+            && self.xbps.is_empty()
+    }
+
     pub fn difference(&self, other: &Self) -> Self {
         Self {
             apt: self.apt.difference(&other.apt).cloned().collect(),
@@ -154,6 +167,21 @@ impl PackagesInstall {
             .and(pipx)
             .and(rustup)
             .and(xbps)
+    }
+
+    #[rustfmt::skip]
+    pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
+        Self {
+            apt: packages_ids.apt.iter().map(|x| (x.clone(), <Apt as Backend>::InstallOptions::default())).collect(),
+            arch: packages_ids.arch.iter().map(|x| (x.clone(), <Arch as Backend>::InstallOptions::default())).collect(),
+            cargo: packages_ids.cargo.iter().map(|x| (x.clone(), <Cargo as Backend>::InstallOptions::default())).collect(),
+            dnf: packages_ids.dnf.iter().map(|x| (x.clone(), <Dnf as Backend>::InstallOptions::default())).collect(),
+            flatpak: packages_ids.flatpak.iter().map(|x| (x.clone(), <Flatpak as Backend>::InstallOptions::default())).collect(),
+            pip: packages_ids.pip.iter().map(|x| (x.clone(), <Pip as Backend>::InstallOptions::default())).collect(),
+            pipx: packages_ids.pipx.iter().map(|x| (x.clone(), <Pipx as Backend>::InstallOptions::default())).collect(),
+            rustup: packages_ids.rustup.iter().map(|x| (x.clone(), <Rustup as Backend>::InstallOptions::default())).collect(),
+            xbps: packages_ids.xbps.iter().map(|x| (x.clone(), <Xbps as Backend>::InstallOptions::default())).collect(),
+        }
     }
 }
 
@@ -219,5 +247,57 @@ impl PackagesIds {
         missing.clear_backends(&config.disabled_backends);
 
         Ok(missing)
+    }
+}
+
+impl Display for PackagesIds {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        macro_rules! list {
+            ($id:ident) => {
+                let $id = itertools::Itertools::intersperse(
+                    self.$id.iter().map(|x| x.to_string()),
+                    "\n".to_string(),
+                )
+                .collect::<String>();
+            };
+        }
+
+        list!(apt);
+        list!(cargo);
+        list!(dnf);
+        list!(flatpak);
+        list!(pip);
+        list!(pipx);
+        list!(rustup);
+        list!(xbps);
+
+        write!(
+            f,
+            "
+[apt]
+{apt}
+
+[cargo]
+{cargo}
+
+[dnf]
+{dnf}
+
+[flatpak]
+{flatpak}
+
+[pip]
+{pip}
+
+[pipx]
+{pipx}
+
+[rustup]
+{rustup}
+
+[xbps]
+{xbps}
+"
+        )
     }
 }

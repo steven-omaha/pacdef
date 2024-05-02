@@ -13,7 +13,7 @@ pub struct DnfQueryInfo {
     user: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DnfInstallOptions {
     repo: Option<String>,
 }

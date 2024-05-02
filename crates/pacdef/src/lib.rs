@@ -40,4 +40,4 @@ mod prelude;
 
 pub mod path;
 
-pub use prelude::{PackagesId, Config, Error};
+pub use prelude::{Config, Error};

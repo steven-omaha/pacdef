@@ -25,6 +25,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
 derive_more = "0.99"
+itertools = "0.12"
 
 alpm = "3.0"
 rust-apt = "0.7"

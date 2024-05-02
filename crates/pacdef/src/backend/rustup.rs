@@ -7,10 +7,11 @@ use std::collections::BTreeMap;
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Rustup;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, derive_more::Display)]
 pub enum RustupPackageId {
     Toolchain(String),
     /// Toolchain, Component
+    #[display(fmt = "{}/{}", _0, _1)]
     Component(String, String),
 }
 

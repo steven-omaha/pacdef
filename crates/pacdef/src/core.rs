@@ -81,24 +81,24 @@ impl SearchPackageAction {
 
 impl SyncPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let to_install = get_missing_packages(groups, config)?;
+        let missing = PackagesIds::missing(groups, config)?;
 
-        if to_install.nothing_to_do_for_all_backends() {
+        if missing.is_empty() {
             println!("nothing to do");
             return Ok(());
         }
 
-        println!("Would install the following packages:\n");
-        to_install.show().context("printing things to do")?;
+        println!("Would install the following packages:\n\n{missing}\n");
 
-        println!();
         if self.no_confirm {
             println!("proceeding without confirmation");
         } else if !get_user_confirmation()? {
             return Ok(());
         }
 
-        to_install.install_missing_packages(self.no_confirm)
+        let packages_to_install = PackagesInstall::from_packages_ids_defaults(&missing);
+
+        packages_to_install.install(self.no_confirm, config)
     }
 }
 
@@ -115,7 +115,6 @@ impl UnmanagedPackageAction {
             .context("printing things to do")
     }
 }
-
 
 /// Get a list of unmanaged packages per backend.
 ///
