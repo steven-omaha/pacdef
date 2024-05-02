@@ -44,12 +44,6 @@ impl VersionArguments {
     }
 }
 
-impl PackageArguments {
-    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        match self.package_action {}
-    }
-}
-
 impl CleanPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
         let to_remove = get_unmanaged_packages(groups, config)?;
@@ -122,38 +116,6 @@ impl UnmanagedPackageAction {
     }
 }
 
-fn get_missing_packages(groups: &Groups, config: &Config) -> Result<BackendPackages> {
-    let backend_packages = groups_to_backend_packages(groups, config)?;
-
-    let mut to_install = ToDoPerBackend::new();
-
-    for (any_backend, packages) in &backend_packages {
-        let backend_info = any_backend.backend_info();
-
-        if config
-            .disabled_backends
-            .contains(&backend_info.section.to_string())
-        {
-            continue;
-        }
-
-        if !binary_in_path(&backend_info.binary)? {
-            continue;
-        }
-
-        let managed_backend = ManagedBackend {
-            packages: packages.clone(),
-            any_backend: any_backend.clone(),
-        };
-
-        match managed_backend.get_missing_packages_sorted() {
-            Ok(diff) => to_install.push((any_backend.clone(), diff)),
-            Err(error) => show_backend_query_error(&error, any_backend),
-        };
-    }
-
-    Ok(to_install)
-}
 
 /// Get a list of unmanaged packages per backend.
 ///

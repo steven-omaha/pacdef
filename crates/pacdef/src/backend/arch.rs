@@ -5,9 +5,10 @@ use std::collections::BTreeMap;
 use crate::cmd::run_args;
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, derive_more::Display)]
 pub struct Arch;
 
+#[derive(Debug, Clone)]
 pub struct ArchQueryInfo {
     reason: PackageReason,
 }

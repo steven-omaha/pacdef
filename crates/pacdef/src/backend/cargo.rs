@@ -8,7 +8,7 @@ use serde_json::Value;
 use crate::cmd::run_args;
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Cargo;
 
 impl Backend for Cargo {

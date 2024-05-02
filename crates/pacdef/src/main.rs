@@ -22,7 +22,7 @@ use anyhow::{bail, Context, Result};
 use clap::Parser;
 use pacdef::cli::MainArguments;
 use pacdef::path::{get_config_path, get_config_path_old_version, get_group_dir};
-use pacdef::{Config, Error as PacdefError, BackendPackages};
+use pacdef::{Config, Error as PacdefError, PackagesId};
 
 const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
 You seem to have used version 1.x of pacdef before.
@@ -92,7 +92,7 @@ fn main_inner() -> Result<()> {
     };
 
     let group_dir = get_group_dir().context("resolving group dir")?;
-    let groups = BackendPackages::load(&group_dir, config.warn_not_symlinks)
+    let groups = PackagesId::load(&group_dir, config.warn_not_symlinks)
         .with_context(|| format!("loading groups under {}", group_dir.to_string_lossy()))?;
 
     if groups.is_empty() {

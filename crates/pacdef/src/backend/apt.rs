@@ -7,9 +7,10 @@ use rust_apt::new_cache;
 use crate::cmd::run_args;
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Apt;
 
+#[derive(Debug, Clone)]
 pub struct AptQueryInfo {
     explicit: bool,
 }

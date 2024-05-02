@@ -8,11 +8,45 @@ pub mod pipx;
 pub mod rustup;
 pub mod xbps;
 
-use std::{collections::BTreeMap, process::Command};
+use std::{collections::BTreeMap, str::FromStr};
 
 use crate::prelude::*;
-use anyhow::Result;
+use anyhow::{Context, Result};
 
+#[derive(Debug, Copy, Clone, derive_more::Display)]
+pub enum AnyBackend {
+    Apt(Apt),
+    Cargo(Cargo),
+    Dnf(Dnf),
+    Flatpak(Flatpak),
+    Pip(Pip),
+    Pipx(Pipx),
+    Rustup(Rustup),
+    Xbps(Xbps),
+}
+impl AnyBackend {
+    pub const ALL: [AnyBackend; 8] = [
+        AnyBackend::Apt(Apt),
+        AnyBackend::Cargo(Cargo),
+        AnyBackend::Dnf(Dnf),
+        AnyBackend::Flatpak(Flatpak),
+        AnyBackend::Pip(Pip),
+        AnyBackend::Pipx(Pipx),
+        AnyBackend::Rustup(Rustup),
+        AnyBackend::Xbps(Xbps),
+    ];
+}
+impl FromStr for AnyBackend {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
+        AnyBackend::ALL
+            .iter()
+            .find(|x| x.to_string() == s)
+            .copied()
+            .with_context(|| anyhow::anyhow!("unable to parse backend from string: {s}"))
+    }
+}
 
 /// A trait to represent any package manager backend
 #[enum_dispatch::enum_dispatch]
@@ -23,7 +57,7 @@ pub trait Backend {
     type QueryInfo;
     type Modification;
 
-    /// Query all packages that are installed in the system.
+    /// Query all packages that are installed in the backend.
     ///
     /// # Errors
     ///

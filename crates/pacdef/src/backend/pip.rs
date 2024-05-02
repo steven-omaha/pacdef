@@ -9,9 +9,10 @@ use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Pip;
 
+#[derive(Debug, Clone)]
 pub struct PipQueryInfo {
     explicit: bool,
 }

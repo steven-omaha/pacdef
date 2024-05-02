@@ -5,9 +5,10 @@ use anyhow::Result;
 use crate::cmd::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Flatpak;
 
+#[derive(Debug, Clone)]
 pub struct FlatpakQueryInfo {
     explicit: bool,
     systemwide: bool,

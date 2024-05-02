@@ -5,9 +5,10 @@ use anyhow::Result;
 use crate::cmd::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Dnf;
 
+#[derive(Debug, Clone)]
 pub struct DnfQueryInfo {
     user: bool,
 }

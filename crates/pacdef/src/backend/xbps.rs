@@ -6,7 +6,7 @@ use regex::Regex;
 use crate::cmd::{run_args, run_args_for_stdout};
 use crate::prelude::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, derive_more::Display)]
 pub struct Xbps;
 
 pub struct XbpsMakeImplicit;

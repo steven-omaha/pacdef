@@ -42,7 +42,7 @@ pub fn search_packages(regex_str: &str, groups: &Groups) -> Result<()> {
     Ok(())
 }
 
-fn print_triples(mut vec: Vec<(&BackendPackages, &Section, &Package)>) {
+fn print_triples(mut vec: Vec<(&PackagesId, &Section, &Package)>) {
     vec.sort_unstable();
 
     let mut g0 = String::new();
@@ -59,13 +59,13 @@ fn print_triples(mut vec: Vec<(&BackendPackages, &Section, &Package)>) {
     }
 }
 
-fn save_group_and_section_name(g0: &mut String, g: &BackendPackages, s0: &mut String, s: &Section) {
+fn save_group_and_section_name(g0: &mut String, g: &PackagesId, s0: &mut String, s: &Section) {
     g0.clone_from(&g.name);
     s0.clone_from(&s.name);
 }
 
 fn print_separator_unless_exhausted(
-    iter: &mut Peekable<IntoIter<(&BackendPackages, &Section, &Package)>>,
+    iter: &mut Peekable<IntoIter<(&PackagesId, &Section, &Package)>>,
     g0: &String,
 ) {
     if let Some((g, _, _)) = iter.peek() {
@@ -82,7 +82,7 @@ fn print_section_if_changed(current: &Section, previous_name: &String) {
 }
 
 fn print_group_if_changed(
-    current_group: &BackendPackages,
+    current_group: &PackagesId,
     previous_group_name: &String,
     previous_section_name: &mut String,
 ) {
