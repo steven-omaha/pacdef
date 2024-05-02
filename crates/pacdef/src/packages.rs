@@ -103,35 +103,42 @@ macro_rules! impl_to_packages_ids {
         }
     };
 }
+macro_rules! impl_is_empty {
+    () => {
+        pub fn is_empty(&self) -> bool {
+            self.apt.is_empty()
+                && self.arch.is_empty()
+                && self.cargo.is_empty()
+                && self.dnf.is_empty()
+                && self.flatpak.is_empty()
+                && self.pip.is_empty()
+                && self.pipx.is_empty()
+                && self.rustup.is_empty()
+                && self.xbps.is_empty()
+        }
+    };
+}
 impl PackagesIds {
     impl_append!();
+    impl_is_empty!();
 }
 impl PackagesInstall {
     impl_append!();
+    impl_is_empty!();
     impl_to_packages_ids!();
 }
 impl PackagesRemove {
     impl_append!();
+    impl_is_empty!();
     impl_to_packages_ids!();
 }
 impl PackagesQuery {
     impl_append!();
+    impl_is_empty!();
     impl_to_packages_ids!();
 }
 
 impl PackagesIds {
-    pub fn is_empty(&self) -> bool {
-        self.apt.is_empty()
-            && self.arch.is_empty()
-            && self.cargo.is_empty()
-            && self.dnf.is_empty()
-            && self.flatpak.is_empty()
-            && self.pip.is_empty()
-            && self.pipx.is_empty()
-            && self.rustup.is_empty()
-            && self.xbps.is_empty()
-    }
-
     pub fn difference(&self, other: &Self) -> Self {
         Self {
             apt: self.apt.difference(&other.apt).cloned().collect(),
@@ -181,6 +188,44 @@ impl PackagesInstall {
             pipx: packages_ids.pipx.iter().map(|x| (x.clone(), <Pipx as Backend>::InstallOptions::default())).collect(),
             rustup: packages_ids.rustup.iter().map(|x| (x.clone(), <Rustup as Backend>::InstallOptions::default())).collect(),
             xbps: packages_ids.xbps.iter().map(|x| (x.clone(), <Xbps as Backend>::InstallOptions::default())).collect(),
+        }
+    }
+}
+
+impl PackagesRemove {
+    pub fn remove(self, no_confirm: bool, config: &Config) -> Result<()> {
+        let apt = Apt::remove_packages(&self.apt, no_confirm, config);
+        let arch = Arch::remove_packages(&self.arch, no_confirm, config);
+        let cargo = Cargo::remove_packages(&self.cargo, no_confirm, config);
+        let dnf = Dnf::remove_packages(&self.dnf, no_confirm, config);
+        let flatpak = Flatpak::remove_packages(&self.flatpak, no_confirm, config);
+        let pip = Pip::remove_packages(&self.pip, no_confirm, config);
+        let pipx = Pipx::remove_packages(&self.pipx, no_confirm, config);
+        let rustup = Rustup::remove_packages(&self.rustup, no_confirm, config);
+        let xbps = Xbps::remove_packages(&self.xbps, no_confirm, config);
+
+        apt.and(arch)
+            .and(cargo)
+            .and(dnf)
+            .and(flatpak)
+            .and(pip)
+            .and(pipx)
+            .and(rustup)
+            .and(xbps)
+    }
+
+    #[rustfmt::skip]
+    pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
+        Self {
+            apt: packages_ids.apt.iter().map(|x| (x.clone(), <Apt as Backend>::RemoveOptions::default())).collect(),
+            arch: packages_ids.arch.iter().map(|x| (x.clone(), <Arch as Backend>::RemoveOptions::default())).collect(),
+            cargo: packages_ids.cargo.iter().map(|x| (x.clone(), <Cargo as Backend>::RemoveOptions::default())).collect(),
+            dnf: packages_ids.dnf.iter().map(|x| (x.clone(), <Dnf as Backend>::RemoveOptions::default())).collect(),
+            flatpak: packages_ids.flatpak.iter().map(|x| (x.clone(), <Flatpak as Backend>::RemoveOptions::default())).collect(),
+            pip: packages_ids.pip.iter().map(|x| (x.clone(), <Pip as Backend>::RemoveOptions::default())).collect(),
+            pipx: packages_ids.pipx.iter().map(|x| (x.clone(), <Pipx as Backend>::RemoveOptions::default())).collect(),
+            rustup: packages_ids.rustup.iter().map(|x| (x.clone(), <Rustup as Backend>::RemoveOptions::default())).collect(),
+            xbps: packages_ids.xbps.iter().map(|x| (x.clone(), <Xbps as Backend>::RemoveOptions::default())).collect(),
         }
     }
 }
@@ -243,6 +288,19 @@ impl PackagesIds {
         let mut missing = requested
             .to_packages_ids()
             .difference(&installed.to_packages_ids());
+
+        missing.clear_backends(&config.disabled_backends);
+
+        Ok(missing)
+    }
+    pub fn unmanaged(groups: &Groups, config: &Config) -> Result<Self> {
+        let requested = groups.to_packages_install();
+
+        let installed = PackagesQuery::installed(config)?;
+
+        let mut missing = installed
+            .to_packages_ids()
+            .difference(&requested.to_packages_ids());
 
         missing.clear_backends(&config.disabled_backends);
 

@@ -7,7 +7,6 @@ use const_format::formatcp;
 
 use crate::cmd::run_args;
 use crate::env::{get_editor, should_print_debug_info};
-use crate::path::binary_in_path;
 use crate::prelude::*;
 use crate::review::review;
 use crate::search::search_packages;
@@ -46,24 +45,24 @@ impl VersionArguments {
 
 impl CleanPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let to_remove = get_unmanaged_packages(groups, config)?;
+        let unmanaged = PackagesIds::unmanaged(groups, config)?;
 
-        if to_remove.nothing_to_do_for_all_backends() {
+        if unmanaged.is_empty() {
             println!("nothing to do");
             return Ok(());
         }
 
-        println!("Would remove the following packages:\n");
-        to_remove.show().context("printing things to do")?;
+        println!("Would remove the following packages:\n\n{unmanaged}\n");
 
-        println!();
         if self.no_confirm {
             println!("proceeding without confirmation");
         } else if !get_user_confirmation()? {
             return Ok(());
         }
 
-        to_remove.remove_unmanaged_packages(self.no_confirm)
+        let packages_to_remove = PackagesRemove::from_packages_ids_defaults(&unmanaged);
+
+        packages_to_remove.remove(self.no_confirm, config)
     }
 }
 
@@ -104,55 +103,16 @@ impl SyncPackageAction {
 
 impl UnmanagedPackageAction {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        let unmanaged_per_backend = &get_unmanaged_packages(groups, config)?;
+        let unmanaged = PackagesIds::unmanaged(groups, config)?;
 
-        if unmanaged_per_backend.nothing_to_do_for_all_backends() {
-            return Ok(());
+        if unmanaged.is_empty() {
+            println!("no unmanaged packages");
+        } else {
+            println!("unmanaged packages:\n\n{unmanaged}");
         }
 
-        unmanaged_per_backend
-            .show()
-            .context("printing things to do")
+        Ok(())
     }
-}
-
-/// Get a list of unmanaged packages per backend.
-///
-/// This method loops through all enabled `Backend`s whose binary is in `PATH`.
-///
-/// # Errors
-///
-/// This function will propagate errors from the individual backends.
-fn get_unmanaged_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
-    let backend_packages = groups_to_backend_packages(groups, config)?;
-
-    let mut todo_unmanaged = ToDoPerBackend::new();
-
-    for (any_backend, packages) in &backend_packages {
-        let backend_info = any_backend.backend_info();
-        if config
-            .disabled_backends
-            .contains(&backend_info.section.to_string())
-        {
-            continue;
-        }
-
-        if !binary_in_path(&backend_info.binary)? {
-            continue;
-        }
-
-        let managed_backend = ManagedBackend {
-            packages: packages.clone(),
-            any_backend: any_backend.clone(),
-        };
-
-        match managed_backend.get_unmanaged_packages_sorted() {
-            Ok(unmanaged) => todo_unmanaged.push((any_backend.clone(), unmanaged)),
-            Err(error) => show_backend_query_error(&error, any_backend),
-        };
-    }
-
-    Ok(todo_unmanaged)
 }
 
 /// Create the parent directory of the `path` if that directory does not exist.
