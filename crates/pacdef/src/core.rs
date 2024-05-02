@@ -1,15 +1,13 @@
-use std::env::current_dir;
-use std::fs::{copy, create_dir_all, remove_file, rename, File};
-use std::os::unix::fs::symlink;
+use std::ffi::OsString;
+use std::fs::{copy, create_dir_all, remove_file, rename};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
-use anyhow::{bail, ensure, Context, Result};
+use anyhow::{bail, Context, Result};
 use const_format::formatcp;
 
 use crate::cmd::run_args;
 use crate::env::{get_editor, should_print_debug_info};
-use crate::path::{binary_in_path, get_absolutized_file_paths, get_group_dir};
+use crate::path::binary_in_path;
 use crate::prelude::*;
 use crate::review::review;
 use crate::search::search_packages;
@@ -26,8 +24,11 @@ impl MainArguments {
     /// This function propagates errors from the underlying functions.
     pub fn run(self, groups: &Groups, config: &Config) -> Result<()> {
         match self.subcommand {
-            MainSubcommand::Group(group) => group.run(groups),
-            MainSubcommand::Package(package) => package.run(groups, config),
+            MainSubcommand::Clean(clean) => clean.run(groups, config),
+            MainSubcommand::Review(review) => review.run(groups, config),
+            MainSubcommand::Search(search) => search.run(groups),
+            MainSubcommand::Sync(sync) => sync.run(groups, config),
+            MainSubcommand::Unmanaged(unmanaged) => unmanaged.run(groups, config),
             MainSubcommand::Version(version) => version.run(config),
         }
     }
@@ -36,286 +37,8 @@ impl MainArguments {
 impl VersionArguments {
     /// If the crate was compiled from git, return `pacdef, <version> (<hash>)`.
     /// Otherwise return `pacdef, <version>`.
-    fn run(self, config: &Config) -> Result<()> {
-        let backends = get_included_backends(config);
-        let mut result = format!("pacdef, version: {}\n", get_version_string());
-        result.push_str("supported backends:");
-        for b in backends {
-            result.push_str("\n  ");
-            result.push_str(b);
-        }
-
-        println!("{}", result);
-
-        Ok(())
-    }
-}
-
-impl GroupArguments {
-    fn run(self, groups: &Groups) -> Result<()> {
-        match self.group_action {
-            GroupAction::Edit(edit) => edit.run(groups),
-            GroupAction::Export(export) => export.run(groups),
-            GroupAction::Import(import) => import.run(),
-            GroupAction::List(list) => list.run(groups),
-            GroupAction::New(new) => new.run(),
-            GroupAction::Remove(remove) => remove.run(groups),
-            GroupAction::Show(show) => show.run(groups),
-        }
-    }
-}
-
-impl EditGroupAction {
-    fn run(self, groups: &Groups) -> Result<()> {
-        let erroneous_group_names = self
-            .edit_groups
-            .iter()
-            .filter(|x| !groups.contains_key(*x))
-            .collect::<Vec<_>>();
-
-        if erroneous_group_names.is_empty() {
-            let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
-            cmd.current_dir(
-                group_files[0]
-                    .parent()
-                    .context("getting parent dir of first file argument")?,
-            );
-            for group_file in group_files {
-                cmd.arg(group_file.to_string_lossy().to_string());
-            }
-            run_external_command(cmd)?;
-
-            Ok(())
-        } else {
-            return Error::MultipleGroupsNotFound(erroneous_group_names);
-        }
-    }
-}
-
-impl ExportGroupAction {
-    /// Export pacdef groups by moving a group file to an output dir. The path of the
-    /// group file relative to the group base dir will be replicated under the output
-    /// directory.
-    ///
-    /// By default, the output dir is the current working directory. `output_dir` may be
-    /// specified to the path of another directory, in which case `output_dir` must
-    /// exist.
-    ///
-    /// If `force` is `true`, the output file will be overwritten if it exists.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if
-    /// - the group file is a symlink (in which case exporting makes no sense),
-    /// - the output file exists and `force` is not `true`, or
-    /// - the user does not have permission to write to the output dir.
-    ///
-    /// # Limitations
-    ///
-    /// At the moment we cannot export nested group dirs. The user would have to
-    /// export every group file individually, or use a shell glob.
-    fn run(self, groups: &Groups) -> Result<()> {
-        let groups = find_groups_by_name(&self.export_groups, groups)?;
-        let output_dir = match self.output_dir {
-            Some(p) => p,
-            None => current_dir().context("no output dir specified, getting current directory")?,
-        };
-
-        ensure!(
-            output_dir.exists() && output_dir.is_dir(),
-            "output must be a directory and exist"
-        );
-
-        for group in &groups {
-            ensure!(!&group.path.is_symlink(), "cannot export symlinks");
-
-            let mut exported_path = output_dir.clone();
-            exported_path.push(PathBuf::from(&group.name));
-
-            ensure!(
-                !self.force && !exported_path.exists(),
-                "{exported_path:?} already exists"
-            );
-
-            create_parent(&exported_path)
-                .with_context(|| format!("creating parent dir of {exported_path:?}"))?;
-            move_file(&group.path, &exported_path).context("moving file")?;
-            symlink(&exported_path, &group.path).context("creating symlink to exported file")?;
-        }
-
-        Ok(())
-    }
-}
-
-impl ImportGroupAction {
-    fn run(self) -> Result<()> {
-        let files = get_absolutized_file_paths(&self.import_groups)?;
-        let groups_dir = get_group_dir()?;
-
-        for target in files {
-            let target_name = target
-                .file_name()
-                .context("path should not end in '..'")?
-                .to_str()
-                .context("filename is not valid UTF-8")?;
-
-            if !target.exists() {
-                log::warn!("file {target_name} does not exist, skipping");
-                continue;
-            }
-
-            let mut link = groups_dir.clone();
-            link.push(target_name);
-
-            if link.exists() {
-                log::warn!("group {target_name} already exists, skipping");
-            } else {
-                symlink(target, link)?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl ListGroupAction {
-    /// Print the alphabetically sorted names of all groups to stdout.
-    ///
-    /// This methods cannot return an error. It returns a `Result` to be consistent
-    /// with other methods.
-    fn run(self, groups: &Groups) -> Result<()> {
-        let mut vec: Vec<_> = groups.iter().collect();
-        vec.sort_unstable();
-        for g in vec {
-            println!("{}", g.name);
-        }
-
-        Ok(())
-    }
-}
-
-impl NewGroupAction {
-    /// Create empty group files.
-    ///
-    /// If `edit` is `true`, the editor will be run to edit the files after they are
-    /// created.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if
-    /// - a group name is `.` or `..`,
-    /// - a group with the same name already exists,
-    /// - the editor cannot be run, or
-    /// - if we do not have permission to write to the group dir.
-    fn run(&self) -> Result<()> {
-        let group_path = get_group_dir()?;
-
-        // prevent group names that resolve to directories
-        for new_group in &self.new_groups {
-            ensure!(
-                new_group != "." && new_group != "..",
-                Error::InvalidGroupName(new_group.clone())
-            );
-        }
-
-        let paths: Vec<_> = self
-            .new_groups
-            .iter()
-            .map(|name| {
-                let mut base = group_path.clone();
-                base.push(name);
-                base
-            })
-            .collect();
-
-        for file in &paths {
-            ensure!(!file.exists(), Error::GroupAlreadyExists(file.clone()));
-        }
-
-        for file in &paths {
-            File::create(file)?;
-        }
-
-        if self.edit {
-            /// Run the editor and pass the provided files as arguments. The workdir is set
-            /// to the parent of the first file.
-            pub fn run_edit_command<P>(files: &[P]) -> Result<()>
-            where
-                P: AsRef<Path>,
-            {
-                fn inner(files: &[&Path]) -> Result<()> {
-                    let mut cmd = Command::new(get_editor().context("getting suitable editor")?);
-                    cmd.current_dir(
-                        files[0]
-                            .parent()
-                            .context("getting parent dir of first file argument")?,
-                    );
-                    for f in files {
-                        cmd.arg(f.to_string_lossy().to_string());
-                    }
-                    run_external_command(cmd)
-                }
-
-                let files: Vec<_> = files.iter().map(|p| p.as_ref()).collect();
-                inner(&files)
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl RemoveGroupAction {
-    fn run(self, groups: &Groups) -> Result<()> {
-        let found = find_groups_by_name(&self.remove_groups, groups)?;
-
-        for group in found {
-            remove_file(&group.path)?;
-        }
-
-        Ok(())
-    }
-}
-
-impl ShowGroupAction {
-    fn run(self, groups: &Groups) -> Result<()> {
-        let mut errors = vec![];
-        let mut found_groups = vec![];
-
-        // make sure all args exist before doing anything
-        for show_group in &self.show_groups {
-            let possible_group = groups.iter().find(|group| group.name == *show_group);
-
-            let Some(group) = possible_group else {
-                errors.push(show_group.to_string());
-                continue;
-            };
-
-            found_groups.push(group);
-        }
-
-        // return an error if any arg was not found
-        ensure!(errors.is_empty(), Error::MultipleGroupsNotFound(errors));
-
-        let show_more_than_one_group = self.show_groups.len() > 1;
-
-        let mut iter = found_groups.into_iter().peekable();
-
-        while let Some(group) = iter.next() {
-            if show_more_than_one_group {
-                let name = &group.name;
-                println!("{name}");
-                for _ in 0..name.len() {
-                    print!("-");
-                }
-                println!();
-            }
-
-            println!("{group}");
-            if iter.peek().is_some() {
-                println!();
-            }
-        }
+    fn run(self, _: &Config) -> Result<()> {
+        println!("pacdef, version: {}\n", get_version_string());
 
         Ok(())
     }
@@ -323,13 +46,7 @@ impl ShowGroupAction {
 
 impl PackageArguments {
     fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        match self.package_action {
-            PackageAction::Clean(clean) => clean.run(groups, config),
-            PackageAction::Review(review) => review.run(groups, config),
-            PackageAction::Search(search) => search.run(groups),
-            PackageAction::Sync(sync) => sync.run(groups, config),
-            PackageAction::Unmanaged(unmanaged) => unmanaged.run(groups, config),
-        }
+        match self.package_action {}
     }
 }
 
@@ -357,8 +74,8 @@ impl CleanPackageAction {
 }
 
 impl ReviewPackageAction {
-    fn run(self, groups: &Groups, config: &Config) -> Result<()> {
-        review(get_unmanaged_packages(groups, config)?, groups)
+    fn run(self, _: &Groups, _: &Config) -> Result<()> {
+        review()
     }
 }
 
@@ -405,7 +122,7 @@ impl UnmanagedPackageAction {
     }
 }
 
-fn get_missing_packages(groups: &Groups, config: &Config) -> Result<ToDoPerBackend> {
+fn get_missing_packages(groups: &Groups, config: &Config) -> Result<BackendPackages> {
     let backend_packages = groups_to_backend_packages(groups, config)?;
 
     let mut to_install = ToDoPerBackend::new();
@@ -554,12 +271,16 @@ pub const fn get_version_string() -> &'static str {
     }
 }
 
-/// Get a vector with the names of all backends, sorted alphabetically.
-fn get_included_backends(config: &Config) -> Vec<&'static str> {
-    let mut result = vec![];
-    for backend in AnyBackend::all(config) {
-        result.push(backend.backend_info().section);
+fn edit_files(files: Vec<PathBuf>) -> Result<()> {
+    let editor = get_editor()?;
+    for file in files {
+        run_args(
+            [
+                OsString::from(editor.as_str()),
+                file.as_path().as_os_str().to_owned(),
+            ]
+            .into_iter(),
+        )?;
     }
-    result.sort_unstable();
-    result
+    Ok(())
 }

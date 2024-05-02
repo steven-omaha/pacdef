@@ -30,7 +30,7 @@ mod config;
 mod core;
 mod env;
 mod errors;
-mod groups;
+mod packages;
 mod review;
 mod search;
 mod ui;
@@ -40,4 +40,4 @@ mod prelude;
 
 pub mod path;
 
-pub use prelude::{Config, Error, Group};
+pub use prelude::{BackendPackages, Config, Error};

@@ -2,7 +2,10 @@ use std::process::Command;
 
 use anyhow::Result;
 
-pub fn run_args_for_stdout<'a>(mut args: impl Iterator<Item = &'a str>) -> Result<String> {
+pub fn run_args_for_stdout<S>(mut args: impl Iterator<Item = S>) -> Result<String>
+where
+    S: std::convert::AsRef<std::ffi::OsStr>,
+{
     let we_are_root = {
         let uid = unsafe { libc::geteuid() };
         uid == 0
@@ -25,6 +28,9 @@ pub fn run_args_for_stdout<'a>(mut args: impl Iterator<Item = &'a str>) -> Resul
     }
 }
 
-pub fn run_args<'a>(args: impl Iterator<Item = &'a str>) -> Result<()> {
+pub fn run_args<S>(args: impl Iterator<Item = S>) -> Result<()>
+where
+    S: std::convert::AsRef<std::ffi::OsStr>,
+{
     run_args_for_stdout(args).map(|_| ())
 }
