@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
 
-use crate::cmd::{run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
@@ -23,6 +23,10 @@ impl Backend for Flatpak {
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("flatpak") {
+            return Ok(BTreeMap::new());
+        }
+
         let sys_explicit_btree = run_args_for_stdout(
             [
                 "flatpak",

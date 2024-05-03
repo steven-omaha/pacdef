@@ -1,9 +1,10 @@
+use std::collections::BTreeMap;
 use std::process::Command;
 
 use anyhow::Result;
 use regex::Regex;
 
-use crate::cmd::{run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
@@ -21,6 +22,10 @@ impl Backend for Xbps {
     fn query_installed_packages(
         _: &Config,
     ) -> Result<std::collections::BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("xbps-query") {
+            return Ok(BTreeMap::new());
+        }
+
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
         let stdout = run_args_for_stdout(["xbps-query", "-l"].into_iter())?;

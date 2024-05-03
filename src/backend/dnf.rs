@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use anyhow::Result;
 
-use crate::cmd::{run_args, run_args_for_stdout};
+use crate::cmd::{command_found, run_args, run_args_for_stdout};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
@@ -27,6 +27,10 @@ impl Backend for Dnf {
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("dnf") {
+            return Ok(BTreeMap::new());
+        }
+
         let system_packages = run_args_for_stdout(
             [
                 "dnf",

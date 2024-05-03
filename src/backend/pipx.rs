@@ -5,6 +5,7 @@ use anyhow::Context;
 use anyhow::Result;
 use serde_json::Value;
 
+use crate::cmd::command_found;
 use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
@@ -20,6 +21,10 @@ impl Backend for Pipx {
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("pipx") {
+            return Ok(BTreeMap::new());
+        }
+
         let names =
             extract_package_names(run_args_for_stdout(["pipx", "list", "--json"].into_iter())?)?;
 

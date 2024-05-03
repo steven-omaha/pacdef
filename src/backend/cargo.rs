@@ -5,7 +5,7 @@ use std::{collections::BTreeMap, fs::read_to_string};
 use anyhow::{bail, Context, Result};
 use serde_json::Value;
 
-use crate::cmd::run_args;
+use crate::cmd::{command_found, run_args};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
@@ -19,6 +19,10 @@ impl Backend for Cargo {
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("cargo") {
+            return Ok(BTreeMap::new());
+        }
+
         let file = get_crates_file().context("getting path to crates file")?;
 
         let contents = match read_to_string(file) {

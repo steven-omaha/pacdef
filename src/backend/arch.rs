@@ -1,5 +1,5 @@
 use alpm::{Alpm, PackageReason};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::collections::BTreeMap;
 
 use crate::cmd::run_args;
@@ -24,8 +24,10 @@ impl Backend for Arch {
     type Modification = ArchMakeImplicit;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
-        let alpm = Alpm::new("/", "/var/lib/pacman")
-            .context("connecting to DB using expected default values")?;
+        let alpm = match Alpm::new("/", "/var/lib/pacman") {
+            Ok(x) => x,
+            Err(_) => return Ok(BTreeMap::new()),
+        };
 
         Ok(alpm
             .localdb()

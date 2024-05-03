@@ -4,7 +4,7 @@ use anyhow::Result;
 use rust_apt::cache::{PackageSort, Sort};
 use rust_apt::new_cache;
 
-use crate::cmd::run_args;
+use crate::cmd::{command_found, run_args};
 use crate::prelude::*;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
@@ -26,6 +26,10 @@ impl Backend for Apt {
     type Modification = AptMakeImplicit;
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("apt") {
+            return Ok(BTreeMap::new());
+        }
+
         let cache = new_cache!()?;
 
         let packages = cache.packages(&PackageSort {

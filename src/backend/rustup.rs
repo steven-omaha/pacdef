@@ -1,3 +1,4 @@
+use crate::cmd::command_found;
 use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
@@ -23,6 +24,10 @@ impl Backend for Rustup {
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("rustup") {
+            return Ok(BTreeMap::new());
+        }
+
         let mut packages = BTreeMap::new();
 
         let toolchains_stdout = run_args_for_stdout(["rustup", "toolchain", "list"].into_iter())?;

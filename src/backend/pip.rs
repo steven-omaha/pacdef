@@ -5,6 +5,7 @@ use anyhow::Context;
 use anyhow::Result;
 use serde_json::Value;
 
+use crate::cmd::command_found;
 use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
@@ -26,6 +27,10 @@ impl Backend for Pip {
     type Modification = ();
 
     fn query_installed_packages(_: &Config) -> Result<BTreeMap<Self::PackageId, Self::QueryInfo>> {
+        if !command_found("pip") {
+            return Ok(BTreeMap::new());
+        }
+
         let all = extract_package_names(run_args_for_stdout(
             ["pip", "list", "--format", "json"].into_iter(),
         )?)?;
