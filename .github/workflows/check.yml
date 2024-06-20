@@ -25,6 +25,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+
   test:
     runs-on: ubuntu-latest
     container:
@@ -52,3 +53,13 @@ jobs:
         if: '!cancelled()'
         run: cargo test --workspace --features arch,debian
 
+  smoke_test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/archlinux/archlinux:base-devel
+    steps:
+    - name: Install dependencies
+      run: pacman -Syyu --noconfirm rust git zsh
+    - uses: actions/checkout@master
+    - name: Build
+      run: cargo build --features arch

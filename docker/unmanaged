@@ -1,0 +1,5 @@
+[arch]
+base-devel
+git
+rust
+zsh
