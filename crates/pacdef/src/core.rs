@@ -548,11 +548,7 @@ pub const fn get_version_string() -> &'static str {
     const VERSION: &str = env!("CARGO_PKG_VERSION");
     const HASH: &str = env!("GIT_HASH");
 
-    if HASH.is_empty() {
-        VERSION
-    } else {
-        formatcp!("{VERSION} ({HASH})")
-    }
+    formatcp!("{VERSION} ({HASH})")
 }
 
 /// Get a vector with the names of all backends, sorted alphabetically.

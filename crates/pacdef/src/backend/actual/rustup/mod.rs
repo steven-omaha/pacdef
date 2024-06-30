@@ -124,7 +124,7 @@ impl Rustup {
         let mut val = Vec::new();
 
         for line in output.lines() {
-            let toolchain = line.split('-').next();
+            let toolchain = line.rsplitn(5, '-').last();
             match toolchain {
                 Some(name) => val.push(name.to_string()),
                 None => bail!("Toolchain name not provided!"),
