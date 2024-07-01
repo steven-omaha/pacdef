@@ -25,8 +25,7 @@ impl Backend for Pipx {
             return Ok(BTreeMap::new());
         }
 
-        let names =
-            extract_package_names(run_args_for_stdout(["pipx", "list", "--json"].into_iter())?)?;
+        let names = extract_package_names(run_args_for_stdout(["pipx", "list", "--json"])?)?;
 
         Ok(names.into_iter().map(|x| (x, ())).collect())
     }

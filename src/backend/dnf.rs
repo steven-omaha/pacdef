@@ -31,28 +31,22 @@ impl Backend for Dnf {
             return Ok(BTreeMap::new());
         }
 
-        let system_packages = run_args_for_stdout(
-            [
-                "dnf",
-                "repoquery",
-                "--installed",
-                "--queryformat",
-                "%{from_repo}/%{name}",
-            ]
-            .into_iter(),
-        )?;
+        let system_packages = run_args_for_stdout([
+            "dnf",
+            "repoquery",
+            "--installed",
+            "--queryformat",
+            "%{from_repo}/%{name}",
+        ])?;
         let system_packages = system_packages.lines().map(parse_package);
 
-        let user_packages = run_args_for_stdout(
-            [
-                "dnf",
-                "repoquery",
-                "--userinstalled",
-                "--queryformat",
-                "%{from_repo}/%{name}",
-            ]
-            .into_iter(),
-        )?;
+        let user_packages = run_args_for_stdout([
+            "dnf",
+            "repoquery",
+            "--userinstalled",
+            "--queryformat",
+            "%{from_repo}/%{name}",
+        ])?;
         let user_packages = user_packages.lines().map(parse_package);
 
         Ok(system_packages

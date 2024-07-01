@@ -27,45 +27,37 @@ impl Backend for Flatpak {
             return Ok(BTreeMap::new());
         }
 
-        let sys_explicit_btree = run_args_for_stdout(
-            [
-                "flatpak",
-                "list",
-                "--system",
-                "--app",
-                "--columns=application",
-            ]
-            .into_iter(),
-        )?
+        let sys_explicit_btree = run_args_for_stdout([
+            "flatpak",
+            "list",
+            "--system",
+            "--app",
+            "--columns=application",
+        ])?
         .lines()
         .map(String::from)
         .collect::<BTreeSet<_>>();
-        let sys_all_btree = run_args_for_stdout(
-            ["flatpak", "list", "--system", "--columns=application"].into_iter(),
-        )?
-        .lines()
-        .map(String::from)
-        .collect::<BTreeSet<_>>();
+        let sys_all_btree =
+            run_args_for_stdout(["flatpak", "list", "--system", "--columns=application"])?
+                .lines()
+                .map(String::from)
+                .collect::<BTreeSet<_>>();
 
-        let user_explicit_btree = run_args_for_stdout(
-            [
-                "flatpak",
-                "list",
-                "--user",
-                "--app",
-                "--columns=application",
-            ]
-            .into_iter(),
-        )?
+        let user_explicit_btree = run_args_for_stdout([
+            "flatpak",
+            "list",
+            "--user",
+            "--app",
+            "--columns=application",
+        ])?
         .lines()
         .map(String::from)
         .collect::<BTreeSet<_>>();
-        let user_all_btree = run_args_for_stdout(
-            ["flatpak", "list", "--user", "--columns=application"].into_iter(),
-        )?
-        .lines()
-        .map(String::from)
-        .collect::<BTreeSet<_>>();
+        let user_all_btree =
+            run_args_for_stdout(["flatpak", "list", "--user", "--columns=application"])?
+                .lines()
+                .map(String::from)
+                .collect::<BTreeSet<_>>();
 
         let sys_explicit = sys_explicit_btree.iter().map(|x| {
             (

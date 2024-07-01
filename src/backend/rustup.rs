@@ -49,7 +49,7 @@ impl Backend for Rustup {
 
         let mut packages = BTreeMap::new();
 
-        let toolchains_stdout = run_args_for_stdout(["rustup", "toolchain", "list"].into_iter())?;
+        let toolchains_stdout = run_args_for_stdout(["rustup", "toolchain", "list"])?;
         let toolchains = toolchains_stdout.lines().map(|x| {
             x.split(' ')
                 .next()
@@ -60,17 +60,14 @@ impl Backend for Rustup {
         for toolchain in toolchains {
             packages.insert(RustupPackageId::Toolchain(toolchain.clone()), ());
 
-            let components_stdpout = run_args_for_stdout(
-                [
-                    "rustup",
-                    "component",
-                    "list",
-                    "--installed",
-                    "--toolchain",
-                    toolchain.as_str(),
-                ]
-                .into_iter(),
-            )?;
+            let components_stdpout = run_args_for_stdout([
+                "rustup",
+                "component",
+                "list",
+                "--installed",
+                "--toolchain",
+                toolchain.as_str(),
+            ])?;
 
             for component in components_stdpout.lines() {
                 packages.insert(
@@ -91,20 +88,17 @@ impl Backend for Rustup {
         for package_id in packages.keys() {
             match package_id {
                 RustupPackageId::Toolchain(toolchain) => {
-                    run_args(["rustup", "toolchain", "install", toolchain.as_str()].into_iter())?;
+                    run_args(["rustup", "toolchain", "install", toolchain.as_str()])?;
                 }
                 RustupPackageId::Component(toolchain, component) => {
-                    run_args(
-                        [
-                            "rustup",
-                            "component",
-                            "add",
-                            component.as_str(),
-                            "--toolchain",
-                            toolchain.as_str(),
-                        ]
-                        .into_iter(),
-                    )?;
+                    run_args([
+                        "rustup",
+                        "component",
+                        "add",
+                        component.as_str(),
+                        "--toolchain",
+                        toolchain.as_str(),
+                    ])?;
                 }
             }
         }
@@ -127,20 +121,17 @@ impl Backend for Rustup {
         for package_id in packages.keys() {
             match package_id {
                 RustupPackageId::Toolchain(toolchain) => {
-                    run_args(["rustup", "toolchain", "uninstall", toolchain.as_str()].into_iter())?;
+                    run_args(["rustup", "toolchain", "uninstall", toolchain.as_str()])?;
                 }
                 RustupPackageId::Component(toolchain, component) => {
-                    run_args(
-                        [
-                            "rustup",
-                            "component",
-                            "remove",
-                            component.as_str(),
-                            "--toolchain",
-                            toolchain.as_str(),
-                        ]
-                        .into_iter(),
-                    )?;
+                    run_args([
+                        "rustup",
+                        "component",
+                        "remove",
+                        component.as_str(),
+                        "--toolchain",
+                        toolchain.as_str(),
+                    ])?;
                 }
             }
         }

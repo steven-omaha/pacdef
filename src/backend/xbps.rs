@@ -28,7 +28,7 @@ impl Backend for Xbps {
 
         let mut cmd = Command::new("xbps-query");
         cmd.args(["-l"]);
-        let stdout = run_args_for_stdout(["xbps-query", "-l"].into_iter())?;
+        let stdout = run_args_for_stdout(["xbps-query", "-l"])?;
 
         // Removes the package status and description from output
         let re1 = Regex::new(r"^ii |^uu |^hr |^\?\? | .*")?;

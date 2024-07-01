@@ -31,12 +31,14 @@ impl Backend for Pip {
             return Ok(BTreeMap::new());
         }
 
-        let all = extract_package_names(run_args_for_stdout(
-            ["pip", "list", "--format", "json"].into_iter(),
-        )?)?;
-        let implicit = extract_package_names(run_args_for_stdout(
-            ["pip", "list", "--format", "json", "--not-required"].into_iter(),
-        )?)?;
+        let all = extract_package_names(run_args_for_stdout(["pip", "list", "--format", "json"])?)?;
+        let implicit = extract_package_names(run_args_for_stdout([
+            "pip",
+            "list",
+            "--format",
+            "json",
+            "--not-required",
+        ])?)?;
 
         let explicit = all.difference(&implicit);
 

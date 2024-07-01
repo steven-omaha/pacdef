@@ -14,10 +14,12 @@ pub fn command_found(command: &str) -> bool {
     false
 }
 
-pub fn run_args_for_stdout<S>(mut args: impl Iterator<Item = S>) -> Result<String>
+pub fn run_args_for_stdout<I, S>(args: I) -> Result<String>
 where
     S: std::convert::AsRef<std::ffi::OsStr>,
+    I: IntoIterator<Item = S>,
 {
+    let mut args = args.into_iter();
     let we_are_root = {
         let uid = unsafe { libc::geteuid() };
         uid == 0
@@ -40,9 +42,10 @@ where
     }
 }
 
-pub fn run_args<S>(args: impl Iterator<Item = S>) -> Result<()>
+pub fn run_args<I, S>(args: I) -> Result<()>
 where
     S: std::convert::AsRef<std::ffi::OsStr>,
+    I: IntoIterator<Item = S>,
 {
     run_args_for_stdout(args).map(|_| ())
 }
