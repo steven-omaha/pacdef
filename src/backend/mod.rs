@@ -25,6 +25,7 @@ pub enum AnyBackend {
     Rustup(Rustup),
     Xbps(Xbps),
 }
+
 impl AnyBackend {
     pub const ALL: [Self; 8] = [
         // Self::Apt(Apt),
@@ -38,6 +39,7 @@ impl AnyBackend {
         Self::Xbps(Xbps),
     ];
 }
+
 impl FromStr for AnyBackend {
     type Err = anyhow::Error;
 
@@ -53,7 +55,7 @@ impl FromStr for AnyBackend {
 /// A trait to represent any package manager backend
 #[enum_dispatch::enum_dispatch]
 pub trait Backend {
-    type PackageId;
+    type PackageId: TryFrom<String>;
     type InstallOptions;
     type RemoveOptions;
     type QueryInfo;

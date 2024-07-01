@@ -2,7 +2,7 @@ use crate::cmd::command_found;
 use crate::cmd::run_args;
 use crate::cmd::run_args_for_stdout;
 use crate::prelude::*;
-use anyhow::Result;
+use anyhow::{anyhow, bail, Error, Result};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Copy, Clone, derive_more::Display)]
@@ -14,6 +14,25 @@ pub enum RustupPackageId {
     /// Toolchain, Component
     #[display(fmt = "{}/{}", _0, _1)]
     Component(String, String),
+}
+
+impl TryFrom<String> for RustupPackageId {
+    type Error = Error;
+    fn try_from(value: String) -> std::prelude::v1::Result<Self, Self::Error> {
+        match value.split_once('/') {
+            Some((package_type, name)) => match package_type {
+                "toolchain" => Ok(Self::Toolchain(name.to_string())),
+                "component" => name
+                    .split_once('/')
+                    .map(|(toolchain, name)| {
+                        Self::Component(toolchain.to_string(), name.to_string())
+                    })
+                    .ok_or(anyhow!("Invalid package name")),
+                _ => bail!("Invalid package name"),
+            },
+            None => bail!("Invalid package name"),
+        }
+    }
 }
 
 impl Backend for Rustup {
