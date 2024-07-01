@@ -46,7 +46,7 @@ impl FromStr for AnyBackend {
     fn from_str(s: &str) -> std::prelude::v1::Result<Self, Self::Err> {
         Self::ALL
             .iter()
-            .find(|x| x.to_string() == s)
+            .find(|x| x.to_string().to_lowercase() == s)
             .copied()
             .with_context(|| anyhow::anyhow!("unable to parse backend from string: {s}"))
     }

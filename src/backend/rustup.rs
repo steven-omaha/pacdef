@@ -62,6 +62,7 @@ impl Backend for Rustup {
 
             let components_stdpout = run_args_for_stdout(
                 [
+                    "rustup",
                     "component",
                     "list",
                     "--installed",

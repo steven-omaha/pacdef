@@ -34,11 +34,7 @@ impl VersionArguments {
         const VERSION: &str = env!("CARGO_PKG_VERSION");
         const HASH: &str = env!("GIT_HASH");
 
-        let version = if HASH.is_empty() {
-            VERSION
-        } else {
-            formatcp!("{VERSION} ({HASH})")
-        };
+        let version = formatcp!("{VERSION} ({HASH})");
 
         println!("pacdef, version: {}\n", version);
 
