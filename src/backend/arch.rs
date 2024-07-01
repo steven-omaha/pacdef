@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use crate::cmd::run_args;
 use crate::prelude::*;
 
-#[derive(Debug, Clone, derive_more::Display)]
+#[derive(Debug, Clone, Copy, derive_more::Display)]
 pub struct Arch;
 
 #[allow(dead_code)]

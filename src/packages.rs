@@ -258,6 +258,7 @@ impl PackagesIds {
 
             match backend {
                 // AnyBackend::Apt(_) => self.apt.clear(),
+                AnyBackend::Arch(_) => self.arch.clear(),
                 AnyBackend::Cargo(_) => self.cargo.clear(),
                 AnyBackend::Dnf(_) => self.dnf.clear(),
                 AnyBackend::Flatpak(_) => self.flatpak.clear(),

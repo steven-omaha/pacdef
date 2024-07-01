@@ -16,6 +16,7 @@ use anyhow::{Context, Result};
 #[derive(Debug, Copy, Clone, derive_more::Display)]
 pub enum AnyBackend {
     // Apt(Apt),
+    Arch(Arch),
     Cargo(Cargo),
     Dnf(Dnf),
     Flatpak(Flatpak),
@@ -27,6 +28,7 @@ pub enum AnyBackend {
 impl AnyBackend {
     pub const ALL: [Self; 8] = [
         // Self::Apt(Apt),
+        Self::Arch(Arch),
         Self::Cargo(Cargo),
         Self::Dnf(Dnf),
         Self::Flatpak(Flatpak),
