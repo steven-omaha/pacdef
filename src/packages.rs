@@ -56,6 +56,24 @@ pub struct PackagesQuery {
     pub xbps: BTreeMap<<Xbps as Backend>::PackageId, <Xbps as Backend>::QueryInfo>,
 }
 
+macro_rules! impl_new {
+    () => {
+        #[allow(dead_code)]
+        pub fn new() -> Self {
+            Self {
+                arch: BTreeSet::new(),
+                cargo: BTreeSet::new(),
+                dnf: BTreeSet::new(),
+                flatpak: BTreeSet::new(),
+                pip: BTreeSet::new(),
+                pipx: BTreeSet::new(),
+                rustup: BTreeSet::new(),
+                xbps: BTreeSet::new(),
+            }
+        }
+    };
+}
+
 macro_rules! impl_append {
     () => {
         #[allow(dead_code)]
@@ -107,6 +125,7 @@ macro_rules! impl_is_empty {
     };
 }
 impl PackagesIds {
+    impl_new!();
     impl_append!();
     impl_is_empty!();
 }
@@ -139,6 +158,20 @@ impl PackagesIds {
             rustup: self.rustup.difference(&other.rustup).cloned().collect(),
             xbps: self.xbps.difference(&other.xbps).cloned().collect(),
         }
+    }
+
+    pub fn insert_backend_package(&mut self, backend: AnyBackend, package: String) -> Result<()> {
+        match backend {
+            AnyBackend::Cargo(_) => self.cargo.insert(package),
+            AnyBackend::Arch(_) => self.arch.insert(package),
+            AnyBackend::Pip(_) => self.pip.insert(package),
+            AnyBackend::Pipx(_) => self.pipx.insert(package),
+            AnyBackend::Rustup(_) => self.rustup.insert(package.try_into()?),
+            AnyBackend::Xbps(_) => self.xbps.insert(package),
+            AnyBackend::Flatpak(_) => self.flatpak.insert(package),
+            AnyBackend::Dnf(_) => self.dnf.insert(package),
+        };
+        Ok(())
     }
 }
 

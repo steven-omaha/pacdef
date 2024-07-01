@@ -16,6 +16,8 @@ pub enum Error {
     InvalidGroupName(String),
     /// Multiple groups not found.
     MultipleGroupsNotFound(Vec<String>),
+    /// The backend in not managed by pacdef
+    InvalidBackend(String),
 }
 
 impl Display for Error {
@@ -34,6 +36,7 @@ impl Display for Error {
                     vec.join(", ")
                 )
             }
+            Self::InvalidBackend(name) => write!(f, "{name}: No such backend exists"),
         }
     }
 }

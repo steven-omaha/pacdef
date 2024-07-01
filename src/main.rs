@@ -75,7 +75,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
 fn main_inner() -> Result<()> {
     let main_arguments = MainArguments::parse();
 
-    let config_file = get_config_path().context("getting config file")?;
+    let mut config_file = get_config_path().context("getting config file")?;
 
     let config = match Config::load(&config_file).context("loading config file") {
         Ok(config) => config,
@@ -91,7 +91,9 @@ fn main_inner() -> Result<()> {
         }
     };
 
-    let groups = Groups::load(&config).context("failed to load groups")?;
+    config_file.pop();
+    config_file.push("groups");
+    let groups = Groups::load(&config_file, &config).context("failed to load groups")?;
 
     if groups.is_empty() {
         log::warn!("no group files found");
