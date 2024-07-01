@@ -1,4 +1,4 @@
-pub use crate::backend::apt::{Apt, AptMakeImplicit, AptQueryInfo};
+// pub use crate::backend::apt::{Apt, AptMakeImplicit, AptQueryInfo};
 pub use crate::backend::arch::{Arch, ArchMakeImplicit, ArchQueryInfo};
 pub use crate::backend::cargo::Cargo;
 pub use crate::backend::dnf::{Dnf, DnfInstallOptions, DnfQueryInfo};

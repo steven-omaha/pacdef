@@ -27,7 +27,7 @@ derive_more = "0.99"
 itertools = "0.12"
 
 alpm = "3.0"
-rust-apt = "0.7"
+# rust-apt = "0.7"
 
 [profile.release]
 lto = "off"

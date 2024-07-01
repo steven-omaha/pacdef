@@ -9,7 +9,7 @@ use crate::prelude::*;
 
 #[derive(Debug, Clone, Default)]
 pub struct PackagesIds {
-    pub apt: BTreeSet<<Apt as Backend>::PackageId>,
+    // pub apt: BTreeSet<<Apt as Backend>::PackageId>,
     pub arch: BTreeSet<<Arch as Backend>::PackageId>,
     pub cargo: BTreeSet<<Cargo as Backend>::PackageId>,
     pub dnf: BTreeSet<<Dnf as Backend>::PackageId>,
@@ -21,7 +21,7 @@ pub struct PackagesIds {
 }
 #[derive(Debug, Clone, Default)]
 pub struct PackagesInstall {
-    pub apt: BTreeMap<<Apt as Backend>::PackageId, <Apt as Backend>::InstallOptions>,
+    // pub apt: BTreeMap<<Apt as Backend>::PackageId, <Apt as Backend>::InstallOptions>,
     pub arch: BTreeMap<<Arch as Backend>::PackageId, <Arch as Backend>::InstallOptions>,
     pub cargo: BTreeMap<<Cargo as Backend>::PackageId, <Cargo as Backend>::InstallOptions>,
     pub dnf: BTreeMap<<Dnf as Backend>::PackageId, <Dnf as Backend>::InstallOptions>,
@@ -33,7 +33,7 @@ pub struct PackagesInstall {
 }
 #[derive(Debug, Clone, Default)]
 pub struct PackagesRemove {
-    pub apt: BTreeMap<<Apt as Backend>::PackageId, <Apt as Backend>::RemoveOptions>,
+    // pub apt: BTreeMap<<Apt as Backend>::PackageId, <Apt as Backend>::RemoveOptions>,
     pub arch: BTreeMap<<Arch as Backend>::PackageId, <Arch as Backend>::RemoveOptions>,
     pub cargo: BTreeMap<<Cargo as Backend>::PackageId, <Cargo as Backend>::RemoveOptions>,
     pub dnf: BTreeMap<<Dnf as Backend>::PackageId, <Dnf as Backend>::RemoveOptions>,
@@ -45,7 +45,7 @@ pub struct PackagesRemove {
 }
 #[derive(Debug, Clone, Default)]
 pub struct PackagesQuery {
-    pub apt: BTreeMap<<Apt as Backend>::PackageId, <Apt as Backend>::QueryInfo>,
+    // pub apt: BTreeMap<<Apt as Backend>::PackageId, <Apt as Backend>::QueryInfo>,
     pub arch: BTreeMap<<Arch as Backend>::PackageId, <Arch as Backend>::QueryInfo>,
     pub cargo: BTreeMap<<Cargo as Backend>::PackageId, <Cargo as Backend>::QueryInfo>,
     pub dnf: BTreeMap<<Dnf as Backend>::PackageId, <Dnf as Backend>::QueryInfo>,
@@ -60,7 +60,7 @@ macro_rules! impl_append {
     () => {
         #[allow(dead_code)]
         pub fn append(&mut self, other: &mut Self) {
-            self.apt.append(&mut other.apt);
+            // self.apt.append(&mut other.apt);
             self.arch.append(&mut other.arch);
             self.cargo.append(&mut other.cargo);
             self.dnf.append(&mut other.dnf);
@@ -77,7 +77,7 @@ macro_rules! impl_into_packages_ids {
         #[allow(dead_code)]
         pub fn into_packages_ids(self) -> PackagesIds {
             PackagesIds {
-                apt: self.apt.into_keys().collect(),
+                // apt: self.apt.into_keys().collect(),
                 arch: self.arch.into_keys().collect(),
                 cargo: self.cargo.into_keys().collect(),
                 dnf: self.dnf.into_keys().collect(),
@@ -94,8 +94,8 @@ macro_rules! impl_is_empty {
     () => {
         #[allow(dead_code)]
         pub fn is_empty(&self) -> bool {
-            self.apt.is_empty()
-                && self.arch.is_empty()
+            // self.apt.is_empty()
+            self.arch.is_empty()
                 && self.cargo.is_empty()
                 && self.dnf.is_empty()
                 && self.flatpak.is_empty()
@@ -129,7 +129,7 @@ impl PackagesQuery {
 impl PackagesIds {
     pub fn difference(&self, other: &Self) -> Self {
         Self {
-            apt: self.apt.difference(&other.apt).cloned().collect(),
+            // apt: self.apt.difference(&other.apt).cloned().collect(),
             arch: self.arch.difference(&other.arch).cloned().collect(),
             cargo: self.cargo.difference(&other.cargo).cloned().collect(),
             dnf: self.dnf.difference(&other.dnf).cloned().collect(),
@@ -144,7 +144,7 @@ impl PackagesIds {
 
 impl PackagesInstall {
     pub fn install(self, no_confirm: bool, config: &Config) -> Result<()> {
-        let apt = Apt::install_packages(&self.apt, no_confirm, config);
+        // let apt = Apt::install_packages(&self.apt, no_confirm, config);
         let arch = Arch::install_packages(&self.arch, no_confirm, config);
         let cargo = Cargo::install_packages(&self.cargo, no_confirm, config);
         let dnf = Dnf::install_packages(&self.dnf, no_confirm, config);
@@ -154,8 +154,8 @@ impl PackagesInstall {
         let rustup = Rustup::install_packages(&self.rustup, no_confirm, config);
         let xbps = Xbps::install_packages(&self.xbps, no_confirm, config);
 
-        apt.and(arch)
-            .and(cargo)
+        // apt.and(arch)
+        arch.and(cargo)
             .and(dnf)
             .and(flatpak)
             .and(pip)
@@ -167,7 +167,7 @@ impl PackagesInstall {
     #[rustfmt::skip]
     pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
         Self {
-            apt: packages_ids.apt.iter().map(|x| (x.clone(), <Apt as Backend>::InstallOptions::default())).collect(),
+            // apt: packages_ids.apt.iter().map(|x| (x.clone(), <Apt as Backend>::InstallOptions::default())).collect(),
             arch: packages_ids.arch.iter().map(|x| (x.clone(), <Arch as Backend>::InstallOptions::default())).collect(),
             cargo: packages_ids.cargo.iter().map(|x| (x.clone(), <Cargo as Backend>::InstallOptions::default())).collect(),
             dnf: packages_ids.dnf.iter().map(|x| (x.clone(), <Dnf as Backend>::InstallOptions::default())).collect(),
@@ -182,7 +182,7 @@ impl PackagesInstall {
 
 impl PackagesRemove {
     pub fn remove(self, no_confirm: bool, config: &Config) -> Result<()> {
-        let apt = Apt::remove_packages(&self.apt, no_confirm, config);
+        // let apt = Apt::remove_packages(&self.apt, no_confirm, config);
         let arch = Arch::remove_packages(&self.arch, no_confirm, config);
         let cargo = Cargo::remove_packages(&self.cargo, no_confirm, config);
         let dnf = Dnf::remove_packages(&self.dnf, no_confirm, config);
@@ -192,8 +192,8 @@ impl PackagesRemove {
         let rustup = Rustup::remove_packages(&self.rustup, no_confirm, config);
         let xbps = Xbps::remove_packages(&self.xbps, no_confirm, config);
 
-        apt.and(arch)
-            .and(cargo)
+        // apt.and(arch)
+        arch.and(cargo)
             .and(dnf)
             .and(flatpak)
             .and(pip)
@@ -205,7 +205,7 @@ impl PackagesRemove {
     #[rustfmt::skip]
     pub fn from_packages_ids_defaults(packages_ids: &PackagesIds) -> Self {
         Self {
-            apt: packages_ids.apt.iter().map(|x| (x.clone(), <Apt as Backend>::RemoveOptions::default())).collect(),
+            // apt: packages_ids.apt.iter().map(|x| (x.clone(), <Apt as Backend>::RemoveOptions::default())).collect(),
             arch: packages_ids.arch.iter().map(|x| (x.clone(), <Arch as Backend>::RemoveOptions::default())).collect(),
             cargo: packages_ids.cargo.iter().map(|x| (x.clone(), <Cargo as Backend>::RemoveOptions::default())).collect(),
             dnf: packages_ids.dnf.iter().map(|x| (x.clone(), <Dnf as Backend>::RemoveOptions::default())).collect(),
@@ -220,7 +220,7 @@ impl PackagesRemove {
 
 impl PackagesQuery {
     pub fn installed(config: &Config) -> Result<Self> {
-        let apt = Apt::query_installed_packages(config)?;
+        // let apt = Apt::query_installed_packages(config)?;
         let arch = Arch::query_installed_packages(config)?;
         let cargo = Cargo::query_installed_packages(config)?;
         let dnf = Dnf::query_installed_packages(config)?;
@@ -231,7 +231,7 @@ impl PackagesQuery {
         let xbps = Xbps::query_installed_packages(config)?;
 
         Ok(Self {
-            apt,
+            // apt,
             arch,
             cargo,
             dnf,
@@ -257,7 +257,7 @@ impl PackagesIds {
             };
 
             match backend {
-                AnyBackend::Apt(_) => self.apt.clear(),
+                // AnyBackend::Apt(_) => self.apt.clear(),
                 AnyBackend::Cargo(_) => self.cargo.clear(),
                 AnyBackend::Dnf(_) => self.dnf.clear(),
                 AnyBackend::Flatpak(_) => self.flatpak.clear(),
@@ -308,7 +308,7 @@ impl Display for PackagesIds {
             };
         }
 
-        list!(apt);
+        // list!(apt);
         list!(cargo);
         list!(dnf);
         list!(flatpak);
@@ -320,9 +320,6 @@ impl Display for PackagesIds {
         write!(
             f,
             "
-[apt]
-{apt}
-
 [cargo]
 {cargo}
 
