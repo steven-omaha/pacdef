@@ -28,11 +28,10 @@ mod cmd;
 mod config;
 #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
 mod core;
-mod env;
 mod errors;
-mod grouping;
+mod groups;
+mod packages;
 mod review;
-mod search;
 mod ui;
 
 #[allow(unused_imports)]
@@ -40,4 +39,5 @@ mod prelude;
 
 pub mod path;
 
-pub use prelude::{Config, Error, Group};
+pub use prelude::Groups;
+pub use prelude::{Config, Error};

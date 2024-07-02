@@ -6,8 +6,6 @@ use std::path::PathBuf;
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// Package search yields no results.
-    NoPackagesFound,
     /// Config file not found.
     ConfigFileNotFound,
     /// Group file not found.
@@ -18,12 +16,13 @@ pub enum Error {
     InvalidGroupName(String),
     /// Multiple groups not found.
     MultipleGroupsNotFound(Vec<String>),
+    /// The backend in not managed by pacdef
+    InvalidBackend(String),
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::NoPackagesFound => write!(f, "no packages matching query"),
             Self::ConfigFileNotFound => write!(f, "config file not found"),
             Self::GroupFileNotFound(name) => write!(f, "group file '{name}' not found"),
             Self::GroupAlreadyExists(path) => {
@@ -37,6 +36,7 @@ impl Display for Error {
                     vec.join(", ")
                 )
             }
+            Self::InvalidBackend(name) => write!(f, "{name}: No such backend exists"),
         }
     }
 }

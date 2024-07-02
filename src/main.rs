@@ -21,8 +21,8 @@ use anyhow::{bail, Context, Result};
 
 use clap::Parser;
 use pacdef::cli::MainArguments;
-use pacdef::path::{get_config_path, get_config_path_old_version, get_group_dir};
-use pacdef::{Config, Error as PacdefError, Group};
+use pacdef::path::{get_config_path, get_config_path_old_version};
+use pacdef::{Config, Error as PacdefError, Groups};
 
 const MAJOR_UPDATE_MESSAGE: &str = "VERSION UPGRADE
 You seem to have used version 1.x of pacdef before.
@@ -55,7 +55,7 @@ fn main() -> ExitCode {
     handle_final_result(main_inner())
 }
 
-/// Skip printing the error chain when searching packages yields no results,
+/// Skip printing the error chain if its a pacdef error,
 /// otherwise report error chain.
 #[allow(clippy::option_if_let_else)]
 fn handle_final_result(result: Result<()>) -> ExitCode {
@@ -75,7 +75,7 @@ fn handle_final_result(result: Result<()>) -> ExitCode {
 fn main_inner() -> Result<()> {
     let main_arguments = MainArguments::parse();
 
-    let config_file = get_config_path().context("getting config file")?;
+    let mut config_file = get_config_path().context("getting config file")?;
 
     let config = match Config::load(&config_file).context("loading config file") {
         Ok(config) => config,
@@ -91,21 +91,12 @@ fn main_inner() -> Result<()> {
         }
     };
 
-    let group_dir = get_group_dir().context("resolving group dir")?;
-    let groups = Group::load(&group_dir, config.warn_not_symlinks)
-        .with_context(|| format!("loading groups under {}", group_dir.to_string_lossy()))?;
+    config_file.pop();
+    config_file.push("groups");
+    let groups = Groups::load(&config_file, &config).context("failed to load groups")?;
 
     if groups.is_empty() {
         log::warn!("no group files found");
-    }
-
-    for group in groups.iter() {
-        if group.warn_symlink {
-            log::warn!(
-                "group file {} is not a symlink",
-                group.path.to_string_lossy()
-            );
-        }
     }
 
     main_arguments.run(&groups, &config)
