@@ -86,11 +86,11 @@ fn parse_group(group_file: &Path) -> Result<PackagesInstall> {
 
     let mut backends = PackagesIds::new();
     let mut prev_backend: Option<AnyBackend> = None;
-    for (count, line) in content.lines().enumerate() {
-        if line.is_empty() {
-            continue;
-        }
-
+    for (count, line) in content
+        .lines()
+        .enumerate()
+        .filter(|(_, line)| !line.trim_start().is_empty() && !line.trim_start().starts_with('#'))
+    {
         if line.starts_with('[') {
             let backend = line
                 .strip_prefix('[')
