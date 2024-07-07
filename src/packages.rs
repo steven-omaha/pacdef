@@ -141,13 +141,13 @@ macro_rules! impl_packages_ids {
 
                 let installed = PackagesQuery::installed(config)?;
 
-                let mut missing = installed
+                let mut unmanaged = installed
                     .into_packages_ids()
                     .difference(&requested.into_packages_ids());
 
-                missing.clear_backends(&config.disabled_backends);
+                unmanaged.clear_backends(&config.disabled_backends);
 
-                Ok(missing)
+                Ok(unmanaged)
             }
         }
     };
