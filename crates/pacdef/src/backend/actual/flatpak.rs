@@ -37,6 +37,21 @@ impl Flatpak {
         let output = String::from_utf8(cmd.output()?.stdout)?;
         Ok(output.lines().map(Package::from).collect::<Packages>())
     }
+
+    fn get_pinned_runtimes(&self) -> Result<Packages> {
+        let mut cmd = Command::new(self.backend_info().binary);
+        cmd.arg("pin");
+        if !self.systemwide {
+            cmd.arg("--user");
+        }
+
+        let output = String::from_utf8(cmd.output()?.stdout)?;
+        let mut packages = Packages::new();
+        for pinned in output.lines().map(|line| line.trim()) {
+            packages.insert(pinned.split('/').nth(1).unwrap_or(pinned).into());
+        }
+        Ok(packages)
+    }
 }
 
 impl Backend for Flatpak {
@@ -57,7 +72,10 @@ impl Backend for Flatpak {
     }
 
     fn get_explicitly_installed_packages(&self) -> Result<Packages> {
-        self.get_installed_packages(false)
+        let mut apps = self.get_installed_packages(false)?;
+        let pinned = self.get_pinned_runtimes()?;
+        apps.extend(pinned);
+        Ok(apps)
     }
 
     /// Install the specified packages.
