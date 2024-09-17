@@ -27,7 +27,7 @@ serde_json = "1.0"
 toml = "0.4"
 
 # backends
-alpm = { version = "3.0", optional = true }
+alpm = { git = "https://github.com/archlinux/alpm.rs", optional = true }
 rust-apt = { version = "0.7", optional = true }
 
 [features]
