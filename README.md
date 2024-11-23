@@ -100,6 +100,7 @@ Pull requests for additional backends are welcome!
 | Python       | `pip`           | `[python]`  | built-in     |                                                                                          |
 | Rust         | `cargo`         | `[rust]`    | built-in     |                                                                                          |
 | Rustup       | `rustup`        | `[rustup]`  | built-in     | See the comments [below](#rustup) about the syntax of the packages in the group file.    |
+| Snap         | `snap`          | `[snap]`    | built-in     | Manages all packages as explicit - no auto/manual distinction like in apt                |
 | Void Linux   | `xbps`          | `[void]`    | built-in     |                                                                                          |
 
 Backends that have a `feature flag` require setting the respective flag for the build process.
@@ -110,6 +111,16 @@ Any backend can be disabled during runtime (see below, "[Configuration](#configu
 For example, to build `pacdef` with support for Debian Linux, you can run one of the two commands.
 * (recommended) `cargo install -F debian pacdef`, this downloads and builds it from [https://crates.io](https://crates.io)
 * in a clone of this repository, `cargo install --path . -F debian`
+
+### Snap Implementation Details
+
+Unlike package managers like `apt` which have a concept of manually installed vs automatically installed dependencies, Snap treats all packages the same way. There is no distinction between manually installed packages and dependencies.
+
+In pacdef, this means:
+- All installed Snap packages are considered "explicitly installed"
+- A Snap package is considered "unmanaged" if it's installed but not listed in any group file
+- When running `pacdef package clean`, any Snap package not listed in your group files will be considered for removal
+- The `make_dependency` operation is not supported for Snap packages
 
 ### Example
 
@@ -150,13 +161,13 @@ Usage on different machines:
 ## Commands
 
 | Subcommand                        | Description                                                           |
-|-----------------------------------|-----------------------------------------------------------------------|
-| `group import [<path>...]`        | create a symlink to the specified group file(s) in your groups folder | 
-| `group export [args] <group> ...` | export (move) a non-symlink group and re-import it as symlink         | 
-| `group list`                      | list names of all groups                                              |  
-| `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   | 
+| --------------------------------- | --------------------------------------------------------------------- |
+| `group import [<path>...]`        | create a symlink to the specified group file(s) in your groups folder |
+| `group export [args] <group> ...` | export (move) a non-symlink group and re-import it as symlink         |
+| `group list`                      | list names of all groups                                              |
+| `group new [-e] [<group>...]`     | create new groups, use `-e` to edit them immediately after creation   |
 | `group remove [<group>...]`       | remove a previously imported group                                    |
-| `group show [<group>...]`         | show contents of a group                                              |  
+| `group show [<group>...]`         | show contents of a group                                              |
 | `package clean [--noconfirm]`     | remove all unmanaged packages                                         |
 | `package review`                  | for each unmanaged package interactively decide what to do            |
 | `package search <regex>`          | search for managed packages that match the search string              |

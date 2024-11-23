@@ -62,6 +62,7 @@ pub enum AnyBackend {
     Python(Python),
     Rust(Rust),
     Rustup(Rustup),
+    Snap(Snap),
     Void(Void),
 }
 impl AnyBackend {
@@ -77,6 +78,7 @@ impl AnyBackend {
             Self::Python(Python::new(config)),
             Self::Rust(Rust::new()),
             Self::Rustup(Rustup::new()),
+            Self::Snap(Snap::new()),
             Self::Void(Void::new()),
         ]
         .into_iter()
@@ -93,6 +95,7 @@ impl AnyBackend {
             "python" => Ok(Self::Python(Python::new(config))),
             "rust" => Ok(Self::Rust(Rust::new())),
             "rustup" => Ok(Self::Rustup(Rustup::new())),
+            "snap" => Ok(Self::Snap(Snap::new())),
             "void" => Ok(Self::Void(Void::new())),
             _ => Err(anyhow::anyhow!(
                 "no matching backend for the section: {section}"

@@ -3,7 +3,8 @@ pub use crate::backend::actual::arch::Arch;
 #[cfg(feature = "debian")]
 pub use crate::backend::actual::debian::Debian;
 pub use crate::backend::actual::{
-    fedora::Fedora, flatpak::Flatpak, python::Python, rust::Rust, rustup::Rustup, void::Void,
+    fedora::Fedora, flatpak::Flatpak, python::Python, rust::Rust, rustup::Rustup, snap::Snap,
+    void::Void,
 };
 pub use crate::backend::backend_trait::{Backend, BackendInfo, Switches, Text};
 pub use crate::backend::todo_per_backend::ToDoPerBackend;

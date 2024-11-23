@@ -548,6 +548,7 @@ pub const fn get_version_string() -> &'static str {
     const VERSION: &str = env!("CARGO_PKG_VERSION");
     const HASH: &str = env!("GIT_HASH");
 
+    #[allow(clippy::const_is_empty)]
     if HASH.is_empty() {
         VERSION
     } else {
