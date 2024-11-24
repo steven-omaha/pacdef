@@ -27,7 +27,7 @@ impl Backend for Snap {
             section: "snap",
             switches_info: &["info"],
             switches_install: &["install"],
-            switches_noconfirm: &["--assume-yes"],
+            switches_noconfirm: &[],
             switches_remove: &["remove"],
             switches_make_dependency: None, // Snap doesn't have the concept of dependencies
         }
@@ -62,15 +62,11 @@ impl Backend for Snap {
         panic!("not supported by {}", self.backend_info().binary)
     }
 
-    fn install_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn install_packages(&self, packages: &Packages, _noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
         let mut cmd = build_base_command_with_privileges(&backend_info.binary);
 
         cmd.args(backend_info.switches_install);
-
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
-        }
 
         for p in packages {
             cmd.arg(format!("{p}"));
@@ -79,15 +75,11 @@ impl Backend for Snap {
         run_external_command(cmd)
     }
 
-    fn remove_packages(&self, packages: &Packages, noconfirm: bool) -> Result<()> {
+    fn remove_packages(&self, packages: &Packages, _noconfirm: bool) -> Result<()> {
         let backend_info = self.backend_info();
         let mut cmd = build_base_command_with_privileges(&backend_info.binary);
 
         cmd.args(backend_info.switches_remove);
-
-        if noconfirm {
-            cmd.args(backend_info.switches_noconfirm);
-        }
 
         for p in packages {
             cmd.arg(format!("{p}"));
