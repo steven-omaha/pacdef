@@ -4,6 +4,7 @@
 
 multi-backend declarative package manager for Linux
 
+## PACDEF IS ARCHIVED, switch to [metapac](https://github.com/ripytide/metapac)!
 
 ## Installation
 
